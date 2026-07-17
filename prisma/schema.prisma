@@ -1,0 +1,663 @@
+// ============================================================================
+// Acerto Compras — Schema de dados
+// Modela o fluxo completo descrito em "Processo de Compras" (doc de referência)
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Identidade e organização
+// ----------------------------------------------------------------------------
+
+enum RoleName {
+  SOLICITANTE
+  COMPRADOR
+  APROVADOR
+  JURIDICO
+  TESOURARIA
+  CONTROLADORIA
+  PRIVACIDADE
+  FISCAL
+  ADMIN
+}
+
+enum Diretoria {
+  CORPORATIVO
+  REVENUE
+  TECNOLOGIA
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  googleId      String?  @unique
+  roles         UserRole[]
+  diretoria     Diretoria?
+  active        Boolean  @default(true)
+  // Controle de acesso às telas internas (Solicitações/quadro, Contratos,
+  // Dashboards) — lista explícita, marcada manualmente por um ADMIN em
+  // /admin/acessos. Todo usuário autenticado (@acerto.com.br) pode abrir
+  // Nova Solicitação independente deste campo; só a visão do processo
+  // inteiro é restrita.
+  canViewBoard  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  requestsMade      PurchaseRequest[] @relation("Requester")
+  requestsBuying    PurchaseRequest[] @relation("Buyer")
+  requestsApproving PurchaseRequest[] @relation("ApproverManager")
+  contractsManaged  Contract[]        @relation("ContractManager")
+  comments          Comment[]
+  approvalDecisions Approval[]
+  stageEvents       StageEvent[]
+}
+
+model UserRole {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+  role   RoleName
+
+  @@unique([userId, role])
+}
+
+model CostCenter {
+  id     String  @id @default(cuid())
+  name   String  @unique // Comitê IA, Gestão, Data Intelligence, Design, etc.
+  active Boolean @default(true)
+
+  requests PurchaseRequest[]
+}
+
+// Linha de orçamento — importada mensalmente da base de remodelagem FP&A.
+// Assunção não verificada: mecanismo de importação (planilha/API) a confirmar com FP&A.
+model BudgetLine {
+  id           String   @id @default(cuid())
+  externalCode String   @unique
+  description  String
+  monthRef     String   // ex: "2026-07"
+  available    Decimal  @db.Decimal(14, 2)
+
+  requests PurchaseRequest[]
+}
+
+// ----------------------------------------------------------------------------
+// Cadastro único de fornecedor (revisão: no fluxo original o fornecedor era
+// texto livre repetido em Cotação, Pedido de Compra e Contrato — sem histórico
+// nem status de compliance consolidado). Screening básico (CNPJ ativo, listas
+// restritivas) é obrigatório para QUALQUER fornecedor novo, não só "Ferramenta
+// Nova"; o Due Diligence de privacidade/segurança (DueDiligenceReview) continua
+// sendo um passo adicional específico para ferramentas que tratam dados.
+// ----------------------------------------------------------------------------
+
+enum RiskTier {
+  BAIXO
+  MEDIO
+  ALTO
+}
+
+enum ScreeningStatus {
+  PENDENTE
+  APROVADO
+  REPROVADO
+}
+
+model Supplier {
+  id                String   @id @default(cuid())
+  legalName         String
+  cnpj              String   @unique
+  tradeName         String?
+  contactName       String?
+  contactPhone      String?
+  contactEmail      String?
+  riskTier          RiskTier @default(MEDIO)
+  approvedVendor    Boolean  @default(false) // já homologado (habilita lane FAST quando aplicável)
+  screeningStatus   ScreeningStatus @default(PENDENTE)
+  screeningNotes    String?
+  screenedAt        DateTime?
+  createdAt         DateTime @default(now())
+
+  quotes         Quote[]
+  purchaseOrders PurchaseOrder[]
+  contracts      Contract[]
+}
+
+// ----------------------------------------------------------------------------
+// Declaração de conflito de interesse — revisão: ausente no fluxo original.
+// Solicitante e comprador declaram não ter relação pessoal/familiar/financeira
+// com o fornecedor proposto, antes da etapa de Aprovação.
+// ----------------------------------------------------------------------------
+
+model ConflictOfInterestDeclaration {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     PurchaseRequest @relation(fields: [requestId], references: [id])
+  declaredBy  String
+  hasConflict Boolean
+  details     String?
+  createdAt   DateTime @default(now())
+}
+
+
+
+enum DemandType {
+  COMPRA_PRODUTO
+  COMPRA_SERVICO
+  FERRAMENTA_NOVA
+  FERRAMENTA_USUARIOS
+  // Adicionado para paridade com o formulário Pipefy ("Compra de Ferramentas
+  // - Upgrade ou Dowgrade de versão"). Decisão registrada: NÃO entra no
+  // gatilho de Due Diligence completa em nextAfterValidacaoOrcamentaria() /
+  // determineLane() — assume-se que a ferramenta já foi avaliada na
+  // homologação original e um upgrade/downgrade de versão não justifica
+  // repetir todo o processo de privacidade/segurança.
+  FERRAMENTA_UPGRADE_DOWNGRADE
+  RENOVACAO_CONTRATO
+  CANCELAMENTO
+}
+
+enum Priority {
+  BAIXA
+  MEDIA
+  ALTA
+  // Adicionado para paridade com o Pipefy ("Crítica (Urgência Máxima)").
+  // Reduz o SLA calculado em slaDaysForDiretoria() — ver comentário lá.
+  CRITICA
+}
+
+enum ValueType {
+  FIXO
+  VARIAVEL
+}
+
+// Faixa de risco do processo (revisão: reintroduz o modelo de lanes já
+// validado em conversas anteriores — nem toda compra precisa do fluxo completo)
+enum Lane {
+  FAST
+  STANDARD
+  STRATEGIC
+}
+
+// Estágios do fluxo — ordem reflete o fluxograma vertical do documento de referência.
+enum Stage {
+  SOLICITACAO
+  TRIAGEM
+  VALIDACAO_ORCAMENTARIA
+  DUE_DILIGENCE
+  COTACAO
+  MAPA_COTACAO
+  APROVACAO
+  JURIDICO
+  PEDIDO_COMPRA
+  AGUARDANDO_ENTREGA
+  MEDICAO
+  FISCAL
+  TESOURARIA
+  MAPEAMENTO_CONTRATO
+  CONCLUIDO
+  CANCELADO
+}
+
+// ----------------------------------------------------------------------------
+// Núcleo do fluxo: PurchaseRequest e sua máquina de estados
+// ----------------------------------------------------------------------------
+
+model PurchaseRequest {
+  id          String   @id @default(cuid())
+  code        String   @unique // ex: PC-2026-0001, gerado sequencialmente
+
+  requesterId String
+  requester   User     @relation("Requester", fields: [requesterId], references: [id])
+
+  // Revisão (SoD): comprador responsável é explícito e nunca pode ser igual a
+  // requesterId (checado em src/lib/workflow.ts -> violatesSegregationOfDuties).
+  buyerId     String?
+  buyer       User?    @relation("Buyer", fields: [buyerId], references: [id])
+
+  diretoria       Diretoria
+  costCenterId    String
+  costCenter      CostCenter @relation(fields: [costCenterId], references: [id])
+
+  approverManagerId String
+  approverManager   User   @relation("ApproverManager", fields: [approverManagerId], references: [id])
+
+  budgetLineId String?
+  budgetLine   BudgetLine? @relation(fields: [budgetLineId], references: [id])
+
+  priority         Priority
+  demandType       DemandType
+  shortDescription String
+  longDescription  String   @db.Text
+  quantity         Int
+  // Opcional (paridade com o Pipefy, onde este campo não tem asterisco —
+  // decisão registrada: preenchimento não é mais exigido na abertura, mas
+  // o motor de alçadas (approvalLevel, budgetExceptionLevel,
+  // minimumQuotesRequired, determineLane, todos em src/lib/workflow.ts)
+  // continua exigindo um número — por isso a Triagem trava o avanço até o
+  // comprador preencher, se ainda estiver nulo (ver rota de triagem).
+  estimatedValue   Decimal? @db.Decimal(14, 2)
+
+  // Campos abaixo replicam o formulário real do Pipefy (ver conversa com
+  // Compras | F&NC) — não existiam no documento de referência original.
+  leadershipPreApproved Boolean // "Solicitação de Compras aprovado pela liderança?"
+  suggestedDeadline     DateTime // "Data Limite sugerida para entrega do processo" — sugerida pelo solicitante, não substitui slaDeadline (calculado automaticamente).
+  indicatedSupplierName    String?
+  indicatedSupplierPhone   String?
+  indicatedSupplierEmail   String?
+  indicatedSupplierWebsite String?
+  affectedUsers            String? // nome + e-mail; usado só quando demandType = FERRAMENTA_USUARIOS (campo condicional na UI)
+
+  // Definidos na Triagem
+  needsContract Boolean?
+  needsMapping  Boolean?
+  valueType     ValueType?
+
+  // Revisão: faixa de risco (fast/standard/strategic) calculada na Triagem via
+  // determineLane() — substitui o "um tamanho serve para todos" do fluxo original.
+  lane Lane?
+
+  // Revisão: sinalizado quando checkFragmentationRisk() detecta que a soma das
+  // solicitações do mesmo fornecedor nos últimos 12 meses ultrapassa a alçada
+  // que essa solicitação sozinha não atingiria. Não bloqueia — força revisão.
+  fragmentationFlag Boolean @default(false)
+
+  currentStage Stage    @default(SOLICITACAO)
+  status       String   @default("ABERTO") // ABERTO | CANCELADO | CONCLUIDO
+  cancelReason String?
+
+  slaDeadline  DateTime? // calculado a partir da diretoria (Tecnologia/Revenue = 45d, Corporativo = 30d)
+
+  // Integração com o futuro ERP (ver src/app/api/erp) — preenchidos quando a
+  // solicitação CONCLUIDA é puxada e confirmada pelo ERP. erpExternalId é o
+  // identificador do lançamento criado do lado do ERP (nota, doc contábil etc).
+  erpSyncedAt   DateTime?
+  erpExternalId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments      Attachment[]
+  comments         Comment[]
+  stageEvents      StageEvent[]
+  budgetException  BudgetException?
+  dueDiligence     DueDiligenceReview?
+  conflictDeclarations ConflictOfInterestDeclaration[]
+  quotes           Quote[]
+  approvals        Approval[]
+  legalReview      LegalReview?
+  purchaseOrder    PurchaseOrder?
+  measurement      Measurement?
+  fiscalDocument   FiscalDocument?
+  payment          Payment?
+  contract         Contract?
+  supplierEvaluation SupplierEvaluation?
+  notifications    Notification[]
+  chatMessages     RequestChatMessage[]
+}
+
+// Chat flutuante (widget "nuvem") entre comprador e solicitante, por
+// solicitação de compra. Cada mensagem enviada pelo app tenta um espelho via
+// Slack DM para quem não está com a janela aberta; slackChannelId/slackTs
+// identificam essa mensagem no Slack e slackThreadTs marca a raiz da thread
+// usada para casar a resposta do Slack de volta com esta solicitação (ver
+// src/app/api/slack/events/route.ts). Mensagens que chegam pelo Slack (em vez
+// de pelo app) são gravadas aqui com source = SLACK.
+model RequestChatMessage {
+  id             String   @id @default(cuid())
+  requestId      String
+  request        PurchaseRequest @relation(fields: [requestId], references: [id])
+  authorRole     String   // "COMPRADOR" | "SOLICITANTE"
+  authorName     String
+  body           String   @db.Text
+  source         String   @default("APP") // "APP" | "SLACK"
+  slackChannelId String?
+  slackTs        String?
+  slackThreadTs  String?
+  createdAt      DateTime @default(now())
+}
+
+// Registro de auditoria: toda transição de etapa fica gravada (imutável).
+model StageEvent {
+  id          String   @id @default(cuid())
+  requestId   String
+  request     PurchaseRequest @relation(fields: [requestId], references: [id])
+  fromStage   Stage?
+  toStage     Stage
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id])
+  comment     String?
+  createdAt   DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  requestId String
+  request   PurchaseRequest @relation(fields: [requestId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String   @db.Text
+  stage     Stage
+  createdAt DateTime @default(now())
+}
+
+// Categorias de anexo do formulário Pipefy (ver Nova Solicitação) — GERAL
+// cobre os anexos soltos durante o fluxo (ex: painel de Anexos genérico).
+enum AttachmentCategory {
+  GERAL
+  PROPOSTA_FORNECEDOR_INDICADO
+  APROVACAO_EXTRA_ORCAMENTARIA
+  ANEXO_COMPLEMENTAR
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  requestId  String
+  request    PurchaseRequest @relation(fields: [requestId], references: [id])
+  fileName   String
+  storageUrl String   // Google Drive fileId/URL ou S3 key
+  uploadedBy String
+  stage      Stage
+  category   AttachmentCategory @default(GERAL)
+  createdAt  DateTime @default(now())
+
+  budgetExceptions BudgetException[]
+}
+
+// ----------------------------------------------------------------------------
+// Validação orçamentária / exceção (workflow de alçada quando NÃO há orçamento)
+// ----------------------------------------------------------------------------
+
+enum ApprovalDecision {
+  PENDENTE
+  APROVADO
+  REPROVADO
+}
+
+model BudgetException {
+  id          String   @id @default(cuid())
+  requestId   String   @unique
+  request     PurchaseRequest @relation(fields: [requestId], references: [id])
+  level       Int      // 1: até 5k (coordenação c/ procuração) | 2: até 25k (Gerente F&NC) | 3: acima 25k (Gerente F&NC + CEO)
+  decision    ApprovalDecision @default(PENDENTE)
+  justification String?
+  decidedAt   DateTime?
+
+  // Anexo de "Aprovação Extra-orçamentária" enviado pelo solicitante já na
+  // abertura (categoria APROVACAO_EXTRA_ORCAMENTARIA) — vinculado aqui
+  // automaticamente quando esta exceção é criada, se existir.
+  attachmentId String?
+  attachment   Attachment? @relation(fields: [attachmentId], references: [id])
+}
+
+// ----------------------------------------------------------------------------
+// Due Diligence (Privacidade) — obrigatório para Ferramenta Nova
+// ----------------------------------------------------------------------------
+
+model DueDiligenceReview {
+  id            String   @id @default(cuid())
+  requestId     String   @unique
+  request       PurchaseRequest @relation(fields: [requestId], references: [id])
+  approved      Boolean?
+  justification String?
+  decidedAt     DateTime?
+}
+
+// ----------------------------------------------------------------------------
+// Cotação e Mapa de Cotação
+// ----------------------------------------------------------------------------
+
+model Quote {
+  id               String  @id @default(cuid())
+  requestId        String
+  request          PurchaseRequest @relation(fields: [requestId], references: [id])
+  supplierId       String?
+  supplier         Supplier? @relation(fields: [supplierId], references: [id])
+  supplierName     String  // preenchido mesmo sem cadastro (fornecedor ainda não homologado)
+  initialValue     Decimal @db.Decimal(14, 2)
+  negotiatedValue  Decimal @db.Decimal(14, 2)
+  paymentCondition String
+  currency         String  @default("BRL")
+  selected         Boolean @default(false)
+  createdAt        DateTime @default(now())
+
+  // savingPercent / savingValue calculados: (initial - negotiated) / initial
+}
+
+// ----------------------------------------------------------------------------
+// Aprovação final (alçadas por valor)
+// ----------------------------------------------------------------------------
+
+model Approval {
+  id            String   @id @default(cuid())
+  requestId     String
+  request       PurchaseRequest @relation(fields: [requestId], references: [id])
+  level         Int      // 1: até 50k | 2: até 500k | 3: acima de 500k (CEO) — renumerado, ver revisão
+  approverId    String
+  approver      User     @relation(fields: [approverId], references: [id])
+  decision      ApprovalDecision @default(PENDENTE)
+  justification String?
+  personifiedBy String?  // comprador que agiu em nome do aprovador — só permitido até o Nível 1 (ver canPersonifyApprover)
+  dueAt         DateTime? // revisão: prazo para decisão; disparo de escalonamento se ultrapassado
+  escalatedAt   DateTime? // revisão: quando o escalonamento por SLA foi disparado
+  decidedAt     DateTime?
+}
+
+// ----------------------------------------------------------------------------
+// Jurídico
+// ----------------------------------------------------------------------------
+
+model LegalReview {
+  id            String   @id @default(cuid())
+  requestId     String   @unique
+  request       PurchaseRequest @relation(fields: [requestId], references: [id])
+  minutaUrl     String?
+  signedDocUrl  String?
+  signed        Boolean?
+  observations  String?
+  decidedAt     DateTime?
+}
+
+// ----------------------------------------------------------------------------
+// Pedido de Compra
+// ----------------------------------------------------------------------------
+
+enum FreightType {
+  CIF
+  FOB
+}
+
+model PurchaseOrder {
+  id                String  @id @default(cuid())
+  requestId         String  @unique
+  request           PurchaseRequest @relation(fields: [requestId], references: [id])
+  supplierId        String?
+  supplier          Supplier? @relation(fields: [supplierId], references: [id])
+  supplierLegalName String
+  supplierCnpj      String
+  contactName       String
+  contactPhone      String
+  contactEmail      String
+  initialValue      Decimal @db.Decimal(14, 2)
+  negotiatedValue   Decimal @db.Decimal(14, 2)
+  paymentCondition  String
+  installments      Int
+  currency          String  @default("BRL")
+  // Campos exigidos pelo layout do PDF do Pedido de Compra (portado do
+  // gerador Python/ReportLab já validado em produção pela Acerto).
+  prazoEntrega      String?
+  localEntrega      String? // "Local de Entrega / Instruções de Recebimento" — campo distinto de prazoEntrega, não fundir.
+  frete             FreightType @default(CIF)
+  sentToSupplier    Boolean @default(false)
+  needsMeasurement  Boolean @default(false)
+  pdfUrl            String?
+  createdAt         DateTime @default(now())
+
+  items PurchaseOrderItem[]
+}
+
+// Itens do Pedido de Compra — máximo de 6 linhas (limite fixo do layout do
+// PDF, calibrado para caber na página A4 paisagem sem estourar a margem).
+model PurchaseOrderItem {
+  id               String   @id @default(cuid())
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  descricao        String
+  quantidade       Decimal  @db.Decimal(10, 2)
+  valorUnitario    Decimal  @db.Decimal(14, 2)
+  impostosPercent  Decimal  @db.Decimal(5, 2) @default(0)
+  valorTotal       Decimal  @db.Decimal(14, 2)
+  order            Int      @default(0)
+}
+
+// ----------------------------------------------------------------------------
+// Mapeamento de contrato + alertas de renovação
+// ----------------------------------------------------------------------------
+
+model Contract {
+  id                String   @id @default(cuid())
+  requestId         String   @unique
+  request           PurchaseRequest @relation(fields: [requestId], references: [id])
+  supplierId        String?
+  supplier          Supplier? @relation(fields: [supplierId], references: [id])
+  supplierName      String
+  startDate         DateTime
+  endDate           DateTime
+  terminationClause String?  @db.Text
+  renewalDate       DateTime
+  contractManagerId String
+  contractManager   User     @relation("ContractManager", fields: [contractManagerId], references: [id])
+  area              String
+  costCenter        String
+  nonCompete        Boolean  @default(false)
+  lgpdClause        Boolean  @default(false)
+  brandUse          Boolean  @default(false)
+  corporateChangeClause Boolean @default(false)
+  status            String   @default("ATIVO") // ATIVO | RENOVACAO_EM_ANDAMENTO | CANCELADO
+  // Revisão: cancelamento do fluxo original só notificava solicitante e
+  // jurídico, sem avisar Tesouraria — risco de continuar pagando contrato
+  // cancelado. Este campo força a checagem antes de marcar CANCELADO.
+  treasuryNotifiedOnCancel Boolean @default(false)
+
+  alerts ContractAlert[]
+}
+
+model ContractAlert {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  sentAt     DateTime @default(now())
+  channel    String   // EMAIL | SLACK
+  newRequestOpened Boolean @default(false)
+}
+
+// ----------------------------------------------------------------------------
+// Medição, Fiscal, Tesouraria
+// ----------------------------------------------------------------------------
+
+model Measurement {
+  id               String   @id @default(cuid())
+  requestId        String   @unique
+  request          PurchaseRequest @relation(fields: [requestId], references: [id])
+  scopeExecuted    String   @db.Text
+  quantities       String?
+  contractRef      String?
+  technicalApproval ApprovalDecision @default(PENDENTE)
+  reviewComment    String?
+  decidedAt        DateTime?
+}
+
+model FiscalDocument {
+  id            String   @id @default(cuid())
+  requestId     String   @unique
+  request       PurchaseRequest @relation(fields: [requestId], references: [id])
+  documentUrl   String
+  approved      Boolean?
+  reviewComment String?
+  decidedAt     DateTime?
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  requestId     String   @unique
+  request       PurchaseRequest @relation(fields: [requestId], references: [id])
+  scheduledDate DateTime?
+  paidDate      DateTime?
+  status        String   @default("PROGRAMADO") // PROGRAMADO | PAGO
+  erpConfirmed  Boolean  @default(false)
+}
+
+// ----------------------------------------------------------------------------
+// NPS / avaliação
+// ----------------------------------------------------------------------------
+
+model SupplierEvaluation {
+  id        String   @id @default(cuid())
+  requestId String   @unique
+  request   PurchaseRequest @relation(fields: [requestId], references: [id])
+  score     Int?
+  feedback  String?
+  createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Notificações (log de e-mails/Slack disparados — auditoria de comunicação)
+// ----------------------------------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  requestId String?
+  request   PurchaseRequest? @relation(fields: [requestId], references: [id])
+  channel   String   // EMAIL | SLACK
+  recipient String
+  subject   String?
+  status    String   @default("ENVIADO") // ENVIADO | FALHA
+  createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Chamados simples (Viagens Acerto / Facilities) — fluxo bem mais enxuto que
+// o de Compras: nome/e-mail livres (não exige cadastro de User) + descrição
+// aberta + histórico de mensagens trocadas dentro do próprio chamado. Sem
+// alçada, sem etapas — só aberto/em andamento/concluído.
+// ----------------------------------------------------------------------------
+
+enum TicketCategory {
+  VIAGENS
+  FACILITIES
+}
+
+enum TicketStatus {
+  ABERTO
+  EM_ANDAMENTO
+  CONCLUIDO
+}
+
+model SimpleTicket {
+  id             String         @id @default(cuid())
+  code           String         @unique // ex: VG-2026-0001 / FC-2026-0001
+  category       TicketCategory
+  requesterName  String
+  requesterEmail String
+  description    String         @db.Text
+  status         TicketStatus   @default(ABERTO)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  messages TicketMessage[]
+}
+
+model TicketMessage {
+  id         String       @id @default(cuid())
+  ticketId   String
+  ticket     SimpleTicket @relation(fields: [ticketId], references: [id])
+  authorName String
+  body       String       @db.Text
+  createdAt  DateTime     @default(now())
+}

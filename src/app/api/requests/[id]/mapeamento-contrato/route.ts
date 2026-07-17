@@ -1,0 +1,68 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { requireRole } from "@/lib/rbac";
+import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+
+/**
+ * POST /api/requests/[id]/mapeamento-contrato
+ *
+ * Cadastra o contrato (vigência, cláusulas, gestor responsável) associado a
+ * esta solicitação e conclui o fluxo. A base para os alertas de renovação
+ * (cron de contract-alerts) é esse cadastro.
+ */
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const request = await prisma.purchaseRequest.findUnique({
+    where: { id: params.id },
+    include: { requester: true, costCenter: true },
+  });
+  if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
+  if (request.currentStage !== "MAPEAMENTO_CONTRATO") {
+    return NextResponse.json({ error: "Solicitação não está na etapa de Mapeamento de Contrato" }, { status: 409 });
+  }
+
+  const body = await req.json();
+  const {
+    actorId, supplierId, supplierName, startDate, endDate, terminationClause, renewalDate,
+    contractManagerId, area, nonCompete, lgpdClause, brandUse, corporateChangeClause,
+  } = body;
+
+  const roleError = await requireRole(actorId, ["COMPRADOR"]);
+  if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
+
+  const required = { supplierName, startDate, endDate, renewalDate, contractManagerId, area };
+  for (const [key, value] of Object.entries(required)) {
+    if (!value) return NextResponse.json({ error: `Campo obrigatório ausente: ${key}` }, { status: 400 });
+  }
+
+  const contract = await prisma.contract.create({
+    data: {
+      requestId: request.id,
+      supplierId: supplierId || undefined,
+      supplierName,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      terminationClause,
+      renewalDate: new Date(renewalDate),
+      contractManagerId,
+      area,
+      costCenter: request.costCenter.name,
+      nonCompete: Boolean(nonCompete),
+      lgpdClause: Boolean(lgpdClause),
+      brandUse: Boolean(brandUse),
+      corporateChangeClause: Boolean(corporateChangeClause),
+    },
+  });
+
+  const updated = await prisma.purchaseRequest.update({
+    where: { id: request.id },
+    data: { currentStage: "CONCLUIDO", status: "CONCLUIDO" },
+  });
+  await prisma.stageEvent.create({
+    data: { requestId: request.id, fromStage: "MAPEAMENTO_CONTRATO", toStage: "CONCLUIDO", actorId },
+  });
+
+  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Concluído");
+  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+
+  return NextResponse.json({ contract, request: updated }, { status: 201 });
+}
