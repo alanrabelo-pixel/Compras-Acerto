@@ -22,12 +22,14 @@ type RequestData = {
   requesterId: string;
   buyerId?: string | null;
   demandType: string;
+  shortDescription: string;
+  longDescription: string;
   needsContract?: boolean | null;
   needsMapping?: boolean | null;
   conflictDeclarations: { id: string; hasConflict: boolean }[];
   approvals: { id: string; level: number; decision: string; approver: { name: string } }[];
   quotes: Quote[];
-  purchaseOrder: { id: string; needsMeasurement: boolean; pdfUrl?: string | null } | null;
+  purchaseOrder: { id: string; needsMeasurement: boolean; pdfUrl?: string | null; paymentCondition?: string } | null;
   contract: { id: string } | null;
   supplierEvaluation: { id: string } | null;
 };
@@ -606,6 +608,13 @@ function PedidoCompraForm({
         <div>
           <label className="label">Itens (máximo 6)</label>
           <div style={{ display: "grid", gap: 6 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr 1.2fr 1fr auto", gap: 6 }}>
+              <span className="help" style={{ margin: 0 }}>Descrição</span>
+              <span className="help" style={{ margin: 0 }}>Qtd</span>
+              <span className="help" style={{ margin: 0 }}>Vlr. unitário</span>
+              <span className="help" style={{ margin: 0 }}>Impostos %</span>
+              <span />
+            </div>
             {items.map((it, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "3fr 1fr 1.2fr 1fr auto", gap: 6 }}>
                 <input className="input" placeholder="Descrição" value={it.descricao} onChange={(e) => updateItem(i, { descricao: e.target.value })} />
@@ -629,6 +638,11 @@ function PedidoCompraForm({
           >
             + Adicionar item
           </button>
+          {validItems.length > 0 && (
+            <p style={{ fontSize: 12.5, fontWeight: 700, textAlign: "right", marginTop: 8 }}>
+              Total (com impostos): {totalValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </p>
+          )}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -840,15 +854,31 @@ function TesourariaForm({
   );
 }
 
+const DOCUMENT_TYPES = [
+  "Contrato de Prestação de Serviço",
+  "Contrato de Licenciamento de Software",
+  "Termo Aditivo",
+  "Acordo de Confidencialidade (NDA)",
+  "Outro",
+];
+
 function MapeamentoContratoForm({
   request, onSubmit, loading, error,
 }: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
   const winningQuote = request.quotes.find((q) => q.selected);
   const [actorId, setActorId] = useState(request.buyerId ?? "");
+  const [supplierId, setSupplierId] = useState("");
   const [supplierName, setSupplierName] = useState(winningQuote?.supplierName ?? "");
+  const [supplierTradeName, setSupplierTradeName] = useState("");
+  const [supplierCnpj, setSupplierCnpj] = useState("");
+  const [documentType, setDocumentType] = useState("");
+  const [contractObject, setContractObject] = useState(request.shortDescription ?? "");
+  const [prazo, setPrazo] = useState("");
+  const [paymentCondition, setPaymentCondition] = useState(request.purchaseOrder?.paymentCondition ?? winningQuote?.paymentCondition ?? "");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [renewalDate, setRenewalDate] = useState("");
+  const [terminationClause, setTerminationClause] = useState("");
   const [contractManagerId, setContractManagerId] = useState(request.buyerId ?? "");
   const [area, setArea] = useState("");
   const [lgpdClause, setLgpdClause] = useState(false);
@@ -861,17 +891,56 @@ function MapeamentoContratoForm({
           <label className="label">Comprador responsável</label>
           <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
         </div>
+
         <div>
-          <label className="label">Fornecedor</label>
-          <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+          <label className="label">Fornecedor cadastrado (opcional)</label>
+          <SupplierPicker
+            onSelect={(s) => {
+              setSupplierId(s.id);
+              setSupplierName(s.legalName);
+              setSupplierTradeName(s.tradeName ?? "");
+              setSupplierCnpj(s.cnpj);
+            }}
+          />
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div>
+            <label className="label">Razão Social</label>
+            <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Nome Fantasia</label>
+            <input className="input" value={supplierTradeName} onChange={(e) => setSupplierTradeName(e.target.value)} />
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div>
+            <label className="label">CNPJ</label>
+            <input className="input" value={supplierCnpj} onChange={(e) => setSupplierCnpj(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Tipo de Documento</label>
+            <select className="input" value={documentType} onChange={(e) => setDocumentType(e.target.value)}>
+              <option value="">Selecione</option>
+              {DOCUMENT_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Objeto do Contrato</label>
+          <textarea className="input" style={{ minHeight: 60, resize: "vertical" }} value={contractObject} onChange={(e) => setContractObject(e.target.value)} />
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
           <div>
-            <label className="label">Início</label>
+            <label className="label">Início da Vigência</label>
             <input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
-            <label className="label">Fim</label>
+            <label className="label">Fim da Vigência</label>
             <input className="input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
           <div>
@@ -879,6 +948,23 @@ function MapeamentoContratoForm({
             <input className="input" type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} />
           </div>
         </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div>
+            <label className="label">Prazo</label>
+            <input className="input" value={prazo} onChange={(e) => setPrazo(e.target.value)} placeholder="Ex: 12 meses, renovação automática" />
+          </div>
+          <div>
+            <label className="label">Condição de Pagamento</label>
+            <input className="input" value={paymentCondition} onChange={(e) => setPaymentCondition(e.target.value)} />
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Cláusula de Renovação e Rescisão</label>
+          <textarea className="input" style={{ minHeight: 60, resize: "vertical" }} value={terminationClause} onChange={(e) => setTerminationClause(e.target.value)} />
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
             <label className="label">Gestor do contrato</label>
@@ -899,7 +985,9 @@ function MapeamentoContratoForm({
           disabled={loading || !actorId || !supplierName || !startDate || !endDate || !renewalDate || !contractManagerId || !area}
           onClick={() =>
             onSubmit(`/api/requests/${request.id}/mapeamento-contrato`, "POST", {
-              actorId, supplierName, startDate, endDate, renewalDate, contractManagerId, area, lgpdClause, nonCompete,
+              actorId, supplierId: supplierId || undefined, supplierName, supplierTradeName, supplierCnpj, documentType,
+              contractObject, prazo, paymentCondition, startDate, endDate, terminationClause, renewalDate,
+              contractManagerId, area, lgpdClause, nonCompete,
             })
           }
         >

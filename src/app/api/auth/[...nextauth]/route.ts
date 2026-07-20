@@ -22,7 +22,14 @@ export const authOptions: NextAuthOptions = {
     async signIn({ profile }) {
       const email = (profile as { email?: string })?.email ?? "";
       if (!email.endsWith("@acerto.com.br")) return false;
-      // Upsert de usuário local para manter roles/diretoria consultáveis via Prisma
+      // Reflete criação/remoção de conta do Google Workspace: primeiro login
+      // de um e-mail novo cria o User automaticamente (upsert abaixo). Uma
+      // pessoa desativada em /admin/acessos (ex.: conta de e-mail excluída)
+      // fica bloqueada aqui mesmo que a conta Google ainda exista — nunca
+      // apagamos o User, só marcamos active=false, preservando todo o
+      // histórico de solicitações/contratos/aprovações dela.
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing && !existing.active) return false;
       await prisma.user.upsert({
         where: { email },
         update: {},

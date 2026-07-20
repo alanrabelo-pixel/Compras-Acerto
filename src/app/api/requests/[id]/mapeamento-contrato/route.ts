@@ -22,7 +22,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const body = await req.json();
   const {
-    actorId, supplierId, supplierName, startDate, endDate, terminationClause, renewalDate,
+    actorId, supplierId, supplierName, supplierTradeName, supplierCnpj, documentType,
+    contractObject, prazo, paymentCondition, startDate, endDate, terminationClause, renewalDate,
     contractManagerId, area, nonCompete, lgpdClause, brandUse, corporateChangeClause,
   } = body;
 
@@ -39,6 +40,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       requestId: request.id,
       supplierId: supplierId || undefined,
       supplierName,
+      supplierTradeName: supplierTradeName || undefined,
+      supplierCnpj: supplierCnpj || undefined,
+      documentType: documentType || undefined,
+      contractObject: contractObject || undefined,
+      prazo: prazo || undefined,
+      paymentCondition: paymentCondition || undefined,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       terminationClause,

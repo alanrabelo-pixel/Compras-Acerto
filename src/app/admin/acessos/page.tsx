@@ -1,12 +1,35 @@
 import { prisma } from "@/lib/db";
 import { TopNav } from "@/components/TopNav";
-import { AccessToggle } from "@/components/AccessToggle";
+import { RoleAccessToggles } from "@/components/RoleAccessToggles";
+import { UserActiveToggle } from "@/components/UserActiveToggle";
+import { SearchFilterBar } from "@/components/SearchFilterBar";
+import type { Prisma, RoleName } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export default async function AcessosPage() {
+const MANAGED_ROLES = ["ADMIN", "COMPRADOR", "SOLICITANTE", "APROVADOR", "CONTROLADORIA"];
+const OTHER_ROLES = ["TESOURARIA", "FISCAL", "JURIDICO", "PRIVACIDADE"];
+
+export default async function AcessosPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; tipo?: string; papel?: string; status?: string };
+}) {
+  const where: Prisma.UserWhereInput = {};
+  where.active = searchParams.status === "inativo" ? false : searchParams.status === "ativo" ? true : undefined;
+  if (searchParams.tipo) where.roles = { some: { role: searchParams.tipo as RoleName } };
+  if (searchParams.papel) {
+    where.AND = [{ roles: { some: { role: searchParams.papel as RoleName } } }];
+  }
+  if (searchParams.q) {
+    where.OR = [
+      { name: { contains: searchParams.q, mode: "insensitive" } },
+      { email: { contains: searchParams.q, mode: "insensitive" } },
+    ];
+  }
+
   const users = await prisma.user.findMany({
-    where: { active: true },
+    where,
     include: { roles: true },
     orderBy: { name: "asc" },
   });
@@ -17,25 +40,65 @@ export default async function AcessosPage() {
       <main className="page" style={{ paddingTop: 28 }}>
         <h1 className="page-title">Controle de acesso</h1>
         <p className="page-subtitle">
-          Quem pode ver o quadro de Solicitações, Contratos e Dashboards. Qualquer pessoa autenticada com e-mail
-          @acerto.com.br já pode abrir uma Nova Solicitação, independente desta lista.
+          Cinco tipos de acesso, uma pessoa pode ter mais de um ao mesmo tempo: <strong>Admin</strong> (acesso total),{" "}
+          <strong>Compras</strong> (opera o fluxo, Contratos e Dashboards), <strong>Solicitante</strong> (só abre
+          solicitações, sem ver o quadro geral), <strong>Aprovador</strong> (decide aprovações, vê o quadro e
+          Dashboards) e <strong>Controladoria</strong> (decide exceções orçamentárias, vê Contratos e Dashboards).
+          Qualquer pessoa @acerto.com.br já pode abrir uma Nova Solicitação, independente desta lista.
+          Desativar uma pessoa bloqueia o acesso (inclusive login), mas preserva todo o histórico dela no sistema.
         </p>
 
+        <SearchFilterBar
+          searchPlaceholder="Nome ou e-mail..."
+          filters={[
+            {
+              key: "tipo",
+              label: "Tipo de acesso",
+              options: [
+                { value: "ADMIN", label: "Admin" },
+                { value: "COMPRADOR", label: "Compras" },
+                { value: "SOLICITANTE", label: "Solicitante" },
+                { value: "APROVADOR", label: "Aprovador" },
+                { value: "CONTROLADORIA", label: "Controladoria" },
+              ],
+            },
+            {
+              key: "papel",
+              label: "Outro papel (etapa)",
+              options: OTHER_ROLES.map((r) => ({ value: r, label: r })),
+            },
+            {
+              key: "status",
+              label: "Status",
+              options: [{ value: "ativo", label: "Ativo" }, { value: "inativo", label: "Inativo" }],
+            },
+          ]}
+        />
+
         <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "2fr 2fr 2fr 1fr" }}>
+          <div className="table-head-row" style={{ gridTemplateColumns: "1.4fr 1.8fr 2.6fr 1.4fr 0.9fr" }}>
             <span>Nome</span>
             <span>E-mail</span>
-            <span>Papéis</span>
-            <span>Acesso ao quadro</span>
+            <span>Tipos de acesso</span>
+            <span>Outros papéis (etapa)</span>
+            <span>Status</span>
           </div>
-          {users.map((u) => (
-            <div key={u.id} className="table-row" style={{ gridTemplateColumns: "2fr 2fr 2fr 1fr", alignItems: "center" }}>
-              <span style={{ fontWeight: 600 }}>{u.name}</span>
-              <span className="text-soft">{u.email}</span>
-              <span className="text-soft">{u.roles.map((r) => r.role).join(", ") || "—"}</span>
-              <span><AccessToggle userId={u.id} initialValue={u.canViewBoard} /></span>
-            </div>
-          ))}
+          {users.map((u) => {
+            const managed = u.roles.filter((r) => MANAGED_ROLES.includes(r.role)).map((r) => r.role);
+            const other = u.roles.filter((r) => !MANAGED_ROLES.includes(r.role)).map((r) => r.role);
+            return (
+              <div key={u.id} className="table-row" style={{ gridTemplateColumns: "1.4fr 1.8fr 2.6fr 1.4fr 0.9fr", alignItems: "center" }}>
+                <span style={{ fontWeight: 600 }}>{u.name}</span>
+                <span className="text-soft">{u.email}</span>
+                <span><RoleAccessToggles userId={u.id} initialRoles={managed} /></span>
+                <span className="text-soft" style={{ fontSize: 11.5 }}>{other.join(", ") || "—"}</span>
+                <span><UserActiveToggle userId={u.id} active={u.active} /></span>
+              </div>
+            );
+          })}
+          {users.length === 0 && (
+            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma pessoa encontrada neste recorte.</p>
+          )}
         </div>
       </main>
     </>

@@ -6,7 +6,16 @@ import { UserPicker } from "@/components/UserPicker";
 
 type Attachment = { id: string; fileName: string; uploadedBy: string; stage: string; createdAt: string };
 
-export function AttachmentsPanel({ requestId, attachments, uploaderId }: { requestId: string; attachments: Attachment[]; uploaderId: string }) {
+export function AttachmentsPanel({
+  requestId, attachments, uploaderId, category, title = "Anexos", emptyLabel = "Nenhum anexo ainda.",
+}: {
+  requestId: string;
+  attachments: Attachment[];
+  uploaderId: string;
+  category?: string;
+  title?: string;
+  emptyLabel?: string;
+}) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadedBy, setUploadedBy] = useState(uploaderId ?? "");
@@ -22,6 +31,7 @@ export function AttachmentsPanel({ requestId, attachments, uploaderId }: { reque
       const form = new FormData();
       form.append("file", file);
       form.append("uploadedBy", uploadedBy);
+      if (category) form.append("category", category);
       const res = await fetch(`/api/requests/${requestId}/attachments`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao enviar anexo.");
@@ -36,8 +46,8 @@ export function AttachmentsPanel({ requestId, attachments, uploaderId }: { reque
 
   return (
     <section className="card section-gap">
-      <h2 className="card-title accent">Anexos</h2>
-      {attachments.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum anexo ainda.</p>}
+      <h2 className="card-title accent">{title}</h2>
+      {attachments.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>{emptyLabel}</p>}
       {attachments.map((a) => (
         <div key={a.id} className="timeline-item" style={{ justifyContent: "space-between" }}>
           <a href={`/api/attachments/${a.id}/file`} style={{ color: "var(--acerto-green-dark)", textDecoration: "none", fontWeight: 600 }}>{a.fileName}</a>

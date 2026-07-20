@@ -354,6 +354,10 @@ enum AttachmentCategory {
   PROPOSTA_FORNECEDOR_INDICADO
   APROVACAO_EXTRA_ORCAMENTARIA
   ANEXO_COMPLEMENTAR
+  // Contrato assinado (PDF), anexado na tela de Contratos — reaproveita o
+  // mesmo mecanismo de Attachment/storage.ts da solicitação de origem
+  // (Contract.requestId), sem precisar de uma tabela própria.
+  CONTRATO_ASSINADO
 }
 
 model Attachment {
@@ -522,14 +526,34 @@ model PurchaseOrderItem {
 
 model Contract {
   id                String   @id @default(cuid())
-  requestId         String   @unique
-  request           PurchaseRequest @relation(fields: [requestId], references: [id])
+  // Opcional para permitir contratos legados importados em massa (planilha,
+  // ver /api/contratos/import) que não nasceram de uma PurchaseRequest deste
+  // sistema — nesse caso, diretoria abaixo guarda o valor direto (para
+  // contratos originados do fluxo normal, a diretoria continua vindo de
+  // request.diretoria, ver contratos/page.tsx e contratos/[id]/page.tsx).
+  requestId         String?  @unique
+  request           PurchaseRequest? @relation(fields: [requestId], references: [id])
+  diretoria         Diretoria?
   supplierId        String?
   supplier          Supplier? @relation(fields: [supplierId], references: [id])
-  supplierName      String
+  supplierName      String // Razão social
+  // Campos abaixo (revisão): pedido do usuário para a planilha de gestão de
+  // contratos trazer razão social/nome fantasia/CNPJ/tipo de documento/objeto/
+  // prazo/condição de pagamento. Quando o fornecedor é selecionado via
+  // SupplierPicker, nomeFantasia/CNPJ vêm do cadastro (Supplier); objeto e
+  // condição de pagamento são sugeridos a partir da solicitação de origem
+  // (shortDescription/longDescription e PurchaseOrder.paymentCondition) mas
+  // continuam editáveis. tipoDeDocumento não tem nenhuma fonte no processo —
+  // é sempre preenchido manualmente.
+  supplierTradeName String? // Nome fantasia
+  supplierCnpj      String?
+  documentType      String? // Tipo de documento (preenchimento manual)
+  contractObject    String?  @db.Text // Objeto do contrato
+  prazo             String? // Prazo contratual em texto livre (ex: "12 meses, renovação automática")
+  paymentCondition  String? // Condição de pagamento
   startDate         DateTime
   endDate           DateTime
-  terminationClause String?  @db.Text
+  terminationClause String?  @db.Text // Cláusula de renovação e rescisão
   renewalDate       DateTime
   contractManagerId String
   contractManager   User     @relation("ContractManager", fields: [contractManagerId], references: [id])

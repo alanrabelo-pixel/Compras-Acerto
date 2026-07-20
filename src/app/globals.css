@@ -745,3 +745,28 @@ a.table-row:hover {
   padding-top: 20px;
   border-top: 1px solid var(--border-soft);
 }
+
+/* ---------------------------------------------------------------------- */
+/* Filtros do Dashboard                                                    */
+/* ---------------------------------------------------------------------- */
+
+.dashboard-filters {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-top: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.dashboard-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.dashboard-filters-row .field {
+  min-width: 120px;
+}
+.dashboard-filters-row .input {
+  min-width: 120px;
+}

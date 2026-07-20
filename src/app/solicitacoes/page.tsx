@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
-import type { Stage } from "@prisma/client";
+import type { Prisma, Stage, Diretoria, DemandType, Priority } from "@prisma/client";
 import { TopNav } from "@/components/TopNav";
+import { SearchFilterBar } from "@/components/SearchFilterBar";
 
 export const dynamic = "force-dynamic";
 
@@ -12,16 +13,47 @@ const PRIORITY_BADGE: Record<string, string> = {
   BAIXA: "badge-neutral",
 };
 
+const DEMAND_TYPE_LABEL: Record<string, string> = {
+  COMPRA_PRODUTO: "Compra de Produtos",
+  COMPRA_SERVICO: "Compra de Serviço",
+  FERRAMENTA_NOVA: "Compra de Nova Ferramenta",
+  FERRAMENTA_USUARIOS: "Ferramentas — Inclusão/remoção de usuários",
+  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas — Upgrade/Downgrade",
+  RENOVACAO_CONTRATO: "Renovação de Contrato",
+  CANCELAMENTO: "Cancelamento de Contrato/Serviço/Ferramenta",
+};
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
-export default async function SolicitacoesPage() {
-  const requests = await prisma.purchaseRequest.findMany({
-    include: { requester: true, costCenter: true },
-    orderBy: { createdAt: "desc" },
-  });
+export default async function SolicitacoesPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; diretoria?: string; costCenterId?: string; priority?: string; demandType?: string };
+}) {
+  const where: Prisma.PurchaseRequestWhereInput = {};
+  if (searchParams.diretoria) where.diretoria = searchParams.diretoria as Diretoria;
+  if (searchParams.costCenterId) where.costCenterId = searchParams.costCenterId;
+  if (searchParams.priority) where.priority = searchParams.priority as Priority;
+  if (searchParams.demandType) where.demandType = searchParams.demandType as DemandType;
+  if (searchParams.q) {
+    where.OR = [
+      { code: { contains: searchParams.q, mode: "insensitive" } },
+      { shortDescription: { contains: searchParams.q, mode: "insensitive" } },
+      { requester: { name: { contains: searchParams.q, mode: "insensitive" } } },
+    ];
+  }
+
+  const [requests, costCenters] = await Promise.all([
+    prisma.purchaseRequest.findMany({
+      where,
+      include: { requester: true, costCenter: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.costCenter.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+  ]);
 
   const byStage = new Map<Stage, typeof requests>();
   for (const r of requests) {
@@ -37,9 +69,19 @@ export default async function SolicitacoesPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
             <h1 className="page-title">Solicitações de Compra</h1>
-            <p className="page-subtitle">{requests.length} solicitação(ões) no total</p>
+            <p className="page-subtitle">{requests.length} solicitação(ões) no recorte atual</p>
           </div>
         </div>
+
+        <SearchFilterBar
+          searchPlaceholder="Código, descrição ou solicitante..."
+          filters={[
+            { key: "diretoria", label: "Diretoria", options: [{ value: "CORPORATIVO", label: "Corporativo" }, { value: "REVENUE", label: "Revenue" }, { value: "TECNOLOGIA", label: "Tecnologia" }] },
+            { key: "costCenterId", label: "Centro de Custo", options: costCenters.map((c) => ({ value: c.id, label: c.name })) },
+            { key: "priority", label: "Prioridade", options: [{ value: "CRITICA", label: "Crítica" }, { value: "ALTA", label: "Alta" }, { value: "MEDIA", label: "Média" }, { value: "BAIXA", label: "Baixa" }] },
+            { key: "demandType", label: "Tipo de Demanda", options: Object.entries(DEMAND_TYPE_LABEL).map(([value, label]) => ({ value, label })) },
+          ]}
+        />
 
         <div style={{ display: "flex", gap: 14, overflowX: "auto", marginTop: 22, paddingBottom: 12 }}>
           {Object.values(STAGES)

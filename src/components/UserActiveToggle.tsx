@@ -3,24 +3,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function AccessToggle({ userId, initialValue }: { userId: string; initialValue: boolean }) {
+export function UserActiveToggle({ userId, active }: { userId: string; active: boolean }) {
   const router = useRouter();
-  const [value, setValue] = useState(initialValue);
   const [loading, setLoading] = useState(false);
 
   async function toggle() {
+    const next = !active;
+    if (next === false && !confirm("Desativar esta pessoa? Ela perde o acesso (inclusive login), mas todo o histórico dela continua no sistema.")) {
+      return;
+    }
     setLoading(true);
-    const next = !value;
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ canViewBoard: next }),
+        body: JSON.stringify({ active: next }),
       });
-      if (res.ok) {
-        setValue(next);
-        router.refresh();
-      }
+      if (res.ok) router.refresh();
     } finally {
       setLoading(false);
     }
@@ -28,12 +27,12 @@ export function AccessToggle({ userId, initialValue }: { userId: string; initial
 
   return (
     <button
-      className={`btn ${value ? "btn-primary" : "btn-secondary"}`}
-      style={{ padding: "5px 12px", fontSize: 11.5 }}
+      className={`btn ${active ? "btn-secondary" : "btn-danger"}`}
+      style={{ padding: "4px 9px", fontSize: 11 }}
       disabled={loading}
       onClick={toggle}
     >
-      {value ? "Liberado" : "Sem acesso"}
+      {active ? "Ativo" : "Reativar"}
     </button>
   );
 }
