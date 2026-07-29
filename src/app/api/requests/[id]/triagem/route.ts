@@ -63,6 +63,30 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "DEVOLVIDO" });
   }
 
+  // Atalho para CANCELAMENTO (pedido do usuário): um cancelamento de
+  // contrato/serviço/ferramenta não compra nada, então não faz sentido
+  // exigir valor estimado/lane/fracionamento nem passar por Validação
+  // Orçamentária, Cotação, Aprovação e Pedido de Compra — vai direto para
+  // Jurídico formalizar o distrato/termo de cancelamento.
+  if (request.demandType === "CANCELAMENTO") {
+    const updated = await prisma.purchaseRequest.update({
+      where: { id: request.id },
+      data: { buyerId, currentStage: "JURIDICO" },
+    });
+    await prisma.stageEvent.create({
+      data: {
+        requestId: request.id,
+        fromStage: "TRIAGEM",
+        toStage: "JURIDICO",
+        actorId: buyerId,
+        comment: "Cancelamento de Contrato/Serviço/Ferramenta — fluxo simplificado, direto para Jurídico.",
+      },
+    });
+    const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Jurídico");
+    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+    return NextResponse.json({ ...updated, _meta: { skippedToJuridico: true } });
+  }
+
   // Gate: Valor Estimado é opcional na Solicitação (paridade com o Pipefy),
   // mas o motor de alçadas (determineLane, checkFragmentationRisk,
   // approvalLevel, budgetExceptionLevel) exige um número — a Triagem é onde

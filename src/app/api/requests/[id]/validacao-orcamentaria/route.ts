@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { budgetExceptionLevel, nextAfterValidacaoOrcamentaria } from "@/lib/workflow";
+import { budgetExceptionLevel, budgetExceptionApproverRole, nextAfterValidacaoOrcamentaria } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { requireRole } from "@/lib/rbac";
 
@@ -14,7 +14,7 @@ import { requireRole } from "@/lib/rbac";
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const { budgetOk, exceptionDecision, exceptionApproverId, justification } = body;
+  const { budgetOk, actorId, observation, exceptionDecision, exceptionApproverId, justification } = body;
 
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
@@ -27,13 +27,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Caminho 1: há orçamento — segue direto, sem passar pelo workflow de exceção.
   if (budgetOk) {
+    const roleError = await requireRole(actorId, ["COMPRADOR"]);
+    if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
+
     const nextStage = nextAfterValidacaoOrcamentaria({ budgetOk: true, demandType: request.demandType });
     const updated = await prisma.purchaseRequest.update({
       where: { id: request.id },
       data: { currentStage: nextStage },
     });
     await prisma.stageEvent.create({
-      data: { requestId: request.id, fromStage: "VALIDACAO_ORCAMENTARIA", toStage: nextStage },
+      data: { requestId: request.id, fromStage: "VALIDACAO_ORCAMENTARIA", toStage: nextStage, actorId, comment: observation || undefined },
     });
     const { subject, html } = templates.atualizacaoEtapa(
       request.requester.name,
@@ -69,8 +72,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "EXCECAO_PENDENTE", exception });
   }
 
-  // Segunda chamada: decisão do aprovador da exceção (Coordenação / Gerente F&NC / CEO conforme nível).
-  const roleError = await requireRole(exceptionApproverId, ["CONTROLADORIA"]);
+  // Segunda chamada: decisão do aprovador da exceção — papel exigido varia
+  // pela alçada (ver budgetExceptionApproverRole em workflow.ts).
+  const requiredRole = budgetExceptionApproverRole(level);
+  const roleError = await requireRole(exceptionApproverId, [requiredRole]);
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
   const decision = exceptionDecision as "APROVADO" | "REPROVADO";

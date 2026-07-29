@@ -10,7 +10,7 @@
  * Isso mantém a lógica de negócio separada da mecânica de integração.
  */
 
-import { Stage, DemandType } from "@prisma/client";
+import { Stage, DemandType, RoleName } from "@prisma/client";
 
 export type StageDefinition = {
   stage: Stage;
@@ -31,7 +31,11 @@ export const STAGES: Record<Stage, StageDefinition> = {
   TRIAGEM: {
     stage: "TRIAGEM",
     label: "Homologação e Triagem",
-    nextStages: ["VALIDACAO_ORCAMENTARIA", "CANCELADO"],
+    // JURIDICO: atalho para demandType CANCELAMENTO — cancelamento de
+    // contrato/serviço/ferramenta não precisa do fluxo completo de compra
+    // (orçamento/cotação/aprovação/pedido de compra), só formalização jurídica
+    // e registro em Contrato. Ver nextStages de JURIDICO abaixo.
+    nextStages: ["VALIDACAO_ORCAMENTARIA", "JURIDICO", "CANCELADO"],
     slaDaysCorporativo: 1,
     slaDaysTecnologiaRevenue: 2,
   },
@@ -73,7 +77,11 @@ export const STAGES: Record<Stage, StageDefinition> = {
   JURIDICO: {
     stage: "JURIDICO",
     label: "Jurídico",
-    nextStages: ["PEDIDO_COMPRA"],
+    // CONCLUIDO: destino para demandType CANCELAMENTO — depois de assinado o
+    // distrato/termo de cancelamento, encerra direto, sem Pedido de Compra
+    // nem Mapeamento de Contrato (o contrato já existe e mapeado; cancelá-lo
+    // de fato é feito em Contratos, ver ação CANCELAR em /api/contracts/[id]).
+    nextStages: ["PEDIDO_COMPRA", "CONCLUIDO"],
     slaDaysCorporativo: 20,
     slaDaysTecnologiaRevenue: 30,
   },
@@ -148,6 +156,24 @@ export function budgetExceptionLevel(estimatedValue: number): 1 | 2 | 3 {
   if (estimatedValue <= 25000) return 2;
   return 3;
 }
+
+/**
+ * Papel exigido para decidir uma exceção orçamentária, por alçada — pedido
+ * explícito do usuário: antes, qualquer pessoa com papel Controladoria
+ * decidia exceção de qualquer nível, sem diferenciar pela alçada calculada
+ * acima. Decisão do usuário: manter só dois papéis (Coordenação / Gerente
+ * F&NC), sem CEO — Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente F&NC.
+ */
+export function budgetExceptionApproverRole(level: 1 | 2 | 3): RoleName {
+  if (level === 1) return "COORDENACAO";
+  return "GERENTE_FNC";
+}
+
+export const BUDGET_EXCEPTION_LEVEL_LABEL: Record<1 | 2 | 3, string> = {
+  1: "Nível 1 (até R$ 5 mil) — Coordenação",
+  2: "Nível 2 (até R$ 25 mil) — Gerente F&NC",
+  3: "Nível 3 (acima de R$ 25 mil) — Gerente F&NC",
+};
 
 /**
  * CORREÇÃO (revisão de consistência): o documento de referência definia as

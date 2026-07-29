@@ -34,6 +34,11 @@ async function main() {
   // canViewBoard: dado de exemplo para desenvolvimento local (libera o
   // Quadro/Contratos/Dashboards para essas pessoas). Em produção, isso é
   // gerenciado manualmente em /admin/acessos (ADMIN), não pelo seed.
+  // extraRoles: papéis de alçada da exceção orçamentária (Coordenação/Gerente
+  // F&NC — ver budgetExceptionApproverRole em workflow.ts). ASSUNÇÃO NÃO
+  // VERIFICADA: são placeholders sobre pessoas já seedadas, só para o fluxo
+  // ficar testável; quem de fato ocupa cada papel precisa ser validado com o
+  // time de Compras | F&NC antes de produção.
   const seedUsers = [
     { email: "alan.rabelo@acerto.com.br", name: "Alan Rabelo", role: "COMPRADOR" as const, admin: true, canViewBoard: true },
     { email: "mariane.gomes@acerto.com.br", name: "Mariane Gomes", role: "COMPRADOR" as const, canViewBoard: true },
@@ -41,8 +46,8 @@ async function main() {
     { email: "vinicius.vieira@acerto.com.br", name: "Vinícius Vieira", role: "JURIDICO" as const, canViewBoard: true },
     { email: "monalisa.tomaz@acerto.com.br", name: "Monalisa Tomaz", role: "TESOURARIA" as const, canViewBoard: true },
     { email: "alcyelle.pereira@acerto.com.br", name: "Alcyelle Pereira", role: "TESOURARIA" as const, canViewBoard: false },
-    { email: "ana.reis@acerto.com.br", name: "Ana Reis", role: "CONTROLADORIA" as const, canViewBoard: true },
-    { email: "jessica.oliveira@acerto.com.br", name: "Jessica Oliveira", role: "CONTROLADORIA" as const, canViewBoard: false },
+    { email: "ana.reis@acerto.com.br", name: "Ana Reis", role: "CONTROLADORIA" as const, canViewBoard: true, extraRoles: ["COORDENACAO"] as const },
+    { email: "jessica.oliveira@acerto.com.br", name: "Jessica Oliveira", role: "CONTROLADORIA" as const, canViewBoard: false, extraRoles: ["GERENTE_FNC"] as const },
     { email: "carolina.horta@acerto.com.br", name: "Carolina Horta", role: "APROVADOR" as const, canViewBoard: true },
     { email: "rafael.martins@acerto.com.br", name: "Rafael Martins", role: "PRIVACIDADE" as const, canViewBoard: false },
     { email: "fiscal@acerto.com.br", name: "Time Fiscal", role: "FISCAL" as const, canViewBoard: false },
@@ -64,6 +69,13 @@ async function main() {
         where: { userId_role: { userId: user.id, role: "ADMIN" } },
         update: {},
         create: { userId: user.id, role: "ADMIN" },
+      });
+    }
+    for (const extraRole of u.extraRoles ?? []) {
+      await prisma.userRole.upsert({
+        where: { userId_role: { userId: user.id, role: extraRole } },
+        update: {},
+        create: { userId: user.id, role: extraRole },
       });
     }
   }

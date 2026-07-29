@@ -35,12 +35,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "MINUTA_EM_ANDAMENTO" });
   }
 
-  const updated = await prisma.purchaseRequest.update({ where: { id: request.id }, data: { currentStage: "PEDIDO_COMPRA" } });
+  // CANCELAMENTO não compra nada e não mapeia contrato novo — o contrato já
+  // existe e já está mapeado (pedido do usuário); depois de assinado o
+  // distrato/termo de cancelamento, encerra direto. A baixa do contrato em si
+  // (status CANCELADO) é feita separadamente em Contratos, ação CANCELAR
+  // (ver /api/contracts/[id]), não faz parte deste fluxo de solicitação.
+  const isCancelamento = request.demandType === "CANCELAMENTO";
+  const nextStage = isCancelamento ? "CONCLUIDO" : "PEDIDO_COMPRA";
+  const nextLabel = isCancelamento ? "Concluído" : "Pedido de Compra";
+
+  const updated = await prisma.purchaseRequest.update({
+    where: { id: request.id },
+    data: { currentStage: nextStage, ...(isCancelamento ? { status: "CONCLUIDO" } : {}) },
+  });
   await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "JURIDICO", toStage: "PEDIDO_COMPRA", actorId },
+    data: { requestId: request.id, fromStage: "JURIDICO", toStage: nextStage, actorId },
   });
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Pedido de Compra");
+  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, nextLabel);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
   return NextResponse.json(updated);

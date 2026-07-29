@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const buffer = await readLocalFile(attachment.storageUrl);
   const ext = attachment.fileName.split(".").pop()?.toLowerCase() ?? "";
 
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": MIME_BY_EXT[ext] ?? "application/octet-stream",
       "Content-Disposition": `attachment; filename="${attachment.fileName}"`,

@@ -7,6 +7,10 @@ import { UserPicker } from "@/components/UserPicker";
 type CostCenter = { id: string; name: string };
 type BudgetLine = { id: string; description: string; externalCode: string };
 
+// Sentinela pro "Orçamento Extra" no <select> de Linha do Orçamento — não é
+// um BudgetLine.id real, então nunca é enviado como budgetLineId (ver submit()).
+const EXTRA_BUDGET = "ORCAMENTO_EXTRA";
+
 // Rótulos idênticos ao formulário Pipefy em produção (https://app.pipefy.com/public/form/a5QZ3k8p),
 // incluindo o "Dowgrade" (sem "n") — mantido de propósito para bater com o texto real.
 const DEMAND_TYPES = [
@@ -47,6 +51,10 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [budgetLines, setBudgetLines] = useState<BudgetLine[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Preenchido quando a solicitação já foi criada mas o anexo obrigatório de
+  // Orçamento Extra falhou ao enviar — evita navegar como se tivesse dado
+  // tudo certo, deixando a pessoa anexar manualmente na página da solicitação.
+  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
 
   const [requesterId, setRequesterId] = useState(sessionRequester?.id ?? "");
   const [costCenterId, setCostCenterId] = useState("");
@@ -67,6 +75,9 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [indicatedSupplierWebsite, setIndicatedSupplierWebsite] = useState("");
   const [affectedUsers, setAffectedUsers] = useState("");
 
+  const [extraBudgetFileSelected, setExtraBudgetFileSelected] = useState(false);
+  const isExtraBudget = budgetLineId === EXTRA_BUDGET;
+
   const extraBudgetFileRef = useRef<HTMLInputElement>(null);
   const supplierProposalFileRef = useRef<HTMLInputElement>(null);
   const complementaryFileRef = useRef<HTMLInputElement>(null);
@@ -83,7 +94,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
     form.append("file", file);
     form.append("uploadedBy", requesterId);
     form.append("category", category);
-    await fetch(`/api/requests/${requestId}/attachments`, { method: "POST", body: form });
+    const res = await fetch(`/api/requests/${requestId}/attachments`, { method: "POST", body: form });
+    if (!res.ok) throw new Error(`Falha ao anexar arquivo (categoria: ${category}).`);
   }
 
   async function submit() {
@@ -96,7 +108,10 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         body: JSON.stringify({
           requesterId, costCenterId, diretoria,
           leadershipPreApproved: leadershipPreApproved === "SIM",
-          approverManagerId, budgetLineId, demandType, shortDescription, longDescription,
+          approverManagerId,
+          budgetLineId: isExtraBudget ? undefined : budgetLineId || undefined,
+          extraBudget: isExtraBudget,
+          demandType, shortDescription, longDescription,
           priority, suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
           quantity, estimatedValue: estimatedValue === "" ? undefined : estimatedValue,
           indicatedSupplierWebsite, affectedUsers: demandType === "FERRAMENTA_USUARIOS" ? affectedUsers : undefined,
@@ -105,10 +120,26 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao criar solicitação.");
 
+      // Anexo de Orçamento Extra é obrigatório quando isExtraBudget — se o
+      // upload falhar aqui, a solicitação já foi criada sem o anexo exigido;
+      // avisamos e paramos, em vez de navegar como se tivesse dado tudo
+      // certo (o anexo pode ser enviado manualmente na página da solicitação).
+      if (isExtraBudget) {
+        try {
+          await uploadIfPresent(data.id, extraBudgetFileRef, "APROVACAO_EXTRA_ORCAMENTARIA");
+        } catch {
+          setError("A solicitação foi criada, mas o anexo obrigatório de Aprovação Extra-orçamentária falhou ao enviar. Abra a solicitação abaixo e anexe manualmente.");
+          setCreatedRequestId(data.id);
+          setLoading(false);
+          return;
+        }
+      } else {
+        await uploadIfPresent(data.id, extraBudgetFileRef, "APROVACAO_EXTRA_ORCAMENTARIA").catch(() => {});
+      }
+
       await Promise.all([
-        uploadIfPresent(data.id, extraBudgetFileRef, "APROVACAO_EXTRA_ORCAMENTARIA"),
-        uploadIfPresent(data.id, supplierProposalFileRef, "PROPOSTA_FORNECEDOR_INDICADO"),
-        uploadIfPresent(data.id, complementaryFileRef, "ANEXO_COMPLEMENTAR"),
+        uploadIfPresent(data.id, supplierProposalFileRef, "PROPOSTA_FORNECEDOR_INDICADO").catch(() => {}),
+        uploadIfPresent(data.id, complementaryFileRef, "ANEXO_COMPLEMENTAR").catch(() => {}),
       ]);
 
       router.push(`/solicitacoes/${data.id}`);
@@ -120,7 +151,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
   const canSubmit =
     requesterId && costCenterId && leadershipPreApproved && approverManagerId && budgetLineId &&
-    shortDescription && longDescription && suggestedDeadline && quantity > 0;
+    shortDescription && longDescription && suggestedDeadline && quantity > 0 &&
+    (!isExtraBudget || extraBudgetFileSelected);
 
   return (
     <main className="page-narrow" style={{ paddingTop: 28 }}>
@@ -179,6 +211,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         >
           <select className="input" value={budgetLineId} onChange={(e) => setBudgetLineId(e.target.value)}>
             <option value="">Selecione</option>
+            <option value={EXTRA_BUDGET}>Orçamento Extra</option>
             {budgetLines.map((bl) => (
               <option key={bl.id} value={bl.id}>{bl.description} ({bl.externalCode})</option>
             ))}
@@ -189,9 +222,17 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
         <Field
           label="Aprovação Extra-orçamentária"
-          help="Anexar o e-mail com a validação do diretor imediato e do time de FP&A. Solicitações abertas sem a previsão de orçamento, deverá obrigatoriamente ser anexado o print com a validação do orçamento Extra pelo time de FP&A."
+          required={isExtraBudget}
+          help={
+            isExtraBudget
+              ? "Obrigatório: você selecionou \"Orçamento Extra\" acima. Anexe o e-mail com a validação do diretor imediato e do time de FP&A."
+              : "Anexar o e-mail com a validação do diretor imediato e do time de FP&A. Solicitações abertas sem a previsão de orçamento, deverá obrigatoriamente ser anexado o print com a validação do orçamento Extra pelo time de FP&A."
+          }
         >
-          <input ref={extraBudgetFileRef} type="file" className="input" style={{ padding: 6 }} />
+          <input
+            ref={extraBudgetFileRef} type="file" className="input" style={{ padding: 6 }}
+            onChange={() => setExtraBudgetFileSelected(Boolean(extraBudgetFileRef.current?.files?.length))}
+          />
         </Field>
 
         <Field label="Tipo de Demanda" required help="Indicar qual o tipo de demanda que melhor relata a solicitação gerada.">
@@ -290,6 +331,11 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         )}
 
         {error && <p style={{ fontSize: 12.5, color: "var(--danger)", margin: 0 }}>{error}</p>}
+        {createdRequestId && (
+          <a href={`/solicitacoes/${createdRequestId}`} style={{ fontSize: 12.5, color: "#178A46", fontWeight: 600 }}>
+            Abrir solicitação criada →
+          </a>
+        )}
 
         <div>
           <button className="btn btn-primary" style={{ padding: "10px 22px", fontSize: 13.5 }} disabled={loading || !canSubmit} onClick={submit}>

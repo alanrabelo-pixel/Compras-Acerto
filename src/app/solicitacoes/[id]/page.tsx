@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { STAGES } from "@/lib/workflow";
 import { RequestActions } from "@/components/RequestActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { RequestChatWidget } from "@/components/RequestChatWidget";
+import { HistoryTimeline } from "@/components/HistoryTimeline";
+import { StageOverrideControls } from "@/components/StageOverrideControls";
 import { formatDateOnly } from "@/lib/format";
 import { TopNav } from "@/components/TopNav";
 
@@ -24,13 +28,14 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       approverManager: true,
       buyer: true,
       costCenter: true,
-      budgetException: true,
+      budgetLine: true,
+      budgetException: { include: { attachment: true } },
       dueDiligence: true,
       conflictDeclarations: { orderBy: { createdAt: "desc" } },
       quotes: { orderBy: { createdAt: "asc" } },
       approvals: { include: { approver: true } },
       legalReview: true,
-      purchaseOrder: true,
+      purchaseOrder: { include: { items: { orderBy: { order: "asc" } } } },
       measurement: true,
       fiscalDocument: true,
       payment: true,
@@ -43,6 +48,29 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   });
 
   if (!request) notFound();
+
+  // Identidade de quem está logado (mesmo padrão de solicitacoes/nova/page.tsx)
+  // — repassada para RequestActions para autopreencher/travar os campos de
+  // "responsável" em cada etapa quando o SSO real estiver ligado. Sem sessão
+  // real (LOCAL_BYPASS_AUTH, ver .env), fica null e os seletores manuais
+  // continuam aparecendo, como antes.
+  const session = await getServerSession(authOptions);
+  const sessionActor = session?.user?.email
+    ? await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, name: true, email: true },
+      })
+    : null;
+
+  // ConflictOfInterestDeclaration.declaredBy guarda o id do usuário (via
+  // UserPicker em RequestActions), sem relação FK no schema — resolvendo o
+  // nome aqui para exibição no Histórico, em vez do id cru.
+  const declaredByUsers = request.conflictDeclarations.length > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: request.conflictDeclarations.map((c) => c.declaredBy) } },
+      })
+    : [];
+  const declaredByNames = Object.fromEntries(declaredByUsers.map((u) => [u.id, u.name]));
 
   // Prisma Decimal não serializa através da fronteira Server → Client Component;
   // convertendo para number antes de passar para <RequestActions>.
@@ -82,6 +110,16 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           </div>
         </div>
 
+        <div style={{ marginTop: 10 }}>
+          <StageOverrideControls
+            requestId={request.id}
+            currentStageLabel={STAGES[request.currentStage].label}
+            allStageOptions={Object.values(STAGES)
+              .filter((s) => s.stage !== request.currentStage)
+              .map((s) => ({ value: s.stage, label: s.label }))}
+          />
+        </div>
+
         {request.fragmentationFlag && (
           <div
             className="section-gap"
@@ -99,6 +137,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               {request.estimatedValue !== null ? `R$ ${Number(request.estimatedValue).toLocaleString("pt-BR")}` : "ainda não informado"}
             </p>
             <p style={{ margin: 0 }}><span className="text-muted">Tipo de demanda:</span> {request.demandType}</p>
+            <p style={{ margin: 0 }}><span className="text-muted">Quantidade:</span> {request.quantity}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Lane:</span> {request.lane ?? "não definida"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Gestor aprovador:</span> {request.approverManager.name}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Comprador:</span> {request.buyer?.name ?? "não atribuído"}</p>
@@ -120,7 +159,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           )}
         </section>
 
-        <RequestActions request={serializableRequest} />
+        <RequestActions request={serializableRequest} sessionActor={sessionActor} />
 
         <AttachmentsPanel
           requestId={request.id}
@@ -128,20 +167,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           uploaderId={request.buyerId ?? request.requesterId}
         />
 
-        <section className="card section-gap">
-          <h2 className="card-title">Histórico</h2>
-          {request.stageEvents.map((e) => (
-            <div key={e.id} className="timeline-item">
-              <span className="timeline-dot" />
-              <span>
-                {e.fromStage ? `${STAGES[e.fromStage].label} → ` : ""}
-                <strong style={{ color: "var(--ink)" }}>{STAGES[e.toStage].label}</strong>
-                {e.actor ? ` · ${e.actor.name}` : ""} · {new Date(e.createdAt).toLocaleString("pt-BR")}
-                {e.comment ? ` — ${e.comment}` : ""}
-              </span>
-            </div>
-          ))}
-        </section>
+        <HistoryTimeline stageEvents={request.stageEvents} request={serializableRequest} declaredByNames={declaredByNames} />
       </main>
 
       <RequestChatWidget requestId={request.id} requesterName={request.requester.name} buyerName={request.buyer?.name ?? null} />

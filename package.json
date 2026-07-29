@@ -13,6 +13,8 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.4",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.20.0",
     "@react-pdf/renderer": "^4.5.1",
     "@slack/web-api": "^7.5.0",

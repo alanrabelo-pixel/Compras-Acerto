@@ -8,7 +8,7 @@ import type { Prisma, RoleName } from "@prisma/client";
 export const dynamic = "force-dynamic";
 
 const MANAGED_ROLES = ["ADMIN", "COMPRADOR", "SOLICITANTE", "APROVADOR", "CONTROLADORIA"];
-const OTHER_ROLES = ["TESOURARIA", "FISCAL", "JURIDICO", "PRIVACIDADE"];
+const OTHER_ROLES = ["TESOURARIA", "FISCAL", "JURIDICO", "PRIVACIDADE", "COORDENACAO", "GERENTE_FNC"];
 
 export default async function AcessosPage({
   searchParams,

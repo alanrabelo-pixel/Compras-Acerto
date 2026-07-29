@@ -26,6 +26,13 @@ enum RoleName {
   PRIVACIDADE
   FISCAL
   ADMIN
+  // Papéis de alçada da exceção orçamentária (ver budgetExceptionApproverRole
+  // em workflow.ts) — Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente
+  // F&NC. Decisão do usuário: manter só estes dois papéis, sem CEO. ASSUNÇÃO
+  // NÃO VERIFICADA: quem de fato ocupa cada papel ainda precisa ser validado
+  // com o time de Compras | F&NC — os usuários de seed são só placeholders.
+  COORDENACAO
+  GERENTE_FNC
 }
 
 enum Diretoria {
@@ -50,6 +57,17 @@ model User {
   canViewBoard  Boolean  @default(false)
   createdAt     DateTime @default(now())
 
+  // Chaves de IA pessoais (pedido do usuário): todo mundo na Acerto já tem
+  // acesso próprio a Claude e Gemini, então os Assistentes de IA (ver
+  // AiInsight/src/lib/integrations/ai.ts) usam a chave de quem está atuando
+  // na etapa no momento — não uma chave única da empresa/app. ASSUNÇÃO NÃO
+  // VERIFICADA: guardadas em texto puro neste ambiente de desenvolvimento;
+  // antes de produção, avaliar criptografia em repouso ou um cofre de
+  // segredos (ex: variável gerenciada, Vault), já que agora é uma chave por
+  // pessoa, não uma única chave de app.
+  anthropicApiKey String?
+  geminiApiKey    String?
+
   requestsMade      PurchaseRequest[] @relation("Requester")
   requestsBuying    PurchaseRequest[] @relation("Buyer")
   requestsApproving PurchaseRequest[] @relation("ApproverManager")
@@ -57,6 +75,7 @@ model User {
   comments          Comment[]
   approvalDecisions Approval[]
   stageEvents       StageEvent[]
+  aiInsightsRequested AiInsight[]
 }
 
 model UserRole {
@@ -300,6 +319,36 @@ model PurchaseRequest {
   supplierEvaluation SupplierEvaluation?
   notifications    Notification[]
   chatMessages     RequestChatMessage[]
+  aiInsights       AiInsight[]
+}
+
+// Assistentes de IA (pedido do usuário) — gera, sob demanda de quem está na
+// etapa, uma análise focada (estratégia/riscos/o que confirmar) nas etapas
+// onde é aplicável: Triagem, Due Diligence, Cotação, Mapa de Cotação,
+// Jurídico e Mapeamento de Contrato (o "stage" abaixo identifica qual). Cada
+// chamada roda Anthropic e Gemini EM PARALELO (pedido do usuário) e persiste
+// os dois resultados aqui para histórico/auditoria e comparação lado a lado
+// — uma sugestão gerada em Cotação, por exemplo, continua visível quando a
+// solicitação chega ao Mapa de Cotação. Ver src/lib/integrations/ai.ts.
+model AiInsight {
+  id            String   @id @default(cuid())
+  requestId     String
+  request       PurchaseRequest @relation(fields: [requestId], references: [id])
+  stage         Stage    // TRIAGEM | DUE_DILIGENCE | COTACAO | MAPA_COTACAO | JURIDICO | MAPEAMENTO_CONTRATO
+  requestedById String?
+  requestedBy   User?    @relation(fields: [requestedById], references: [id])
+
+  // JSON de AiInsightPayload (summary/highlights/cautions/recommendation/nextStep),
+  // ou null se o provedor não respondeu (ver *Error abaixo).
+  anthropicPayload String? @db.Text
+  anthropicModel   String?
+  anthropicError   String? @db.Text
+
+  geminiPayload    String? @db.Text
+  geminiModel      String?
+  geminiError      String? @db.Text
+
+  createdAt     DateTime @default(now())
 }
 
 // Chat flutuante (widget "nuvem") entre comprador e solicitante, por
@@ -492,6 +541,11 @@ model PurchaseOrder {
   negotiatedValue   Decimal @db.Decimal(14, 2)
   paymentCondition  String
   installments      Int
+  // Valor de cada parcela — sugerido automaticamente (negotiatedValue /
+  // installments) mas editável no formulário, para cobrir arredondamento ou
+  // parcelas desiguais. Pedido do usuário: ajuda a alimentar o fluxo de
+  // caixa futuramente (quanto sai, em quantas parcelas).
+  installmentValue  Decimal? @db.Decimal(14, 2)
   currency          String  @default("BRL")
   // Campos exigidos pelo layout do PDF do Pedido de Compra (portado do
   // gerador Python/ReportLab já validado em produção pela Acerto).
@@ -506,8 +560,9 @@ model PurchaseOrder {
   items PurchaseOrderItem[]
 }
 
-// Itens do Pedido de Compra — máximo de 6 linhas (limite fixo do layout do
-// PDF, calibrado para caber na página A4 paisagem sem estourar a margem).
+// Itens do Pedido de Compra — sem limite de linhas; o PDF (ver
+// src/lib/pdf/pedidoCompra.tsx) pagina automaticamente quando ultrapassa a
+// primeira página A4 paisagem.
 model PurchaseOrderItem {
   id               String   @id @default(cuid())
   purchaseOrderId  String

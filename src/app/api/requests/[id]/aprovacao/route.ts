@@ -26,7 +26,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const body = await req.json();
 
-  const roleError = await requireRole(body.approverId, ["APROVADOR"]);
+  // requireSelf: false — approverId aqui é uma ATRIBUIÇÃO (o comprador está
+  // roteando a solicitação para um aprovador específico da alçada), não
+  // necessariamente quem está logado clicando "Criar". Só o papel do alvo
+  // (APROVADOR) é validado, sem exigir que a sessão seja essa mesma pessoa.
+  const roleError = await requireRole(body.approverId, ["APROVADOR"], { requireSelf: false });
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
   // Revisão v1.1: declaração de conflito de interesse é obrigatória antes da

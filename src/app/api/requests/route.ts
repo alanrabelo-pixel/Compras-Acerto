@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     leadershipPreApproved,
     approverManagerId,
     budgetLineId,
+    extraBudget,
     priority,
     demandType,
     shortDescription,
@@ -44,15 +45,22 @@ export async function POST(req: NextRequest) {
   // Validação mínima dos campos obrigatórios (marcados com * no formulário Pipefy).
   // estimatedValue NÃO é obrigatório aqui (paridade consciente com o Pipefy — ver
   // gate na Triagem, que exige o valor antes de calcular alçada/lane).
+  //
+  // budgetLineId é dispensado quando extraBudget=true ("Orçamento Extra"
+  // selecionado no lugar de uma linha real) — nesse caso o formulário exige o
+  // anexo de Aprovação Extra-orçamentária em vez de uma linha específica.
   const required = {
     requesterId, diretoria, costCenterId, leadershipPreApproved, approverManagerId,
-    budgetLineId, priority, demandType, shortDescription, longDescription,
+    priority, demandType, shortDescription, longDescription,
     suggestedDeadline, quantity,
   };
   for (const [key, value] of Object.entries(required)) {
     if (value === undefined || value === null || value === "") {
       return NextResponse.json({ error: `Campo obrigatório ausente: ${key}` }, { status: 400 });
     }
+  }
+  if (!budgetLineId && !extraBudget) {
+    return NextResponse.json({ error: "Campo obrigatório ausente: budgetLineId (ou selecione Orçamento Extra)" }, { status: 400 });
   }
 
   const count = await prisma.purchaseRequest.count();

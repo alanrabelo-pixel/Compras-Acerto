@@ -1,9 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import type { RoleName } from "@prisma/client";
 import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
+import { AiInsightPanel } from "@/components/AiInsightPanel";
+import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL } from "@/lib/workflow";
+
+// Identidade de quem está logado (server session — ver src/lib/auth.ts),
+// repassada de solicitacoes/[id]/page.tsx. Com SSO real ligado, o servidor
+// (requireRole em src/lib/rbac.ts) exige que o "ator" de cada ação bata com
+// quem está de fato autenticado — então, quando sessionActor existe, os
+// campos de "responsável" abaixo são preenchidos com a própria pessoa
+// logada e o seletor manual é ocultado (não faz sentido deixar escolher
+// outra pessoa que o servidor vai rejeitar). Sem sessão real
+// (LOCAL_BYPASS_AUTH, ver .env), sessionActor é null e o seletor manual
+// volta a aparecer, como antes.
+type SessionActor = { id: string; name: string; email: string } | null;
+
+// Estado do "ator" de uma ação: quando há sessão real, é sempre o próprio
+// usuário logado (ignora qualquer seleção manual); sem sessão, é um estado
+// local comum, editável via o UserPicker.
+function useActorId(sessionActor: SessionActor, initial = "") {
+  const [manual, setManual] = useState(initial);
+  return [sessionActor?.id ?? manual, setManual] as const;
+}
+
+// Campo de "responsável pela ação": com sessão real, mostra só o nome de
+// quem está logado (somente leitura); sem sessão, mostra o UserPicker manual
+// de sempre.
+function ActorField({
+  label, sessionActor, value, onChange, role, placeholder,
+}: {
+  label: string;
+  sessionActor: SessionActor;
+  value: string;
+  onChange: (userId: string) => void;
+  role?: RoleName;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="label">{label}</label>
+      {sessionActor ? (
+        <p style={{ fontSize: 12.5, margin: "4px 0 0" }}>
+          {sessionActor.name} <span style={{ color: "var(--ink-muted)" }}>({sessionActor.email})</span>
+        </p>
+      ) : (
+        <UserPicker value={value} onChange={onChange} role={role} placeholder={placeholder} />
+      )}
+    </div>
+  );
+}
 
 type Quote = {
   id: string;
@@ -36,7 +85,7 @@ type RequestData = {
 
 type Submit = (url: string, method: string, body: unknown) => void;
 
-export function RequestActions({ request }: { request: RequestData }) {
+export function RequestActions({ request, sessionActor = null }: { request: RequestData; sessionActor?: SessionActor }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,31 +107,31 @@ export function RequestActions({ request }: { request: RequestData }) {
 
   switch (request.currentStage) {
     case "TRIAGEM":
-      return <TriagemForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <TriagemForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "VALIDACAO_ORCAMENTARIA":
-      return <ValidacaoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <ValidacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "DUE_DILIGENCE":
-      return <DueDiligenceForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <DueDiligenceForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "COTACAO":
-      return <CotacaoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <CotacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "MAPA_COTACAO":
-      return <MapaCotacaoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <MapaCotacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "APROVACAO":
-      return <AprovacaoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <AprovacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "JURIDICO":
-      return <JuridicoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <JuridicoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "PEDIDO_COMPRA":
-      return <PedidoCompraForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <PedidoCompraForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "AGUARDANDO_ENTREGA":
-      return <AguardandoEntregaForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <AguardandoEntregaForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "MEDICAO":
-      return <MedicaoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <MedicaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "FISCAL":
-      return <FiscalForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <FiscalForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "TESOURARIA":
-      return <TesourariaForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <TesourariaForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "MAPEAMENTO_CONTRATO":
-      return <MapeamentoContratoForm request={request} onSubmit={call} loading={loading} error={error} />;
+      return <MapeamentoContratoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "CONCLUIDO":
       return <ConcluidoPanel request={request} onSubmit={call} loading={loading} error={error} />;
     default:
@@ -109,9 +158,9 @@ function ErrorBox({ error }: { error: string | null }) {
 }
 
 function TriagemForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [buyerId, setBuyerId] = useState("");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [buyerId, setBuyerId] = useActorId(sessionActor);
   const [needsContract, setNeedsContract] = useState(false);
   const [needsMapping, setNeedsMapping] = useState(false);
   const [valueType, setValueType] = useState("FIXO");
@@ -121,14 +170,59 @@ function TriagemForm({
   const [priorValue, setPriorValue] = useState(0);
   const [estimatedValue, setEstimatedValue] = useState(0);
   const needsEstimatedValue = request.estimatedValue === null;
+  const isCancelamento = request.demandType === "CANCELAMENTO";
+
+  if (isCancelamento) {
+    return (
+      <Panel title="Triagem">
+        <div style={{ display: "grid", gap: 10 }}>
+          <p style={{ fontSize: 12, color: "var(--ink-muted)", background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
+            Cancelamento de Contrato, Serviços e Ferramentas — fluxo simplificado: pula Validação Orçamentária,
+            Cotação, Aprovação e Pedido de Compra, e vai direto para Jurídico formalizar o distrato/termo de
+            cancelamento. Depois de assinado, a solicitação é encerrada direto (o contrato já existe e já está
+            mapeado — cancelá-lo de fato é feito em Contratos).
+          </p>
+          <ActorField
+            label="Comprador responsável (não pode ser o solicitante)"
+            sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
+            role="COMPRADOR" placeholder="Selecione o comprador"
+          />
+          <ErrorBox error={error} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="btn btn-primary"
+              disabled={loading || !buyerId}
+              onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "AVANCAR" })}
+            >
+              Avançar direto para Jurídico (Cancelamento)
+            </button>
+            <button
+              className="btn btn-secondary"
+              disabled={loading || !buyerId}
+              onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas — favor detalhar." })}
+            >
+              Devolver ao solicitante
+            </button>
+          </div>
+        </div>
+      </Panel>
+    );
+  }
 
   return (
     <Panel title="Triagem">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Comprador responsável (não pode ser o solicitante)</label>
-          <UserPicker value={buyerId} onChange={setBuyerId} role="COMPRADOR" placeholder="Selecione o comprador" />
-        </div>
+        <ActorField
+          label="Comprador responsável (não pode ser o solicitante)"
+          sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
+          role="COMPRADOR" placeholder="Selecione o comprador"
+        />
+        <AiInsightPanel
+          requestId={request.id}
+          stage="TRIAGEM"
+          actorId={buyerId}
+          draft={{ supplierApproved, supplierRiskTier, handlesPersonalData }}
+        />
         {needsEstimatedValue && (
           <div style={{ background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
             <label className="label">
@@ -196,16 +290,39 @@ function TriagemForm({
 }
 
 function ValidacaoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
   const [justification, setJustification] = useState("");
-  const [exceptionApproverId, setExceptionApproverId] = useState("");
+  const [exceptionApproverId, setExceptionApproverId] = useActorId(sessionActor);
+  const [budgetActorId, setBudgetActorId] = useActorId(sessionActor, request.buyerId ?? "");
+  const [budgetObservation, setBudgetObservation] = useState("");
+
+  // Alçada da exceção calculada pelo valor estimado — define qual papel pode
+  // decidir (Coordenação no Nível 1, Gerente F&NC nos Níveis 2 e 3).
+  const exceptionLevel = budgetExceptionLevel(request.estimatedValue ?? 0);
+  const exceptionApproverRole = budgetExceptionApproverRole(exceptionLevel);
 
   return (
     <Panel title="Validação orçamentária">
       <div style={{ display: "grid", gap: 10 }}>
+        <ActorField label="Responsável pela validação" sessionActor={sessionActor} value={budgetActorId} onChange={setBudgetActorId} role="COMPRADOR" />
+        <div>
+          <label className="label">Linha do Orçamento (observação)</label>
+          <input
+            className="input" value={budgetObservation} onChange={(e) => setBudgetObservation(e.target.value)}
+            placeholder="Ex: Linha Marketing Digital, dentro do previsto para o mês"
+          />
+        </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-primary" disabled={loading} onClick={() => onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", { budgetOk: true })}>
+          <button
+            className="btn btn-primary"
+            disabled={loading || !budgetActorId}
+            onClick={() =>
+              onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", {
+                budgetOk: true, actorId: budgetActorId, observation: budgetObservation,
+              })
+            }
+          >
             Há orçamento disponível
           </button>
           <button
@@ -217,9 +334,14 @@ function ValidacaoForm({
           </button>
         </div>
         <div style={{ borderTop: "1px solid #eee", paddingTop: 10 }}>
-          <p style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>Se uma exceção já foi aberta, decida abaixo:</p>
-          <label className="label">Aprovador da exceção</label>
-          <UserPicker value={exceptionApproverId} onChange={setExceptionApproverId} role="CONTROLADORIA" placeholder="Selecione o aprovador da exceção" />
+          <p style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>
+            Se uma exceção já foi aberta, decida abaixo — alçada calculada: <strong>{BUDGET_EXCEPTION_LEVEL_LABEL[exceptionLevel]}</strong>
+          </p>
+          <ActorField
+            label={`Aprovador da exceção (${exceptionApproverRole})`}
+            sessionActor={sessionActor} value={exceptionApproverId} onChange={setExceptionApproverId}
+            role={exceptionApproverRole} placeholder="Selecione o aprovador da exceção"
+          />
           <label className="label" style={{ marginTop: 8 }}>Justificativa</label>
           <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -254,18 +376,16 @@ function ValidacaoForm({
 }
 
 function DueDiligenceForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [decidedBy, setDecidedBy] = useState("");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [decidedBy, setDecidedBy] = useActorId(sessionActor);
   const [justification, setJustification] = useState("");
 
   return (
     <Panel title="Due Diligence (Privacidade)">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Responsável (Privacidade)</label>
-          <UserPicker value={decidedBy} onChange={setDecidedBy} role="PRIVACIDADE" />
-        </div>
+        <ActorField label="Responsável (Privacidade)" sessionActor={sessionActor} value={decidedBy} onChange={setDecidedBy} role="PRIVACIDADE" />
+        <AiInsightPanel requestId={request.id} stage="DUE_DILIGENCE" actorId={decidedBy} />
         <div>
           <label className="label">Justificativa</label>
           <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
@@ -285,9 +405,9 @@ function DueDiligenceForm({
 }
 
 function CotacaoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState(request.buyerId ?? "");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [supplierName, setSupplierName] = useState("");
   const [initialValue, setInitialValue] = useState(0);
   const [negotiatedValue, setNegotiatedValue] = useState(0);
@@ -305,10 +425,8 @@ function CotacaoForm({
             ))}
           </div>
         )}
-        <div>
-          <label className="label">Comprador responsável</label>
-          <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
-        </div>
+        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        <AiInsightPanel requestId={request.id} stage="COTACAO" actorId={actorId} />
         <div>
           <label className="label">Fornecedor</label>
           <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
@@ -349,9 +467,9 @@ function CotacaoForm({
 }
 
 function MapaCotacaoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState(request.buyerId ?? "");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [selectedQuoteId, setSelectedQuoteId] = useState("");
 
   return (
@@ -369,10 +487,8 @@ function MapaCotacaoForm({
             </label>
           );
         })}
-        <div>
-          <label className="label">Comprador responsável</label>
-          <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
-        </div>
+        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        <AiInsightPanel requestId={request.id} stage="MAPA_COTACAO" actorId={actorId} />
         <ErrorBox error={error} />
         <button className="btn btn-primary" disabled={loading || !actorId || !selectedQuoteId} onClick={() => onSubmit(`/api/requests/${request.id}/mapa-cotacao`, "PATCH", { actorId, selectedQuoteId })}>
           Selecionar vencedor e avançar para Aprovação
@@ -383,12 +499,23 @@ function MapaCotacaoForm({
 }
 
 function AprovacaoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  // approverId: NÃO é o ator — é uma atribuição (o comprador roteia a
+  // solicitação para um aprovador específico da alçada), ver requireSelf:
+  // false em POST /api/requests/[id]/aprovacao. Continua manual mesmo com
+  // sessão real.
   const [approverId, setApproverId] = useState("");
   const [approvalId, setApprovalId] = useState("");
   const [justification, setJustification] = useState("");
-  const [personifiedBy, setPersonifiedBy] = useState("");
+  // personifiedBy é opcional (normalmente vazio — o aprovador real decide);
+  // só quando marcado é que a pessoa logada está personificando, então usa
+  // checkbox em vez do padrão ActorField (que sempre preencheria).
+  const [personifying, setPersonifying] = useState(false);
+  const [manualPersonifiedBy, setManualPersonifiedBy] = useState("");
+  const personifiedBy = sessionActor ? (personifying ? sessionActor.id : "") : manualPersonifiedBy;
+  // declaredBy: rota /conflito-interesse não valida identidade (pode ser o
+  // solicitante ou o comprador declarando) — mantém manual.
   const [declaredBy, setDeclaredBy] = useState(request.buyerId ?? "");
   const [hasConflict, setHasConflict] = useState(false);
   const [conflictDetails, setConflictDetails] = useState("");
@@ -446,7 +573,14 @@ function AprovacaoForm({
               <label className="label" style={{ marginTop: 8 }}>
                 Personificado por (comprador) — só permitido até R$ 50 mil
               </label>
-              <UserPicker value={personifiedBy} onChange={setPersonifiedBy} role="COMPRADOR" placeholder="Nenhum (aprovador real decide)" />
+              {sessionActor ? (
+                <label style={{ fontSize: 12 }}>
+                  <input type="checkbox" checked={personifying} onChange={(e) => setPersonifying(e.target.checked)} />
+                  {" "}Estou personificando o aprovador real (urgência/ausência) — {sessionActor.name}
+                </label>
+              ) : (
+                <UserPicker value={manualPersonifiedBy} onChange={setManualPersonifiedBy} role="COMPRADOR" placeholder="Nenhum (aprovador real decide)" />
+              )}
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                 <button
                   className="btn btn-primary"
@@ -481,20 +615,26 @@ function AprovacaoForm({
 }
 
 function JuridicoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState("");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor);
   const [minutaUrl, setMinutaUrl] = useState("");
   const [signedDocUrl, setSignedDocUrl] = useState("");
   const [observations, setObservations] = useState("");
+  const isCancelamento = request.demandType === "CANCELAMENTO";
 
   return (
     <Panel title="Jurídico">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Responsável (Jurídico)</label>
-          <UserPicker value={actorId} onChange={setActorId} role="JURIDICO" />
-        </div>
+        {isCancelamento && (
+          <p style={{ fontSize: 12, color: "var(--ink-muted)", background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
+            Cancelamento de Contrato, Serviços e Ferramentas — ao assinar, a solicitação é encerrada direto
+            (sem Pedido de Compra nem Mapeamento de Contrato, já que o contrato já existe e já está mapeado).
+            Lembre-se de cancelar o contrato correspondente em Contratos (ação Cancelar) para notificar a Tesouraria.
+          </p>
+        )}
+        <ActorField label="Responsável (Jurídico)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="JURIDICO" />
+        <AiInsightPanel requestId={request.id} stage="JURIDICO" actorId={actorId} draft={{ minutaUrl, observations }} />
         <div>
           <label className="label">URL da minuta</label>
           <input className="input" value={minutaUrl} onChange={(e) => setMinutaUrl(e.target.value)} />
@@ -534,10 +674,10 @@ type PcItem = { descricao: string; quantidade: number; valorUnitario: number; im
 const emptyItem = (): PcItem => ({ descricao: "", quantidade: 1, valorUnitario: 0, impostosPercent: 0 });
 
 function PedidoCompraForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
   const winningQuote = request.quotes.find((q) => q.selected);
-  const [actorId, setActorId] = useState(request.buyerId ?? "");
+  const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [supplierId, setSupplierId] = useState("");
   const [supplierLegalName, setSupplierLegalName] = useState(winningQuote?.supplierName ?? "");
   const [supplierCnpj, setSupplierCnpj] = useState("");
@@ -545,6 +685,8 @@ function PedidoCompraForm({
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [installments, setInstallments] = useState(1);
+  const [installmentValue, setInstallmentValue] = useState(0);
+  const [installmentValueTouched, setInstallmentValueTouched] = useState(false);
   const [needsMeasurement, setNeedsMeasurement] = useState(false);
   const [prazoEntrega, setPrazoEntrega] = useState("");
   const [localEntrega, setLocalEntrega] = useState("");
@@ -557,14 +699,21 @@ function PedidoCompraForm({
 
   const validItems = items.filter((it) => it.descricao && it.quantidade > 0 && it.valorUnitario > 0);
   const totalValue = validItems.reduce((sum, it) => sum + it.quantidade * it.valorUnitario * (1 + it.impostosPercent / 100), 0);
+  const negotiatedValue = winningQuote?.negotiatedValue ?? totalValue;
+
+  // Valor da parcela sugerido automaticamente (negotiatedValue / parcelas) —
+  // ajuda a preencher fluxo de caixa depois. Só recalcula sozinho enquanto o
+  // comprador não editar manualmente (ex: para acertar arredondamento).
+  useEffect(() => {
+    if (!installmentValueTouched && installments > 0) {
+      setInstallmentValue(Math.round((negotiatedValue / installments) * 100) / 100);
+    }
+  }, [negotiatedValue, installments, installmentValueTouched]);
 
   return (
     <Panel title="Pedido de Compra">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Comprador responsável</label>
-          <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
-        </div>
+        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
 
         <div>
           <label className="label">Fornecedor cadastrado (opcional)</label>
@@ -606,7 +755,7 @@ function PedidoCompraForm({
         </div>
 
         <div>
-          <label className="label">Itens (máximo 6)</label>
+          <label className="label">Itens</label>
           <div style={{ display: "grid", gap: 6 }}>
             <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr 1.2fr 1fr auto", gap: 6 }}>
               <span className="help" style={{ margin: 0 }}>Descrição</span>
@@ -633,7 +782,6 @@ function PedidoCompraForm({
           </div>
           <button
             className="btn btn-secondary" style={{ marginTop: 6 }}
-            disabled={items.length >= 6}
             onClick={() => setItems((prev) => [...prev, emptyItem()])}
           >
             + Adicionar item
@@ -645,14 +793,24 @@ function PedidoCompraForm({
           )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
           <div>
             <label className="label">Prazo de Entrega</label>
             <input className="input" value={prazoEntrega} onChange={(e) => setPrazoEntrega(e.target.value)} placeholder="Ex: 15 dias úteis" />
           </div>
           <div>
-            <label className="label">Parcelas</label>
+            <label className="label">Número de Parcelas</label>
             <input className="input" type="number" value={installments} onChange={(e) => setInstallments(Number(e.target.value))} />
+          </div>
+          <div>
+            <label className="label">Valor da Parcela</label>
+            <input
+              className="input" type="number" value={installmentValue}
+              onChange={(e) => { setInstallmentValueTouched(true); setInstallmentValue(Number(e.target.value)); }}
+            />
+            <span className="help" style={{ margin: "2px 0 0" }}>
+              Sugerido: {(negotiatedValue / (installments || 1)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} — ajuda a alimentar o fluxo de caixa
+            </span>
           </div>
         </div>
 
@@ -675,14 +833,14 @@ function PedidoCompraForm({
         <ErrorBox error={error} />
         <button
           className="btn btn-primary"
-          disabled={loading || !actorId || !supplierLegalName || !supplierCnpj || !prazoEntrega || !localEntrega || validItems.length === 0}
+          disabled={loading || !actorId || !supplierLegalName || !supplierCnpj || !contactName || !contactPhone || !contactEmail || !prazoEntrega || !localEntrega || validItems.length === 0}
           onClick={() =>
             onSubmit(`/api/requests/${request.id}/pedido-compra`, "POST", {
               actorId, supplierId: supplierId || undefined, supplierLegalName, supplierCnpj, contactName, contactPhone, contactEmail,
               initialValue: winningQuote?.initialValue ?? totalValue,
-              negotiatedValue: winningQuote?.negotiatedValue ?? totalValue,
+              negotiatedValue,
               paymentCondition: winningQuote?.paymentCondition ?? "à vista",
-              installments, needsMeasurement, prazoEntrega, localEntrega, frete,
+              installments, installmentValue, needsMeasurement, prazoEntrega, localEntrega, frete,
               items: validItems.map((it) => ({
                 ...it,
                 valorTotal: it.quantidade * it.valorUnitario * (1 + it.impostosPercent / 100),
@@ -698,9 +856,9 @@ function PedidoCompraForm({
 }
 
 function AguardandoEntregaForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState(request.buyerId ?? "");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
 
   return (
     <Panel title="Aguardando Entrega/Conclusão">
@@ -710,10 +868,7 @@ function AguardandoEntregaForm({
             Baixar PDF do Pedido de Compra
           </a>
         )}
-        <div>
-          <label className="label">Comprador responsável</label>
-          <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
-        </div>
+        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
         <ErrorBox error={error} />
         <button className="btn btn-primary" disabled={loading || !actorId} onClick={() => onSubmit(`/api/requests/${request.id}/aguardando-entrega`, "PATCH", { actorId })}>
           Confirmar entrega/recebimento e avançar
@@ -724,9 +879,9 @@ function AguardandoEntregaForm({
 }
 
 function MedicaoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState(request.buyerId ?? "");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [scopeExecuted, setScopeExecuted] = useState("");
   const [quantities, setQuantities] = useState("");
   const [reviewComment, setReviewComment] = useState("");
@@ -734,10 +889,7 @@ function MedicaoForm({
   return (
     <Panel title="Medição e Aprovação Financeira">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Comprador responsável</label>
-          <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
-        </div>
+        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
         <div>
           <label className="label">Escopo executado</label>
           <input className="input" value={scopeExecuted} onChange={(e) => setScopeExecuted(e.target.value)} />
@@ -773,19 +925,16 @@ function MedicaoForm({
 }
 
 function FiscalForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState("");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor);
   const [documentUrl, setDocumentUrl] = useState("");
   const [reviewComment, setReviewComment] = useState("");
 
   return (
     <Panel title="Validação Fiscal">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Responsável (Fiscal)</label>
-          <UserPicker value={actorId} onChange={setActorId} role="FISCAL" />
-        </div>
+        <ActorField label="Responsável (Fiscal)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="FISCAL" />
         <div>
           <label className="label">URL do documento fiscal</label>
           <input className="input" value={documentUrl} onChange={(e) => setDocumentUrl(e.target.value)} />
@@ -809,19 +958,16 @@ function FiscalForm({
 }
 
 function TesourariaForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
-  const [actorId, setActorId] = useState("");
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor);
   const [scheduledDate, setScheduledDate] = useState("");
   const [paidDate, setPaidDate] = useState("");
 
   return (
     <Panel title="Tesouraria (Pagamento)">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Responsável (Tesouraria)</label>
-          <UserPicker value={actorId} onChange={setActorId} role="TESOURARIA" />
-        </div>
+        <ActorField label="Responsável (Tesouraria)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="TESOURARIA" />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
             <label className="label">Data programada</label>
@@ -863,10 +1009,10 @@ const DOCUMENT_TYPES = [
 ];
 
 function MapeamentoContratoForm({
-  request, onSubmit, loading, error,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null }) {
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
   const winningQuote = request.quotes.find((q) => q.selected);
-  const [actorId, setActorId] = useState(request.buyerId ?? "");
+  const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [supplierId, setSupplierId] = useState("");
   const [supplierName, setSupplierName] = useState(winningQuote?.supplierName ?? "");
   const [supplierTradeName, setSupplierTradeName] = useState("");
@@ -883,14 +1029,20 @@ function MapeamentoContratoForm({
   const [area, setArea] = useState("");
   const [lgpdClause, setLgpdClause] = useState(false);
   const [nonCompete, setNonCompete] = useState(false);
+  const [brandUse, setBrandUse] = useState(false);
+  const [corporateChangeClause, setCorporateChangeClause] = useState(false);
 
   return (
     <Panel title="Mapeamento de Contrato">
       <div style={{ display: "grid", gap: 10 }}>
-        <div>
-          <label className="label">Comprador responsável</label>
-          <UserPicker value={actorId} onChange={setActorId} role="COMPRADOR" />
-        </div>
+        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+
+        <AiInsightPanel
+          requestId={request.id}
+          stage="MAPEAMENTO_CONTRATO"
+          actorId={actorId}
+          draft={{ supplierName, contractObject, prazo, paymentCondition, terminationClause, nonCompete, lgpdClause, brandUse, corporateChangeClause }}
+        />
 
         <div>
           <label className="label">Fornecedor cadastrado (opcional)</label>
@@ -975,9 +1127,11 @@ function MapeamentoContratoForm({
             <input className="input" value={area} onChange={(e) => setArea(e.target.value)} />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+        <div style={{ display: "flex", gap: 16, fontSize: 12, flexWrap: "wrap" }}>
           <label><input type="checkbox" checked={lgpdClause} onChange={(e) => setLgpdClause(e.target.checked)} /> Cláusula LGPD</label>
           <label><input type="checkbox" checked={nonCompete} onChange={(e) => setNonCompete(e.target.checked)} /> Não-concorrência</label>
+          <label><input type="checkbox" checked={brandUse} onChange={(e) => setBrandUse(e.target.checked)} /> Uso de marca</label>
+          <label><input type="checkbox" checked={corporateChangeClause} onChange={(e) => setCorporateChangeClause(e.target.checked)} /> Mudança societária</label>
         </div>
         <ErrorBox error={error} />
         <button
@@ -987,7 +1141,7 @@ function MapeamentoContratoForm({
             onSubmit(`/api/requests/${request.id}/mapeamento-contrato`, "POST", {
               actorId, supplierId: supplierId || undefined, supplierName, supplierTradeName, supplierCnpj, documentType,
               contractObject, prazo, paymentCondition, startDate, endDate, terminationClause, renewalDate,
-              contractManagerId, area, lgpdClause, nonCompete,
+              contractManagerId, area, lgpdClause, nonCompete, brandUse, corporateChangeClause,
             })
           }
         >

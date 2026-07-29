@@ -32,6 +32,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     prazoEntrega, localEntrega, frete, items,
   } = body;
 
+  // Valor da parcela: usa o que veio do formulário (pode ter sido ajustado
+  // manualmente por arredondamento); se ausente/inválido, calcula a partir
+  // de negotiatedValue / installments.
+  const installmentValue =
+    typeof body.installmentValue === "number" && body.installmentValue > 0
+      ? Math.round(body.installmentValue * 100) / 100
+      : installments > 0
+      ? Math.round((Number(negotiatedValue) / installments) * 100) / 100
+      : null;
+
   const roleError = await requireRole(actorId, ["COMPRADOR"]);
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
@@ -45,9 +55,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
   }
 
-  const itemList: PedidoCompraItem[] = Array.isArray(items) ? items.slice(0, 6) : [];
+  // Sem limite de itens — o PDF (ver src/lib/pdf/pedidoCompra.tsx) pagina
+  // automaticamente quando ultrapassa a primeira página.
+  const itemList: PedidoCompraItem[] = Array.isArray(items) ? items : [];
   if (itemList.length === 0) {
-    return NextResponse.json({ error: "Informe ao menos 1 item (máximo de 6)." }, { status: 400 });
+    return NextResponse.json({ error: "Informe ao menos 1 item." }, { status: 400 });
   }
   for (const it of itemList) {
     if (!it.descricao || !it.quantidade || it.valorUnitario === undefined) {
@@ -59,13 +71,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     where: { requestId: request.id },
     update: {
       supplierId: supplierId || undefined, supplierLegalName, supplierCnpj, contactName, contactPhone, contactEmail,
-      initialValue, negotiatedValue, paymentCondition, installments, currency: currency ?? "BRL",
+      initialValue, negotiatedValue, paymentCondition, installments, installmentValue, currency: currency ?? "BRL",
       needsMeasurement: Boolean(needsMeasurement), prazoEntrega, localEntrega, frete: frete ?? "CIF",
     },
     create: {
       requestId: request.id, supplierId: supplierId || undefined, supplierLegalName, supplierCnpj,
       contactName, contactPhone, contactEmail, initialValue, negotiatedValue, paymentCondition,
-      installments, currency: currency ?? "BRL", needsMeasurement: Boolean(needsMeasurement),
+      installments, installmentValue, currency: currency ?? "BRL", needsMeasurement: Boolean(needsMeasurement),
       prazoEntrega, localEntrega, frete: frete ?? "CIF",
     },
   });
@@ -90,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         code: request.code,
         createdAt: purchaseOrder.createdAt.toISOString(),
         supplierLegalName, supplierCnpj, contactName, contactPhone, contactEmail,
-        paymentCondition, installments, currency: currency ?? "BRL",
+        paymentCondition, installments, installmentValue, currency: currency ?? "BRL",
         prazoEntrega, localEntrega, frete: (frete ?? "CIF") as "CIF" | "FOB",
         items: itemList,
       }}

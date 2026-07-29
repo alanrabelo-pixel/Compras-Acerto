@@ -6,11 +6,17 @@ import { fitFontSize } from "./stringWidth";
 /**
  * Pedido de Compra — layout portado 1:1 da especificação do gerador
  * Python/ReportLab já validado em produção pela Acerto (campos, ordem,
- * limite de 6 linhas na tabela, sem assinatura — ver conversa com o time de
- * Compras | F&NC). O que foi revisado aqui é só o acabamento visual (cores,
- * tipografia, espaçamento) usando a identidade oficial da marca (verde
- * #25D366, extraído do SVG do logo em "Materiais da Marca" no Confluence) —
- * a estrutura/conteúdo do documento não muda sem validar com o time.
+ * sem assinatura — ver conversa com o time de Compras | F&NC). O que foi
+ * revisado aqui é só o acabamento visual (cores, tipografia, espaçamento)
+ * usando a identidade oficial da marca (verde #25D366, extraído do SVG do
+ * logo em "Materiais da Marca" no Confluence) — a estrutura/conteúdo do
+ * documento não muda sem validar com o time.
+ *
+ * Sem limite de itens: até 6 linhas, a tabela preenche uma única página A4
+ * paisagem (preenchendo linhas em branco até 6, para manter o visual
+ * original). Acima disso, o @react-pdf/renderer pagina automaticamente —
+ * cada linha (`wrap={false}`) nunca é cortada ao meio, e o cabeçalho da
+ * tabela (`fixed`) se repete em toda página de continuação.
  */
 
 // Dados fixos da Acerto (hardcoded — sempre os mesmos em todo Pedido de Compra).
@@ -152,6 +158,7 @@ export type PedidoCompraPdfData = {
   contactEmail: string;
   paymentCondition: string;
   installments: number;
+  installmentValue?: number | null;
   currency: string;
   prazoEntrega: string;
   localEntrega: string;
@@ -162,7 +169,10 @@ export type PedidoCompraPdfData = {
 const BOX_INNER_WIDTH = (USABLE_WIDTH - 12) / 2 - 16; // largura útil dentro de cada caixa (menos padding)
 
 export function PedidoCompraDocument({ data }: { data: PedidoCompraPdfData }) {
-  const rows = [...data.items.slice(0, 6)];
+  // Sem limite de itens — preenche com linhas em branco só até 6 (para manter
+  // o visual original quando o pedido é pequeno); acima disso, renderiza
+  // todas as linhas reais e deixa o react-pdf paginar automaticamente.
+  const rows = [...data.items];
   while (rows.length < 6) {
     rows.push({ descricao: "", quantidade: 0, valorUnitario: 0, impostosPercent: 0, valorTotal: 0 });
   }
@@ -204,7 +214,7 @@ export function PedidoCompraDocument({ data }: { data: PedidoCompraPdfData }) {
         </View>
 
         <View style={styles.table}>
-          <View style={styles.tableHeaderRow}>
+          <View style={styles.tableHeaderRow} fixed>
             <Text style={[styles.th, { width: COL.descricao }]}>DESCRIÇÃO</Text>
             <Text style={[styles.th, { width: COL.qtd, textAlign: "right" }]}>QTD</Text>
             <Text style={[styles.th, { width: COL.valorUnitario, textAlign: "right" }]}>VLR. UNITÁRIO</Text>
@@ -212,7 +222,7 @@ export function PedidoCompraDocument({ data }: { data: PedidoCompraPdfData }) {
             <Text style={[styles.th, { width: COL.valorTotal, textAlign: "right" }]}>VLR. TOTAL</Text>
           </View>
           {rows.map((item, i) => (
-            <View key={i} style={[styles.tableRow, ...(i % 2 === 1 ? [styles.tableRowAlt] : [])]}>
+            <View key={i} wrap={false} style={[styles.tableRow, ...(i % 2 === 1 ? [styles.tableRowAlt] : [])]}>
               <View style={[styles.td, { width: COL.descricao }]}>
                 <FitText text={item.descricao} maxWidthPt={COL.descricao - 12} />
               </View>
@@ -235,7 +245,16 @@ export function PedidoCompraDocument({ data }: { data: PedidoCompraPdfData }) {
         <View style={styles.fieldsRow}>
           <View style={styles.fieldBox}>
             <Text style={styles.sectionLabel}>CONDIÇÃO DE PAGAMENTO</Text>
-            <FitText text={`${data.paymentCondition} (${data.installments}x)`} maxWidthPt={BOX_INNER_WIDTH} baseFontSize={8.5} style={styles.fieldValue} />
+            <FitText
+              text={
+                data.installmentValue
+                  ? `${data.paymentCondition} (${data.installments}x de ${money(data.installmentValue, data.currency)})`
+                  : `${data.paymentCondition} (${data.installments}x)`
+              }
+              maxWidthPt={BOX_INNER_WIDTH}
+              baseFontSize={8.5}
+              style={styles.fieldValue}
+            />
           </View>
           <View style={styles.fieldBox}>
             <Text style={styles.sectionLabel}>PRAZO DE ENTREGA</Text>

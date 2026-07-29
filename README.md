@@ -111,8 +111,72 @@ decidir se o ERP vai fazer polling do endpoint de lista ou se faz mais
 sentido este sistema chamar um webhook do ERP quando a solicitação conclui
 (não implementado — ainda não há URL de destino).
 
+## Assistentes de IA (Triagem, Due Diligence, Cotação, Mapa de Cotação, Jurídico, Mapeamento de Contrato)
+
+Pedido do usuário: dar a quem atua em cada etapa uma "atuação de IA" focada —
+estratégia, riscos, o que confirmar/evitar — em todas as etapas onde isso é
+aplicável, rodando **Anthropic (Claude) e Gemini em paralelo** e mostrando as
+duas sugestões lado a lado (pedido explícito do usuário — cada provedor
+responde/falha de forma independente, não há fallback nem escolha única).
+
+- `src/lib/integrations/ai.ts` — um prompt por etapa (`buildTriagemPrompt`,
+  `buildDueDiligencePrompt`, `buildNegotiationPrompt`, `buildLegalReviewPrompt`,
+  `buildContractReviewPrompt`), todos pedindo a mesma estrutura de resposta
+  (`summary`/`highlights`/`cautions`/`recommendation`/`nextStep`), e
+  `generateInsight(prompt, keys)` que chama Claude e Gemini em paralelo — cada
+  chamada recebe a **chave pessoal** de quem está atuando (ver abaixo), não
+  uma chave única do app. Só o modelo (`ANTHROPIC_MODEL`/`GEMINI_MODEL`) segue
+  vindo do `.env`, por ser uma escolha técnica do app, não uma credencial.
+- **Chaves pessoais de IA** (pedido do usuário): todo mundo na Acerto já tem
+  acesso próprio a Claude e Gemini, então os Assistentes usam a chave de quem
+  está atuando na etapa no momento, não uma chave única da empresa/app —
+  `User.anthropicApiKey`/`geminiApiKey` no schema, geridas por cada pessoa
+  direto no painel do assistente (`AiInsightPanel` mostra se estão
+  configuradas e permite salvar/atualizar). `GET/PATCH /api/users/:id/ai-keys`
+  — o `GET` nunca retorna o valor da chave, só se está configurada.
+- `POST /api/requests/:id/ai-insight` — gera uma análise sob demanda a partir
+  da etapa atual da solicitação (TRIAGEM, DUE_DILIGENCE, COTACAO,
+  MAPA_COTACAO, JURIDICO ou MAPEAMENTO_CONTRATO — outras etapas respondem
+  409), com papel exigido conforme a etapa (COMPRADOR / PRIVACIDADE /
+  JURIDICO), usando a chave pessoal de quem está atuando (`actorId`). Aceita
+  um `draft` opcional no corpo com campos que a pessoa está digitando no
+  formulário mas ainda não salvou (ex: observações do Jurídico, dados do
+  contrato no Mapeamento), para a IA reagir ao que está sendo preenchido.
+  Persiste os dois resultados (payload + modelo + erro de cada provedor) em
+  `AiInsight` — histórico permanente por solicitação, independente de qual
+  chave/pessoa gerou cada sugestão. `GET` lista o histórico completo da
+  solicitação (todas as etapas, mais recente primeiro) — uma análise gerada
+  em Cotação, por exemplo, continua visível quando a solicitação chega ao
+  Mapa de Cotação.
+- UI: `AiInsightPanel` (componente compartilhado, renderiza Claude e Gemini
+  em colunas lado a lado, com status/edição das chaves pessoais de quem está
+  selecionado no formulário), embutido nos formulários de Triagem, Due
+  Diligence, Cotação, Mapa de Cotação, Jurídico e Mapeamento de Contrato em
+  `RequestActions.tsx`.
+
+Diferente do Gmail/Slack, esta integração **não falha silenciosamente**: sem
+a chave pessoal configurada, cada provedor responde com seu próprio erro claro
+("Você ainda não configurou sua chave pessoal da Anthropic/Gemini") em vez de
+engolir a falha — é uma ação sob demanda, que precisa avisar na hora que a
+sugestão não veio (a chave ausente de uma pessoa não afeta as demais, e um
+provedor sem chave não impede o outro de responder).
+
 ## Assunções não verificadas (validar antes de produção)
 
+- **Chaves pessoais de IA armazenadas em texto puro** — `User.anthropicApiKey`/
+  `geminiApiKey` são guardadas sem criptografia neste ambiente de
+  desenvolvimento. Antes de produção, avaliar criptografia em repouso ou um
+  cofre de segredos (ex: KMS/Vault) — agora é uma chave por pessoa (potencialmente
+  dezenas), não uma única chave de app, o que aumenta a superfície se o banco
+  vazar. Também vale decidir um limite de uso/custo por pessoa, já que cada
+  chave é cobrada na conta pessoal de quem a configurou.
+- **Assistentes de IA (modelos e prompts)** — os modelos (`claude-sonnet-5` /
+  `gemini-2.5-flash`, via env) e o formato dos prompts são um ponto de
+  partida; vale revisar com cada time dono da etapa (Compras, Privacidade,
+  Jurídico) se a análise sugerida está alinhada às políticas vigentes antes
+  de expor em produção — em especial o Jurídico, cujo prompt já deixa
+  explícito que é um apoio preliminar, não substitui a leitura integral do
+  contrato.
 - **E-mail via Gmail API com conta de serviço** — requer domain-wide delegation
   no Google Admin Console. Confirmar com SI e Privacidade se é viável ou se o
   time de infra prefere um relay SMTP tradicional.
