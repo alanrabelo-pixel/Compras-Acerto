@@ -176,17 +176,19 @@ function TriagemForm({
     return (
       <Panel title="Triagem">
         <div style={{ display: "grid", gap: 10 }}>
-          <p style={{ fontSize: 12, color: "var(--ink-muted)", background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
+          <p className="hint-box hint-box-warning">
             Cancelamento de Contrato, Serviços e Ferramentas — fluxo simplificado: pula Validação Orçamentária,
             Cotação, Aprovação e Pedido de Compra, e vai direto para Jurídico formalizar o distrato/termo de
             cancelamento. Depois de assinado, a solicitação é encerrada direto (o contrato já existe e já está
             mapeado — cancelá-lo de fato é feito em Contratos).
           </p>
-          <ActorField
-            label="Comprador responsável (não pode ser o solicitante)"
-            sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
-            role="COMPRADOR" placeholder="Selecione o comprador"
-          />
+          <div className="form-section">
+            <ActorField
+              label="Comprador responsável (não pode ser o solicitante)"
+              sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
+              role="COMPRADOR" placeholder="Selecione o comprador"
+            />
+          </div>
           <ErrorBox error={error} />
           <div style={{ display: "flex", gap: 8 }}>
             <button
@@ -212,53 +214,64 @@ function TriagemForm({
   return (
     <Panel title="Triagem">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField
-          label="Comprador responsável (não pode ser o solicitante)"
-          sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
-          role="COMPRADOR" placeholder="Selecione o comprador"
-        />
+        <div className="form-section">
+          <ActorField
+            label="Comprador responsável (não pode ser o solicitante)"
+            sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
+            role="COMPRADOR" placeholder="Selecione o comprador"
+          />
+        </div>
+
         <AiInsightPanel
           requestId={request.id}
           stage="TRIAGEM"
           actorId={buyerId}
           draft={{ supplierApproved, supplierRiskTier, handlesPersonalData }}
         />
-        {needsEstimatedValue && (
-          <div style={{ background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
-            <label className="label">
-              Esta solicitação foi aberta sem valor estimado — preencha antes de avançar (necessário para calcular alçada/lane)
-            </label>
-            <input className="input" type="number" value={estimatedValue} onChange={(e) => setEstimatedValue(Number(e.target.value))} />
+
+        <div className="form-section">
+          <p className="form-section-label">Valor e risco</p>
+          {needsEstimatedValue && (
+            <div className="hint-box hint-box-warning">
+              <label className="label">
+                Esta solicitação foi aberta sem valor estimado — preencha antes de avançar (necessário para calcular alçada/lane)
+              </label>
+              <input className="input" type="number" value={estimatedValue} onChange={(e) => setEstimatedValue(Number(e.target.value))} />
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Tipo de valor</label>
+              <select className="input" value={valueType} onChange={(e) => setValueType(e.target.value)}>
+                <option value="FIXO">Fixo</option>
+                <option value="VARIAVEL">Variável</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Risco do fornecedor</label>
+              <select className="input" value={supplierRiskTier} onChange={(e) => setSupplierRiskTier(e.target.value)}>
+                <option value="BAIXO">Baixo</option>
+                <option value="MEDIO">Médio</option>
+                <option value="ALTO">Alto</option>
+              </select>
+            </div>
           </div>
-        )}
-        <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
-          <label><input type="checkbox" checked={needsContract} onChange={(e) => setNeedsContract(e.target.checked)} /> Precisa de contrato</label>
-          <label><input type="checkbox" checked={needsMapping} onChange={(e) => setNeedsMapping(e.target.checked)} /> Precisa de mapeamento</label>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
-            <label className="label">Tipo de valor</label>
-            <select className="input" value={valueType} onChange={(e) => setValueType(e.target.value)}>
-              <option value="FIXO">Fixo</option>
-              <option value="VARIAVEL">Variável</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Risco do fornecedor</label>
-            <select className="input" value={supplierRiskTier} onChange={(e) => setSupplierRiskTier(e.target.value)}>
-              <option value="BAIXO">Baixo</option>
-              <option value="MEDIO">Médio</option>
-              <option value="ALTO">Alto</option>
-            </select>
+            <label className="label">Soma de compras deste fornecedor nos últimos 12 meses (R$)</label>
+            <input className="input" type="number" value={priorValue} onChange={(e) => setPriorValue(Number(e.target.value))} />
           </div>
         </div>
-        <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
-          <label><input type="checkbox" checked={supplierApproved} onChange={(e) => setSupplierApproved(e.target.checked)} /> Fornecedor já homologado</label>
-          <label><input type="checkbox" checked={handlesPersonalData} onChange={(e) => setHandlesPersonalData(e.target.checked)} /> Trata dado pessoal</label>
-        </div>
-        <div>
-          <label className="label">Soma de compras deste fornecedor nos últimos 12 meses (R$)</label>
-          <input className="input" type="number" value={priorValue} onChange={(e) => setPriorValue(Number(e.target.value))} />
+
+        <div className="form-section">
+          <p className="form-section-label">Contrato e fornecedor</p>
+          <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+            <label><input type="checkbox" checked={needsContract} onChange={(e) => setNeedsContract(e.target.checked)} /> Precisa de contrato</label>
+            <label><input type="checkbox" checked={needsMapping} onChange={(e) => setNeedsMapping(e.target.checked)} /> Precisa de mapeamento</label>
+          </div>
+          <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+            <label><input type="checkbox" checked={supplierApproved} onChange={(e) => setSupplierApproved(e.target.checked)} /> Fornecedor já homologado</label>
+            <label><input type="checkbox" checked={handlesPersonalData} onChange={(e) => setHandlesPersonalData(e.target.checked)} /> Trata dado pessoal</label>
+          </div>
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -305,36 +318,40 @@ function ValidacaoForm({
   return (
     <Panel title="Validação orçamentária">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Responsável pela validação" sessionActor={sessionActor} value={budgetActorId} onChange={setBudgetActorId} role="COMPRADOR" />
-        <div>
-          <label className="label">Linha do Orçamento (observação)</label>
-          <input
-            className="input" value={budgetObservation} onChange={(e) => setBudgetObservation(e.target.value)}
-            placeholder="Ex: Linha Marketing Digital, dentro do previsto para o mês"
-          />
+        <div className="form-section">
+          <p className="form-section-label">Validação</p>
+          <ActorField label="Responsável pela validação" sessionActor={sessionActor} value={budgetActorId} onChange={setBudgetActorId} role="COMPRADOR" />
+          <div>
+            <label className="label">Linha do Orçamento (observação)</label>
+            <input
+              className="input" value={budgetObservation} onChange={(e) => setBudgetObservation(e.target.value)}
+              placeholder="Ex: Linha Marketing Digital, dentro do previsto para o mês"
+            />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="btn btn-primary"
+              disabled={loading || !budgetActorId}
+              onClick={() =>
+                onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", {
+                  budgetOk: true, actorId: budgetActorId, observation: budgetObservation,
+                })
+              }
+            >
+              Há orçamento disponível
+            </button>
+            <button
+              className="btn btn-secondary"
+              disabled={loading}
+              onClick={() => onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", { budgetOk: false })}
+            >
+              Sem orçamento — abrir exceção
+            </button>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn btn-primary"
-            disabled={loading || !budgetActorId}
-            onClick={() =>
-              onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", {
-                budgetOk: true, actorId: budgetActorId, observation: budgetObservation,
-              })
-            }
-          >
-            Há orçamento disponível
-          </button>
-          <button
-            className="btn btn-secondary"
-            disabled={loading}
-            onClick={() => onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", { budgetOk: false })}
-          >
-            Sem orçamento — abrir exceção
-          </button>
-        </div>
-        <div style={{ borderTop: "1px solid #eee", paddingTop: 10 }}>
-          <p style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>
+        <div className="form-section">
+          <p className="form-section-label">Exceção orçamentária</p>
+          <p style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 8 }}>
             Se uma exceção já foi aberta, decida abaixo — alçada calculada: <strong>{BUDGET_EXCEPTION_LEVEL_LABEL[exceptionLevel]}</strong>
           </p>
           <ActorField
@@ -342,9 +359,11 @@ function ValidacaoForm({
             sessionActor={sessionActor} value={exceptionApproverId} onChange={setExceptionApproverId}
             role={exceptionApproverRole} placeholder="Selecione o aprovador da exceção"
           />
-          <label className="label" style={{ marginTop: 8 }}>Justificativa</label>
-          <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <div>
+            <label className="label">Justificativa</label>
+            <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
             <button
               className="btn btn-primary"
               disabled={loading}
@@ -384,11 +403,16 @@ function DueDiligenceForm({
   return (
     <Panel title="Due Diligence (Privacidade)">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Responsável (Privacidade)" sessionActor={sessionActor} value={decidedBy} onChange={setDecidedBy} role="PRIVACIDADE" />
+        <div className="form-section">
+          <ActorField label="Responsável (Privacidade)" sessionActor={sessionActor} value={decidedBy} onChange={setDecidedBy} role="PRIVACIDADE" />
+        </div>
         <AiInsightPanel requestId={request.id} stage="DUE_DILIGENCE" actorId={decidedBy} />
-        <div>
-          <label className="label">Justificativa</label>
-          <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
+        <div className="form-section">
+          <p className="form-section-label">Decisão</p>
+          <div>
+            <label className="label">Justificativa</label>
+            <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
+          </div>
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -417,33 +441,41 @@ function CotacaoForm({
     <Panel title="Cotação">
       <div style={{ display: "grid", gap: 10 }}>
         {request.quotes.length > 0 && (
-          <div style={{ fontSize: 12 }}>
-            {request.quotes.map((q) => (
-              <div key={q.id} style={{ padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-                <strong>{q.supplierName}</strong> — R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
-              </div>
-            ))}
+          <div className="form-section">
+            <p className="form-section-label">Cotações registradas</p>
+            <div style={{ fontSize: 12 }}>
+              {request.quotes.map((q) => (
+                <div key={q.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border-soft)" }}>
+                  <strong>{q.supplierName}</strong> — R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
+                </div>
+              ))}
+            </div>
           </div>
         )}
-        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        <div className="form-section">
+          <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        </div>
         <AiInsightPanel requestId={request.id} stage="COTACAO" actorId={actorId} />
-        <div>
-          <label className="label">Fornecedor</label>
-          <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="form-section">
+          <p className="form-section-label">Nova cotação</p>
           <div>
-            <label className="label">Valor inicial</label>
-            <input className="input" type="number" value={initialValue} onChange={(e) => setInitialValue(Number(e.target.value))} />
+            <label className="label">Fornecedor</label>
+            <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Valor inicial</label>
+              <input className="input" type="number" value={initialValue} onChange={(e) => setInitialValue(Number(e.target.value))} />
+            </div>
+            <div>
+              <label className="label">Valor negociado</label>
+              <input className="input" type="number" value={negotiatedValue} onChange={(e) => setNegotiatedValue(Number(e.target.value))} />
+            </div>
           </div>
           <div>
-            <label className="label">Valor negociado</label>
-            <input className="input" type="number" value={negotiatedValue} onChange={(e) => setNegotiatedValue(Number(e.target.value))} />
+            <label className="label">Condição de pagamento</label>
+            <input className="input" value={paymentCondition} onChange={(e) => setPaymentCondition(e.target.value)} />
           </div>
-        </div>
-        <div>
-          <label className="label">Condição de pagamento</label>
-          <input className="input" value={paymentCondition} onChange={(e) => setPaymentCondition(e.target.value)} />
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -475,19 +507,24 @@ function MapaCotacaoForm({
   return (
     <Panel title="Mapa de Cotação">
       <div style={{ display: "grid", gap: 10 }}>
-        {request.quotes.map((q) => {
-          const saving = q.initialValue > 0 ? ((q.initialValue - q.negotiatedValue) / q.initialValue) * 100 : 0;
-          return (
-            <label key={q.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: 8, border: "1px solid #eee", borderRadius: 8 }}>
-              <span>
-                <input type="radio" name="quote" checked={selectedQuoteId === q.id} onChange={() => setSelectedQuoteId(q.id)} />{" "}
-                <strong>{q.supplierName}</strong> — R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
-              </span>
-              <span style={{ color: saving >= 0 ? "#25D366" : "#A32D2D", fontWeight: 700 }}>saving {saving.toFixed(1)}%</span>
-            </label>
-          );
-        })}
-        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        <div className="form-section">
+          <p className="form-section-label">Cotações</p>
+          {request.quotes.map((q) => {
+            const saving = q.initialValue > 0 ? ((q.initialValue - q.negotiatedValue) / q.initialValue) * 100 : 0;
+            return (
+              <label key={q.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: 8, border: "1px solid var(--border-soft)", borderRadius: 8 }}>
+                <span>
+                  <input type="radio" name="quote" checked={selectedQuoteId === q.id} onChange={() => setSelectedQuoteId(q.id)} />{" "}
+                  <strong>{q.supplierName}</strong> — R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
+                </span>
+                <span style={{ color: saving >= 0 ? "var(--acerto-green)" : "var(--danger)", fontWeight: 700 }}>saving {saving.toFixed(1)}%</span>
+              </label>
+            );
+          })}
+        </div>
+        <div className="form-section">
+          <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        </div>
         <AiInsightPanel requestId={request.id} stage="MAPA_COTACAO" actorId={actorId} />
         <ErrorBox error={error} />
         <button className="btn btn-primary" disabled={loading || !actorId || !selectedQuoteId} onClick={() => onSubmit(`/api/requests/${request.id}/mapa-cotacao`, "PATCH", { actorId, selectedQuoteId })}>
@@ -527,7 +564,7 @@ function AprovacaoForm({
     <Panel title="Aprovação">
       <div style={{ display: "grid", gap: 10 }}>
         {!hasDeclaration || latestHasConflict ? (
-          <div style={{ background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
+          <div className="hint-box hint-box-warning">
             <p style={{ fontSize: 11, fontWeight: 700, marginBottom: 8 }}>
               Declaração de conflito de interesse obrigatória antes de criar a aprovação.
             </p>
@@ -549,8 +586,9 @@ function AprovacaoForm({
           </div>
         ) : (
           <>
-            <div>
-              <label className="label">1. Criar aprovação — aprovador</label>
+            <div className="form-section">
+              <p className="form-section-label">1. Criar aprovação</p>
+              <label className="label">Aprovador</label>
               <div style={{ display: "flex", gap: 8 }}>
                 <UserPicker value={approverId} onChange={setApproverId} role="APROVADOR" />
                 <button className="btn btn-secondary" disabled={loading || !approverId} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", { approverId })}>
@@ -558,8 +596,8 @@ function AprovacaoForm({
                 </button>
               </div>
             </div>
-            <div style={{ borderTop: "1px solid #eee", paddingTop: 10 }}>
-              <label className="label">2. Decidir</label>
+            <div className="form-section">
+              <p className="form-section-label">2. Decidir</p>
               <select className="input" value={approvalId} onChange={(e) => setApprovalId(e.target.value)}>
                 <option value="">Selecione a aprovação</option>
                 {request.approvals.map((a) => (
@@ -627,25 +665,30 @@ function JuridicoForm({
     <Panel title="Jurídico">
       <div style={{ display: "grid", gap: 10 }}>
         {isCancelamento && (
-          <p style={{ fontSize: 12, color: "var(--ink-muted)", background: "#FFF4D6", borderRadius: 8, padding: 10 }}>
+          <p className="hint-box hint-box-warning">
             Cancelamento de Contrato, Serviços e Ferramentas — ao assinar, a solicitação é encerrada direto
             (sem Pedido de Compra nem Mapeamento de Contrato, já que o contrato já existe e já está mapeado).
             Lembre-se de cancelar o contrato correspondente em Contratos (ação Cancelar) para notificar a Tesouraria.
           </p>
         )}
-        <ActorField label="Responsável (Jurídico)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="JURIDICO" />
+        <div className="form-section">
+          <ActorField label="Responsável (Jurídico)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="JURIDICO" />
+        </div>
         <AiInsightPanel requestId={request.id} stage="JURIDICO" actorId={actorId} draft={{ minutaUrl, observations }} />
-        <div>
-          <label className="label">URL da minuta</label>
-          <input className="input" value={minutaUrl} onChange={(e) => setMinutaUrl(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">URL do documento assinado</label>
-          <input className="input" value={signedDocUrl} onChange={(e) => setSignedDocUrl(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">Observações</label>
-          <input className="input" value={observations} onChange={(e) => setObservations(e.target.value)} />
+        <div className="form-section">
+          <p className="form-section-label">Documentos</p>
+          <div>
+            <label className="label">URL da minuta</label>
+            <input className="input" value={minutaUrl} onChange={(e) => setMinutaUrl(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">URL do documento assinado</label>
+            <input className="input" value={signedDocUrl} onChange={(e) => setSignedDocUrl(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Observações</label>
+            <input className="input" value={observations} onChange={(e) => setObservations(e.target.value)} />
+          </div>
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -713,49 +756,54 @@ function PedidoCompraForm({
   return (
     <Panel title="Pedido de Compra">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
-
-        <div>
-          <label className="label">Fornecedor cadastrado (opcional)</label>
-          <SupplierPicker
-            onSelect={(s) => {
-              setSupplierId(s.id);
-              setSupplierLegalName(s.legalName);
-              setSupplierCnpj(s.cnpj);
-              setContactName(s.contactName ?? "");
-              setContactPhone(s.contactPhone ?? "");
-              setContactEmail(s.contactEmail ?? "");
-            }}
-          />
+        <div className="form-section">
+          <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="form-section">
+          <p className="form-section-label">Fornecedor</p>
           <div>
-            <label className="label">Razão social do fornecedor</label>
-            <input className="input" value={supplierLegalName} onChange={(e) => setSupplierLegalName(e.target.value)} />
+            <label className="label">Fornecedor cadastrado (opcional)</label>
+            <SupplierPicker
+              onSelect={(s) => {
+                setSupplierId(s.id);
+                setSupplierLegalName(s.legalName);
+                setSupplierCnpj(s.cnpj);
+                setContactName(s.contactName ?? "");
+                setContactPhone(s.contactPhone ?? "");
+                setContactEmail(s.contactEmail ?? "");
+              }}
+            />
           </div>
-          <div>
-            <label className="label">CNPJ</label>
-            <input className="input" value={supplierCnpj} onChange={(e) => setSupplierCnpj(e.target.value)} />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Razão social do fornecedor</label>
+              <input className="input" value={supplierLegalName} onChange={(e) => setSupplierLegalName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">CNPJ</label>
+              <input className="input" value={supplierCnpj} onChange={(e) => setSupplierCnpj(e.target.value)} />
+            </div>
           </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-          <div>
-            <label className="label">Contato</label>
-            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Telefone</label>
-            <input className="input" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">E-mail</label>
-            <input className="input" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Contato</label>
+              <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Telefone</label>
+              <input className="input" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">E-mail</label>
+              <input className="input" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="label">Itens</label>
+        <div className="form-section">
+          <p className="form-section-label">Itens</p>
           <div style={{ display: "grid", gap: 6 }}>
             <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr 1.2fr 1fr auto", gap: 6 }}>
               <span className="help" style={{ margin: 0 }}>Descrição</span>
@@ -793,43 +841,46 @@ function PedidoCompraForm({
           )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-          <div>
-            <label className="label">Prazo de Entrega</label>
-            <input className="input" value={prazoEntrega} onChange={(e) => setPrazoEntrega(e.target.value)} placeholder="Ex: 15 dias úteis" />
+        <div className="form-section">
+          <p className="form-section-label">Condições comerciais e entrega</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Prazo de Entrega</label>
+              <input className="input" value={prazoEntrega} onChange={(e) => setPrazoEntrega(e.target.value)} placeholder="Ex: 15 dias úteis" />
+            </div>
+            <div>
+              <label className="label">Número de Parcelas</label>
+              <input className="input" type="number" value={installments} onChange={(e) => setInstallments(Number(e.target.value))} />
+            </div>
+            <div>
+              <label className="label">Valor da Parcela</label>
+              <input
+                className="input" type="number" value={installmentValue}
+                onChange={(e) => { setInstallmentValueTouched(true); setInstallmentValue(Number(e.target.value)); }}
+              />
+              <span className="help" style={{ margin: "2px 0 0" }}>
+                Sugerido: {(negotiatedValue / (installments || 1)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} — ajuda a alimentar o fluxo de caixa
+              </span>
+            </div>
           </div>
+
           <div>
-            <label className="label">Número de Parcelas</label>
-            <input className="input" type="number" value={installments} onChange={(e) => setInstallments(Number(e.target.value))} />
+            <label className="label">Local de Entrega / Instruções de Recebimento</label>
+            <input className="input" value={localEntrega} onChange={(e) => setLocalEntrega(e.target.value)} placeholder="Endereço e/ou instruções de recebimento" />
           </div>
+
           <div>
-            <label className="label">Valor da Parcela</label>
-            <input
-              className="input" type="number" value={installmentValue}
-              onChange={(e) => { setInstallmentValueTouched(true); setInstallmentValue(Number(e.target.value)); }}
-            />
-            <span className="help" style={{ margin: "2px 0 0" }}>
-              Sugerido: {(negotiatedValue / (installments || 1)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} — ajuda a alimentar o fluxo de caixa
-            </span>
+            <label className="label">Frete</label>
+            <select className="input" value={frete} onChange={(e) => setFrete(e.target.value as "CIF" | "FOB")}>
+              <option value="CIF">CIF</option>
+              <option value="FOB">FOB</option>
+            </select>
           </div>
-        </div>
 
-        <div>
-          <label className="label">Local de Entrega / Instruções de Recebimento</label>
-          <input className="input" value={localEntrega} onChange={(e) => setLocalEntrega(e.target.value)} placeholder="Endereço e/ou instruções de recebimento" />
+          <label style={{ fontSize: 12 }}>
+            <input type="checkbox" checked={needsMeasurement} onChange={(e) => setNeedsMeasurement(e.target.checked)} /> Precisa de medição antes da entrega/conclusão
+          </label>
         </div>
-
-        <div>
-          <label className="label">Frete</label>
-          <select className="input" value={frete} onChange={(e) => setFrete(e.target.value as "CIF" | "FOB")}>
-            <option value="CIF">CIF</option>
-            <option value="FOB">FOB</option>
-          </select>
-        </div>
-
-        <label style={{ fontSize: 12 }}>
-          <input type="checkbox" checked={needsMeasurement} onChange={(e) => setNeedsMeasurement(e.target.checked)} /> Precisa de medição antes da entrega/conclusão
-        </label>
         <ErrorBox error={error} />
         <button
           className="btn btn-primary"
@@ -864,11 +915,13 @@ function AguardandoEntregaForm({
     <Panel title="Aguardando Entrega/Conclusão">
       <div style={{ display: "grid", gap: 10 }}>
         {request.purchaseOrder?.pdfUrl && (
-          <a href={request.purchaseOrder.pdfUrl} target="_blank" style={{ fontSize: 12, color: "#25D366" }}>
+          <a href={request.purchaseOrder.pdfUrl} target="_blank" style={{ fontSize: 12, color: "var(--acerto-green)" }}>
             Baixar PDF do Pedido de Compra
           </a>
         )}
-        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        <div className="form-section">
+          <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        </div>
         <ErrorBox error={error} />
         <button className="btn btn-primary" disabled={loading || !actorId} onClick={() => onSubmit(`/api/requests/${request.id}/aguardando-entrega`, "PATCH", { actorId })}>
           Confirmar entrega/recebimento e avançar
@@ -889,18 +942,23 @@ function MedicaoForm({
   return (
     <Panel title="Medição e Aprovação Financeira">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
-        <div>
-          <label className="label">Escopo executado</label>
-          <input className="input" value={scopeExecuted} onChange={(e) => setScopeExecuted(e.target.value)} />
+        <div className="form-section">
+          <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
         </div>
-        <div>
-          <label className="label">Quantidades</label>
-          <input className="input" value={quantities} onChange={(e) => setQuantities(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">Comentário</label>
-          <input className="input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+        <div className="form-section">
+          <p className="form-section-label">Medição</p>
+          <div>
+            <label className="label">Escopo executado</label>
+            <input className="input" value={scopeExecuted} onChange={(e) => setScopeExecuted(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Quantidades</label>
+            <input className="input" value={quantities} onChange={(e) => setQuantities(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Comentário</label>
+            <input className="input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+          </div>
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -934,14 +992,19 @@ function FiscalForm({
   return (
     <Panel title="Validação Fiscal">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Responsável (Fiscal)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="FISCAL" />
-        <div>
-          <label className="label">URL do documento fiscal</label>
-          <input className="input" value={documentUrl} onChange={(e) => setDocumentUrl(e.target.value)} />
+        <div className="form-section">
+          <ActorField label="Responsável (Fiscal)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="FISCAL" />
         </div>
-        <div>
-          <label className="label">Comentário</label>
-          <input className="input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+        <div className="form-section">
+          <p className="form-section-label">Documento fiscal</p>
+          <div>
+            <label className="label">URL do documento fiscal</label>
+            <input className="input" value={documentUrl} onChange={(e) => setDocumentUrl(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Comentário</label>
+            <input className="input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} />
+          </div>
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -967,15 +1030,20 @@ function TesourariaForm({
   return (
     <Panel title="Tesouraria (Pagamento)">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Responsável (Tesouraria)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="TESOURARIA" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <div>
-            <label className="label">Data programada</label>
-            <input className="input" type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Data de pagamento</label>
-            <input className="input" type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} />
+        <div className="form-section">
+          <ActorField label="Responsável (Tesouraria)" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="TESOURARIA" />
+        </div>
+        <div className="form-section">
+          <p className="form-section-label">Pagamento</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Data programada</label>
+              <input className="input" type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Data de pagamento</label>
+              <input className="input" type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} />
+            </div>
           </div>
         </div>
         <ErrorBox error={error} />
@@ -1035,7 +1103,9 @@ function MapeamentoContratoForm({
   return (
     <Panel title="Mapeamento de Contrato">
       <div style={{ display: "grid", gap: 10 }}>
-        <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        <div className="form-section">
+          <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
+        </div>
 
         <AiInsightPanel
           requestId={request.id}
@@ -1044,94 +1114,106 @@ function MapeamentoContratoForm({
           draft={{ supplierName, contractObject, prazo, paymentCondition, terminationClause, nonCompete, lgpdClause, brandUse, corporateChangeClause }}
         />
 
-        <div>
-          <label className="label">Fornecedor cadastrado (opcional)</label>
-          <SupplierPicker
-            onSelect={(s) => {
-              setSupplierId(s.id);
-              setSupplierName(s.legalName);
-              setSupplierTradeName(s.tradeName ?? "");
-              setSupplierCnpj(s.cnpj);
-            }}
-          />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="form-section">
+          <p className="form-section-label">Fornecedor</p>
           <div>
-            <label className="label">Razão Social</label>
-            <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+            <label className="label">Fornecedor cadastrado (opcional)</label>
+            <SupplierPicker
+              onSelect={(s) => {
+                setSupplierId(s.id);
+                setSupplierName(s.legalName);
+                setSupplierTradeName(s.tradeName ?? "");
+                setSupplierCnpj(s.cnpj);
+              }}
+            />
           </div>
-          <div>
-            <label className="label">Nome Fantasia</label>
-            <input className="input" value={supplierTradeName} onChange={(e) => setSupplierTradeName(e.target.value)} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Razão Social</label>
+              <input className="input" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Nome Fantasia</label>
+              <input className="input" value={supplierTradeName} onChange={(e) => setSupplierTradeName(e.target.value)} />
+            </div>
           </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <div>
-            <label className="label">CNPJ</label>
-            <input className="input" value={supplierCnpj} onChange={(e) => setSupplierCnpj(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Tipo de Documento</label>
-            <select className="input" value={documentType} onChange={(e) => setDocumentType(e.target.value)}>
-              <option value="">Selecione</option>
-              {DOCUMENT_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="label">Objeto do Contrato</label>
-          <textarea className="input" style={{ minHeight: 60, resize: "vertical" }} value={contractObject} onChange={(e) => setContractObject(e.target.value)} />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-          <div>
-            <label className="label">Início da Vigência</label>
-            <input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Fim da Vigência</label>
-            <input className="input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Renovação prevista</label>
-            <input className="input" type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">CNPJ</label>
+              <input className="input" value={supplierCnpj} onChange={(e) => setSupplierCnpj(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Tipo de Documento</label>
+              <select className="input" value={documentType} onChange={(e) => setDocumentType(e.target.value)}>
+                <option value="">Selecione</option>
+                {DOCUMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="form-section">
+          <p className="form-section-label">Objeto e vigência</p>
           <div>
-            <label className="label">Prazo</label>
-            <input className="input" value={prazo} onChange={(e) => setPrazo(e.target.value)} placeholder="Ex: 12 meses, renovação automática" />
+            <label className="label">Objeto do Contrato</label>
+            <textarea className="input" style={{ minHeight: 60, resize: "vertical" }} value={contractObject} onChange={(e) => setContractObject(e.target.value)} />
           </div>
-          <div>
-            <label className="label">Condição de Pagamento</label>
-            <input className="input" value={paymentCondition} onChange={(e) => setPaymentCondition(e.target.value)} />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Início da Vigência</label>
+              <input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Fim da Vigência</label>
+              <input className="input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Renovação prevista</label>
+              <input className="input" type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Prazo</label>
+              <input className="input" value={prazo} onChange={(e) => setPrazo(e.target.value)} placeholder="Ex: 12 meses, renovação automática" />
+            </div>
+            <div>
+              <label className="label">Condição de Pagamento</label>
+              <input className="input" value={paymentCondition} onChange={(e) => setPaymentCondition(e.target.value)} />
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className="label">Cláusula de Renovação e Rescisão</label>
-          <textarea className="input" style={{ minHeight: 60, resize: "vertical" }} value={terminationClause} onChange={(e) => setTerminationClause(e.target.value)} />
+        <div className="form-section">
+          <p className="form-section-label">Cláusulas</p>
+          <div>
+            <label className="label">Cláusula de Renovação e Rescisão</label>
+            <textarea className="input" style={{ minHeight: 60, resize: "vertical" }} value={terminationClause} onChange={(e) => setTerminationClause(e.target.value)} />
+          </div>
+          <div style={{ display: "flex", gap: 16, fontSize: 12, flexWrap: "wrap" }}>
+            <label><input type="checkbox" checked={lgpdClause} onChange={(e) => setLgpdClause(e.target.checked)} /> Cláusula LGPD</label>
+            <label><input type="checkbox" checked={nonCompete} onChange={(e) => setNonCompete(e.target.checked)} /> Não-concorrência</label>
+            <label><input type="checkbox" checked={brandUse} onChange={(e) => setBrandUse(e.target.checked)} /> Uso de marca</label>
+            <label><input type="checkbox" checked={corporateChangeClause} onChange={(e) => setCorporateChangeClause(e.target.checked)} /> Mudança societária</label>
+          </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <div>
-            <label className="label">Gestor do contrato</label>
-            <UserPicker value={contractManagerId} onChange={setContractManagerId} />
+        <div className="form-section">
+          <p className="form-section-label">Gestão</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <label className="label">Gestor do contrato</label>
+              <UserPicker value={contractManagerId} onChange={setContractManagerId} />
+            </div>
+            <div>
+              <label className="label">Área</label>
+              <input className="input" value={area} onChange={(e) => setArea(e.target.value)} />
+            </div>
           </div>
-          <div>
-            <label className="label">Área</label>
-            <input className="input" value={area} onChange={(e) => setArea(e.target.value)} />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 16, fontSize: 12, flexWrap: "wrap" }}>
-          <label><input type="checkbox" checked={lgpdClause} onChange={(e) => setLgpdClause(e.target.checked)} /> Cláusula LGPD</label>
-          <label><input type="checkbox" checked={nonCompete} onChange={(e) => setNonCompete(e.target.checked)} /> Não-concorrência</label>
-          <label><input type="checkbox" checked={brandUse} onChange={(e) => setBrandUse(e.target.checked)} /> Uso de marca</label>
-          <label><input type="checkbox" checked={corporateChangeClause} onChange={(e) => setCorporateChangeClause(e.target.checked)} /> Mudança societária</label>
         </div>
         <ErrorBox error={error} />
         <button
@@ -1161,17 +1243,17 @@ function ConcluidoPanel({
   return (
     <Panel title="Concluído">
       <div style={{ display: "grid", gap: 10 }}>
-        {request.contract && <a href={`/contratos/${request.contract.id}`} style={{ fontSize: 12, color: "#25D366" }}>Ver contrato mapeado →</a>}
+        {request.contract && <a href={`/contratos/${request.contract.id}`} style={{ fontSize: 12, color: "var(--acerto-green)" }}>Ver contrato mapeado →</a>}
         {request.purchaseOrder && (
-          <a href={`/api/requests/${request.id}/pedido-compra/pdf`} target="_blank" style={{ fontSize: 12, color: "#25D366" }}>
+          <a href={`/api/requests/${request.id}/pedido-compra/pdf`} target="_blank" style={{ fontSize: 12, color: "var(--acerto-green)" }}>
             Baixar PDF do Pedido de Compra
           </a>
         )}
         {request.supplierEvaluation ? (
-          <p style={{ fontSize: 12, color: "#666" }}>Avaliação (NPS) já registrada. Obrigado!</p>
+          <p style={{ fontSize: 12, color: "var(--ink-muted)" }}>Avaliação (NPS) já registrada. Obrigado!</p>
         ) : (
           <>
-            <p style={{ fontSize: 12, color: "#666" }}>Como foi sua experiência com este processo de compra? (0–10)</p>
+            <p style={{ fontSize: 12, color: "var(--ink-muted)" }}>Como foi sua experiência com este processo de compra? (0–10)</p>
             <input className="input" type="number" min={0} max={10} value={score} onChange={(e) => setScore(Number(e.target.value))} />
             <input className="input" placeholder="Comentário (opcional)" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
             <ErrorBox error={error} />

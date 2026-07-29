@@ -9,7 +9,7 @@ import { RequestChatWidget } from "@/components/RequestChatWidget";
 import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { StageOverrideControls } from "@/components/StageOverrideControls";
 import { formatDateOnly } from "@/lib/format";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
 
@@ -92,8 +92,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   };
 
   return (
-    <>
-      <TopNav active="/solicitacoes" />
+    <AppShell active="/solicitacoes">
       <main className="page" style={{ paddingTop: 28 }}>
         <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
 
@@ -171,6 +170,6 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       </main>
 
       <RequestChatWidget requestId={request.id} requesterName={request.requester.name} buyerName={request.buyer?.name ?? null} />
-    </>
+    </AppShell>
   );
 }

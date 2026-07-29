@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { formatDateOnly } from "@/lib/format";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { ContractImportUpload } from "@/components/ContractImportUpload";
 import type { Prisma, Diretoria } from "@prisma/client";
@@ -51,8 +51,7 @@ export default async function ContratosPage({
   });
 
   return (
-    <>
-      <TopNav active="/contratos" />
+    <AppShell active="/contratos">
       <main className="page" style={{ paddingTop: 28 }}>
         <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
@@ -100,6 +99,6 @@ export default async function ContratosPage({
           )}
         </div>
       </main>
-    </>
+    </AppShell>
   );
 }

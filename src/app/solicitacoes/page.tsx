@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
 import type { Prisma, Stage, Diretoria, DemandType, Priority } from "@prisma/client";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 
 export const dynamic = "force-dynamic";
@@ -63,14 +63,14 @@ export default async function SolicitacoesPage({
   }
 
   return (
-    <>
-      <TopNav active="/solicitacoes" />
+    <AppShell active="/solicitacoes">
       <main className="page" style={{ paddingTop: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10 }}>
           <div>
             <h1 className="page-title">Solicitações de Compra</h1>
             <p className="page-subtitle">{requests.length} solicitação(ões) no recorte atual</p>
           </div>
+          <a href="/solicitacoes/pendencias" className="btn btn-secondary">Minhas Pendências →</a>
         </div>
 
         <SearchFilterBar
@@ -129,6 +129,6 @@ export default async function SolicitacoesPage({
             })}
         </div>
       </main>
-    </>
+    </AppShell>
   );
 }

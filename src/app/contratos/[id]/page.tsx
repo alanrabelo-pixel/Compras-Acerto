@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ContractActions } from "@/components/ContractActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { formatDateOnly } from "@/lib/format";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
 
@@ -60,8 +60,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
       : { label: `Normal (${diasFaltantes} dias)`, badge: "badge-green" };
 
   return (
-    <>
-      <TopNav active="/contratos" />
+    <AppShell active="/contratos">
       <main className="page-narrow" style={{ paddingTop: 28 }}>
         <a href="/contratos" className="back-link">← voltar aos contratos</a>
 
@@ -161,6 +160,6 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           ))}
         </section>
       </main>
-    </>
+    </AppShell>
   );
 }

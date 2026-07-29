@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 import { NovaSolicitacaoForm } from "@/components/NovaSolicitacaoForm";
 
 export default async function NovaSolicitacaoPage() {
@@ -20,9 +20,8 @@ export default async function NovaSolicitacaoPage() {
     : null;
 
   return (
-    <>
-      <TopNav active="/solicitacoes" />
+    <AppShell active="/solicitacoes">
       <NovaSolicitacaoForm sessionRequester={sessionRequester} />
-    </>
+    </AppShell>
   );
 }

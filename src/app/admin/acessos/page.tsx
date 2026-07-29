@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 import { RoleAccessToggles } from "@/components/RoleAccessToggles";
 import { UserActiveToggle } from "@/components/UserActiveToggle";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
@@ -35,8 +35,7 @@ export default async function AcessosPage({
   });
 
   return (
-    <>
-      <TopNav active="/admin/acessos" />
+    <AppShell active="/admin/acessos">
       <main className="page" style={{ paddingTop: 28 }}>
         <h1 className="page-title">Controle de acesso</h1>
         <p className="page-subtitle">
@@ -101,6 +100,6 @@ export default async function AcessosPage({
           )}
         </div>
       </main>
-    </>
+    </AppShell>
   );
 }

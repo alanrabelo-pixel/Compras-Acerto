@@ -332,7 +332,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
         {error && <p style={{ fontSize: 12.5, color: "var(--danger)", margin: 0 }}>{error}</p>}
         {createdRequestId && (
-          <a href={`/solicitacoes/${createdRequestId}`} style={{ fontSize: 12.5, color: "#178A46", fontWeight: 600 }}>
+          <a href={`/solicitacoes/${createdRequestId}`} style={{ fontSize: 12.5, color: "var(--acerto-green-dark)", fontWeight: 600 }}>
             Abrir solicitação criada →
           </a>
         )}

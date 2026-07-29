@@ -160,18 +160,9 @@ export function AiInsightPanel({
   const [latest, ...older] = insights;
 
   return (
-    <section
-      style={{
-        border: "1px solid #D8EFE0",
-        background: "#F3FBF6",
-        borderRadius: 10,
-        padding: 12,
-        display: "grid",
-        gap: 10,
-      }}
-    >
+    <section className="ai-panel">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: "#178A46" }}>Assistente de IA</h3>
+        <h3 className="ai-panel-title">Assistente de IA</h3>
         <button
           className="btn btn-secondary"
           disabled={generating || !actorId}
@@ -198,13 +189,13 @@ export function AiInsightPanel({
             <button
               type="button"
               onClick={() => setEditingKeys((v) => !v)}
-              style={{ background: "none", border: "none", color: "#178A46", cursor: "pointer", fontSize: 11, textDecoration: "underline" }}
+              style={{ background: "none", border: "none", color: "var(--acerto-green-dark)", cursor: "pointer", fontSize: 11, textDecoration: "underline" }}
             >
               {editingKeys ? "cancelar" : "editar"}
             </button>
           </div>
           {editingKeys && (
-            <div style={{ display: "grid", gap: 6, background: "#FFFFFF", border: "1px solid #eee", borderRadius: 8, padding: 8 }}>
+            <div style={{ display: "grid", gap: 6, background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "var(--radius-sm)", padding: 8 }}>
               <p style={{ color: "var(--ink-muted)" }}>
                 Cada pessoa usa sua própria chave (todo mundo na Acerto já tem acesso a Claude e Gemini) — deixe em
                 branco o que não quiser alterar.
@@ -260,16 +251,7 @@ function InsightCard({ insight, highlight }: { insight: Insight; highlight?: boo
   };
 
   return (
-    <div
-      style={{
-        background: highlight ? "#FFFFFF" : "#FAFAFA",
-        border: highlight ? "1px solid #25D366" : "1px solid #eee",
-        borderRadius: 8,
-        padding: 10,
-        display: "grid",
-        gap: 8,
-      }}
-    >
+    <div className={`ai-insight-card${highlight ? " latest" : ""}`}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--ink-muted)" }}>
         <span>
           {config.label} · {insight.requestedBy?.name ?? "—"}
@@ -306,8 +288,8 @@ function ProviderColumn({
   config: { highlights: string; cautions: string; recommendation: string };
 }) {
   return (
-    <div style={{ fontSize: 11.5, display: "grid", gap: 6, borderLeft: "2px solid #eee", paddingLeft: 8 }}>
-      <p style={{ fontWeight: 700, fontSize: 10.5, color: "#178A46" }}>{label}</p>
+    <div className="ai-provider-col">
+      <p className="ai-provider-label">{label}</p>
       {!payload && errorMsg && <p style={{ color: "var(--danger)", fontSize: 10.5 }}>{errorMsg}</p>}
       {payload && (
         <>
@@ -324,7 +306,7 @@ function ProviderColumn({
           )}
           {payload.cautions.length > 0 && (
             <div>
-              <p style={{ fontWeight: 700, fontSize: 10.5, color: "#A32D2D" }}>{config.cautions}</p>
+              <p style={{ fontWeight: 700, fontSize: 10.5, color: "var(--danger)" }}>{config.cautions}</p>
               <ul style={{ margin: "2px 0 0 14px", padding: 0 }}>
                 {payload.cautions.map((point, i) => (
                   <li key={i}>{point}</li>

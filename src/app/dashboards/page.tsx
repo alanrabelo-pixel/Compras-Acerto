@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { TopNav } from "@/components/TopNav";
+import { AppShell } from "@/components/AppShell";
 import { DashboardFilters } from "@/components/DashboardFilters";
 import { STAGES } from "@/lib/workflow";
 import type { Prisma, Stage, Diretoria, DemandType } from "@prisma/client";
@@ -189,8 +189,7 @@ export default async function DashboardsPage({
   const stageOptions = stageOrder.map((s) => ({ value: s, label: STAGES[s].label }));
 
   return (
-    <>
-      <TopNav active="/dashboards" />
+    <AppShell active="/dashboards">
       <main className="page" style={{ paddingTop: 28 }}>
         <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
         <h1 className="page-title" style={{ marginTop: 12 }}>Dashboards</h1>
@@ -359,6 +358,6 @@ export default async function DashboardsPage({
           </Card>
         </div>
       </main>
-    </>
+    </AppShell>
   );
 }
