@@ -31,8 +31,20 @@ function initials(name: string) {
 export default async function SolicitacoesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; diretoria?: string; costCenterId?: string; priority?: string; demandType?: string };
+  searchParams: { q?: string; diretoria?: string; costCenterId?: string; priority?: string; demandType?: string; view?: string };
 }) {
+  const viewMode = searchParams.view === "lista" ? "lista" : "kanban";
+  const viewHref = (view: string) => {
+    const params = new URLSearchParams();
+    if (searchParams.q) params.set("q", searchParams.q);
+    if (searchParams.diretoria) params.set("diretoria", searchParams.diretoria);
+    if (searchParams.costCenterId) params.set("costCenterId", searchParams.costCenterId);
+    if (searchParams.priority) params.set("priority", searchParams.priority);
+    if (searchParams.demandType) params.set("demandType", searchParams.demandType);
+    params.set("view", view);
+    return `?${params.toString()}`;
+  };
+
   const where: Prisma.PurchaseRequestWhereInput = {};
   if (searchParams.diretoria) where.diretoria = searchParams.diretoria as Diretoria;
   if (searchParams.costCenterId) where.costCenterId = searchParams.costCenterId;
@@ -70,7 +82,13 @@ export default async function SolicitacoesPage({
             <h1 className="page-title">Solicitações de Compra</h1>
             <p className="page-subtitle">{requests.length} solicitação(ões) no recorte atual</p>
           </div>
-          <a href="/solicitacoes/pendencias" className="btn btn-secondary">Minhas Pendências →</a>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div className="view-toggle">
+              <a href={viewHref("kanban")} className={viewMode === "kanban" ? "active" : ""}>☰ Kanban</a>
+              <a href={viewHref("lista")} className={viewMode === "lista" ? "active" : ""}>▤ Lista</a>
+            </div>
+            <a href="/solicitacoes/pendencias" className="btn btn-secondary">Minhas Pendências →</a>
+          </div>
         </div>
 
         <SearchFilterBar
@@ -83,6 +101,7 @@ export default async function SolicitacoesPage({
           ]}
         />
 
+        {viewMode === "kanban" ? (
         <div style={{ display: "flex", gap: 14, overflowX: "auto", marginTop: 22, paddingBottom: 12 }}>
           {Object.values(STAGES)
             .filter((s) => s.stage !== "CANCELADO")
@@ -128,6 +147,34 @@ export default async function SolicitacoesPage({
               );
             })}
         </div>
+        ) : (
+        <div className="table-wrap section-gap">
+          <div className="table-head-row" style={{ gridTemplateColumns: "1fr 2.6fr 1.6fr 0.9fr 1.6fr" }}>
+            <span>Código</span>
+            <span>Descrição</span>
+            <span>Etapa</span>
+            <span>Prioridade</span>
+            <span>Solicitante</span>
+          </div>
+          {requests.map((r) => (
+            <a
+              key={r.id}
+              href={`/solicitacoes/${r.id}`}
+              className="table-row"
+              style={{ gridTemplateColumns: "1fr 2.6fr 1.6fr 0.9fr 1.6fr", alignItems: "center" }}
+            >
+              <span style={{ fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
+              <span className="text-soft">{r.shortDescription}</span>
+              <span><span className="badge badge-neutral">{STAGES[r.currentStage].label}</span></span>
+              <span><span className={`badge ${PRIORITY_BADGE[r.priority] ?? "badge-neutral"}`}>{r.priority}</span></span>
+              <span className="text-soft">{r.requester.name} · {r.costCenter.name}</span>
+            </a>
+          ))}
+          {requests.length === 0 && (
+            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma solicitação encontrada neste recorte.</p>
+          )}
+        </div>
+        )}
       </main>
     </AppShell>
   );

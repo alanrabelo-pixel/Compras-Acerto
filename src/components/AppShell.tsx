@@ -34,14 +34,9 @@ export async function AppShell({ active, children }: { active?: string; children
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link href="/" className="sidebar-brand">
+        <Link href="/" className="sidebar-brand" title="Voltar ao menu de apps da Acerto">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="sidebar-logo" />
-          <span className="sidebar-title">Compras</span>
-        </Link>
-
-        <Link href="/solicitacoes/nova" className="btn btn-primary sidebar-cta">
-          + Nova Solicitação
         </Link>
 
         <nav className="sidebar-nav">
@@ -68,6 +63,10 @@ export async function AppShell({ active, children }: { active?: string; children
             </>
           )}
         </nav>
+
+        <Link href="/solicitacoes/nova" className="btn btn-primary sidebar-cta">
+          + Nova Solicitação
+        </Link>
 
         {user && (
           <div className="sidebar-footer">

@@ -175,29 +175,31 @@ a {
   padding: 20px 14px;
 }
 
+/* Leva de volta ao menu de apps da Acerto (Compras, Chamados...) — só a logo,
+   sem rótulo/ícone extra ao lado. */
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  text-decoration: none;
-  padding: 4px 8px 0;
-  margin-bottom: 20px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+.sidebar-brand:hover {
+  background: var(--surface-muted);
 }
 
 .sidebar-logo {
-  height: 20px;
+  height: 18px;
   width: auto;
   display: block;
 }
 
-.sidebar-title {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
+/* margin-top: auto empurra o botão (e o footer, que vem logo depois) para o
+   fim da barra lateral — fica colado acima de "Modo local"/"Sair". */
 .sidebar-cta {
-  margin-bottom: 18px;
+  margin-top: auto;
+  margin-bottom: 12px;
   justify-content: center;
   width: 100%;
 }
@@ -252,7 +254,6 @@ a {
 }
 
 .sidebar-footer {
-  margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid var(--border-soft);
   display: flex;
@@ -298,7 +299,7 @@ a {
     padding: 10px 14px;
   }
   .sidebar-brand { margin-bottom: 0; margin-right: 8px; }
-  .sidebar-cta { display: none; }
+  .sidebar-cta.btn { display: none; }
   .sidebar-section-label { display: none; }
   .sidebar-nav { flex-direction: row; flex-wrap: wrap; }
   .sidebar-link.sub { padding-left: 10px; }
@@ -519,6 +520,35 @@ textarea.input:focus {
   background: #b42318;
 }
 
+/* Alternância de visualização (ex: Kanban/Lista em Solicitações) — pares de
+   link estilo segmented control, tudo via searchParams (?view=). */
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.view-toggle a {
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  background: var(--surface);
+  transition: background 0.15s, color 0.15s;
+}
+.view-toggle a + a {
+  border-left: 1px solid var(--border);
+}
+.view-toggle a:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+.view-toggle a.active {
+  background: var(--acerto-green-50);
+  color: var(--acerto-green-dark);
+}
+
 /* ---------------------------------------------------------------------- */
 /* Badges                                                                  */
 /* ---------------------------------------------------------------------- */
@@ -555,6 +585,7 @@ textarea.input:focus {
 
 .table-head-row {
   display: grid;
+  gap: 12px;
   padding: 11px 16px;
   background: var(--surface-muted);
   font-size: 11px;
@@ -567,6 +598,7 @@ textarea.input:focus {
 
 .table-row {
   display: grid;
+  gap: 12px;
   padding: 13px 16px;
   border-top: 1px solid var(--border-soft);
   font-size: 13px;
