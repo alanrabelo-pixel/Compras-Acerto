@@ -12,6 +12,7 @@ import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { loadDashboardData, money, CATEGORY_LABEL } from "@/lib/dashboard-data";
 import { STAGES } from "@/lib/workflow";
+import { TableWrap, TableHeadRow, TableRow } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,60 @@ export default async function DashboardsPage({
             <CycleHistogram data={data.cycleHistogram} />
           </Panel>
         </div>
+
+        {/* ---- Chamados (Viagens Acerto / Facilities / NDA) ---- */}
+        <Panel
+          title="Chamados (Viagens · Facilities · NDA)"
+          icon="🎫"
+          subtitle="Fluxo simples fora do processo de Compras — mesmo período do filtro acima; demais filtros não se aplicam"
+        >
+          <div className="kpi-grid" style={{ marginBottom: 16 }}>
+            <KpiCard
+              icon="🎫" label="Chamados no período"
+              formattedValue={String(data.ticketsPanel.total.value)}
+              deltaPct={data.ticketsPanel.total.deltaPct} direction={data.ticketsPanel.total.direction}
+            />
+            <KpiCard
+              icon="⏱" label="Tempo médio de resolução"
+              formattedValue={data.ticketsPanel.avgResolutionDays === null ? "—" : `${data.ticketsPanel.avgResolutionDays.toFixed(1)}d`}
+              deltaPct={null} direction="flat" goodDirection="down"
+            />
+            <KpiCard icon="📬" label="Chamados em aberto" formattedValue={String(data.ticketsPanel.openCount)} deltaPct={null} direction="flat" />
+          </div>
+
+          <TableWrap>
+            <TableHeadRow columns="1.6fr 0.7fr 0.9fr 0.8fr 0.6fr">
+              <span>Serviço</span>
+              <span>Aberto</span>
+              <span>Em andamento</span>
+              <span>Concluído</span>
+              <span>Total</span>
+            </TableHeadRow>
+            {data.ticketsPanel.byCategory.map((c) => (
+              <TableRow key={c.slug} href={`/chamados/${c.slug}`} columns="1.6fr 0.7fr 0.9fr 0.8fr 0.6fr" style={{ alignItems: "center", fontSize: 12.5 }}>
+                <span>{c.label}</span>
+                <span>{c.open}</span>
+                <span>{c.inProgress}</span>
+                <span>{c.concluded}</span>
+                <strong>{c.total}</strong>
+              </TableRow>
+            ))}
+          </TableWrap>
+
+          {data.ticketsPanel.oldestOpen.length > 0 && (
+            <div style={{ marginTop: 14, borderTop: "1px solid var(--border-soft)", paddingTop: 12 }}>
+              <p style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink-soft)", marginBottom: 6 }}>Chamados abertos há mais tempo</p>
+              <div style={{ display: "grid", gap: 4 }}>
+                {data.ticketsPanel.oldestOpen.map((t) => (
+                  <a key={t.id} href={t.href} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--ink)", textDecoration: "none" }}>
+                    <span><strong>{t.code}</strong> · {t.categoryLabel} · {t.description}</span>
+                    <span style={{ fontWeight: 700, color: "var(--ink-muted)" }}>{t.daysOpen}d aberto</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </Panel>
 
         {/* ---- Sazonalidade ---- */}
         <Panel title="Sazonalidade" icon="📅" subtitle="Quando as solicitações são abertas — ajuda a antecipar picos de demanda">

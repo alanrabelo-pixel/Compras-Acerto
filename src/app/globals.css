@@ -25,8 +25,12 @@
   --danger-bg: #fef3f2;
   --warning: #b54708;
   --warning-bg: #fff4d6;
-  --info: #175cd3;
-  --info-bg: #eff6ff;
+  /* "Informativo" — propositalmente grafite/neutro, não azul: a paleta oficial
+     da Acerto (ver acerto-docs) não tem azul, e azul é a cor de um concorrente
+     direto — nunca usar aqui, nem em gráficos (ver CHART_COLORS/CATEGORY_PALETTE
+     em src/components/dashboard/charts.tsx). */
+  --info: #344054;
+  --info-bg: #eef1f5;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -67,8 +71,8 @@
   --danger-bg: #2a1414;
   --warning: #fdb022;
   --warning-bg: #2a2010;
-  --info: #6ba6f2;
-  --info-bg: #10203a;
+  --info: #cbd3e0;
+  --info-bg: #1d2634;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -96,8 +100,8 @@
     --danger-bg: #2a1414;
     --warning: #fdb022;
     --warning-bg: #2a2010;
-    --info: #6ba6f2;
-    --info-bg: #10203a;
+    --info: #cbd3e0;
+    --info-bg: #1d2634;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);

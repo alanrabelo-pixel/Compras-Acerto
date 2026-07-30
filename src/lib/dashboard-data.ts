@@ -14,6 +14,7 @@
 
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
+import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, CATEGORY_ENUM_TO_SLUG, type TicketCategorySlug } from "@/lib/tickets";
 import type { Prisma, Stage } from "@prisma/client";
 
 // ----------------------------------------------------------------------------
@@ -498,6 +499,73 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     alerts.push({ severity: "warning", text: `${riskMap.noContractCount} solicitação(ões) que precisam de contrato ainda não têm contrato mapeado` });
   }
 
+  // ---- Chamados simples (Viagens Acerto / Facilities / NDA) — fluxo à parte
+  // do processo de Compras (SimpleTicket, sem alçada/etapas), mas o pedido é
+  // que o Dashboard também mostre esse recorte. Só o filtro de período
+  // (de/ate) se aplica aqui: os demais filtros do dashboard (diretoria,
+  // centro de custo, categoria de gasto, comprador, fornecedor) pertencem ao
+  // modelo de PurchaseRequest e não existem em SimpleTicket.
+  const [currentTickets, previousTicketsCount] = await Promise.all([
+    prisma.simpleTicket.findMany({
+      where: { createdAt: { gte: de, lte: ate } },
+      select: { id: true, code: true, category: true, status: true, createdAt: true, updatedAt: true, requesterName: true, description: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.simpleTicket.count({ where: { createdAt: { gte: prevDe, lte: prevAte } } }),
+  ]);
+
+  const ticketCategorySlugs = Object.keys(TICKET_CATEGORIES) as TicketCategorySlug[];
+  const byTicketCategory = new Map<string, { open: number; inProgress: number; concluded: number }>();
+  for (const slug of ticketCategorySlugs) byTicketCategory.set(TICKET_CATEGORIES[slug].enumValue, { open: 0, inProgress: 0, concluded: 0 });
+  for (const t of currentTickets) {
+    const agg = byTicketCategory.get(t.category);
+    if (!agg) continue;
+    if (t.status === "ABERTO") agg.open += 1;
+    else if (t.status === "EM_ANDAMENTO") agg.inProgress += 1;
+    else agg.concluded += 1;
+  }
+  const ticketsByCategory = ticketCategorySlugs.map((slug) => {
+    const cfg = TICKET_CATEGORIES[slug];
+    const agg = byTicketCategory.get(cfg.enumValue)!;
+    return { slug, label: cfg.label, open: agg.open, inProgress: agg.inProgress, concluded: agg.concluded, total: agg.open + agg.inProgress + agg.concluded };
+  });
+
+  // updatedAt só muda quando o status do chamado é alterado (POST de mensagem
+  // não toca o registro do ticket — ver /api/tickets/[id]/messages), então é
+  // uma medida confiável de "quando foi concluído" para o cálculo abaixo.
+  const concludedTickets = currentTickets.filter((t) => t.status === "CONCLUIDO");
+  const ticketResolutionDays = concludedTickets.map((t) => (t.updatedAt.getTime() - t.createdAt.getTime()) / 86_400_000);
+  const avgTicketResolutionDays = ticketResolutionDays.length > 0
+    ? ticketResolutionDays.reduce((a, b) => a + b, 0) / ticketResolutionDays.length
+    : null;
+
+  const openTickets = currentTickets.filter((t) => t.status !== "CONCLUIDO");
+  const nowMs = now.getTime();
+  const oldestOpenTickets = openTickets
+    .map((t) => {
+      const slug = CATEGORY_ENUM_TO_SLUG[t.category];
+      return {
+        id: t.id,
+        code: t.code,
+        categoryLabel: TICKET_CATEGORIES[slug].label,
+        href: `/chamados/${slug}/${t.id}`,
+        requesterName: t.requesterName,
+        description: t.description.length > 70 ? `${t.description.slice(0, 70)}…` : t.description,
+        statusLabel: TICKET_STATUS_LABEL[t.status] ?? t.status,
+        daysOpen: Math.floor((nowMs - t.createdAt.getTime()) / 86_400_000),
+      };
+    })
+    .sort((a, b) => b.daysOpen - a.daysOpen)
+    .slice(0, 6);
+
+  const ticketsPanel = {
+    total: trend(currentTickets.length, previousTicketsCount),
+    byCategory: ticketsByCategory,
+    avgResolutionDays: avgTicketResolutionDays,
+    openCount: openTickets.length,
+    oldestOpen: oldestOpenTickets,
+  };
+
   return {
     generatedAt: now,
     range: { de, ate, prevDe, prevAte },
@@ -520,6 +588,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     riskMap,
     alerts,
     overdue,
+    ticketsPanel,
     filterOptions: { costCenters, buyers, suppliers: supplierOptions },
   };
 }

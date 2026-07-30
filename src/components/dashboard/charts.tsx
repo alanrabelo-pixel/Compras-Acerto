@@ -15,16 +15,19 @@ import {
 // Tokens (não hex cru) — para os gráficos reagirem ao dark mode como o resto
 // do app. Navegadores modernos resolvem var() em atributos de apresentação
 // SVG (fill/stroke), então isso funciona igual a passar a cor computada.
+// Sem azul em nenhum gráfico — não é cor da paleta oficial da Acerto (ver
+// acerto-docs) e é a cor de um concorrente direto. "graphite" (var(--info),
+// grafite/neutro) substitui o que antes era um azul de "série neutra".
 export const CHART_COLORS = {
   green: "var(--acerto-green)",
   greenDark: "var(--acerto-green-dark)",
-  blue: "var(--info)",
+  graphite: "var(--info)",
   orange: "var(--warning)",
   red: "var(--danger)",
   gray: "var(--ink-muted)",
 };
 
-export const CATEGORY_PALETTE = ["#175cd3", "#25d366", "#b54708", "#7c3aed", "#d92d20", "#0891b2", "#667085", "#c026d3"];
+export const CATEGORY_PALETTE = ["#25d366", "#1a9c4a", "#b54708", "#7c3aed", "#d92d20", "#65a30d", "#667085", "#c026d3"];
 
 function money(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -72,7 +75,7 @@ export function TrendChart({ data }: { data: { label: string; value: number; sav
           formatter={(value) => (value === "value" ? "Valor comprado" : "Saving")}
           wrapperStyle={{ fontSize: 11.5 }}
         />
-        <Bar yAxisId="value" dataKey="value" fill={CHART_COLORS.blue} radius={[4, 4, 0, 0]} maxBarSize={28} />
+        <Bar yAxisId="value" dataKey="value" fill={CHART_COLORS.graphite} radius={[4, 4, 0, 0]} maxBarSize={28} />
         <Bar yAxisId="saving" dataKey="saving" fill={CHART_COLORS.green} radius={[4, 4, 0, 0]} maxBarSize={16} />
       </BarChart>
     </ResponsiveContainer>
@@ -114,7 +117,7 @@ export function CostCenterBarHorizontal({ data }: { data: { label: string; value
         <XAxis type="number" tick={{ fontSize: 10.5, fill: "var(--ink-muted)" }} axisLine={false} tickLine={false} tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
         <YAxis type="category" dataKey="label" width={140} tick={{ fontSize: 11.5, fill: "var(--ink-soft)" }} axisLine={false} tickLine={false} />
         <Tooltip formatter={(value) => money(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--border)" }} />
-        <Bar dataKey="value" fill={CHART_COLORS.blue} radius={[0, 4, 4, 0]} maxBarSize={18} />
+        <Bar dataKey="value" fill={CHART_COLORS.green} radius={[0, 4, 4, 0]} maxBarSize={18} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -154,7 +157,7 @@ export function CycleHistogram({ data }: { data: { label: string; count: number 
         <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--ink-muted)" }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
         <YAxis allowDecimals={false} tick={{ fontSize: 10.5, fill: "var(--ink-muted)" }} axisLine={false} tickLine={false} />
         <Tooltip formatter={(value) => [`${Number(value)} solicitação(ões)`, "Quantidade"]} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--border)" }} />
-        <Bar dataKey="count" fill={CHART_COLORS.blue} radius={[4, 4, 0, 0]} maxBarSize={40} />
+        <Bar dataKey="count" fill={CHART_COLORS.green} radius={[4, 4, 0, 0]} maxBarSize={40} />
       </BarChart>
     </ResponsiveContainer>
   );

@@ -1,7 +1,7 @@
 import type { Stage } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
-import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, type TicketCategorySlug } from "@/lib/tickets";
+import { TICKET_STATUS_LABEL, CATEGORY_ENUM_TO_SLUG } from "@/lib/tickets";
 
 const TERMINAL_STAGES: Stage[] = ["CONCLUIDO", "CANCELADO"];
 const EXPIRING_WINDOW_DAYS = 30;
@@ -24,10 +24,6 @@ export type HomeStats = {
 export type HomeData =
   | { personalized: true; requesterName: string; items: HomeActivityItem[]; stats: HomeStats }
   | { personalized: false; stats: HomeStats };
-
-const ENUM_TO_SLUG = Object.fromEntries(
-  Object.entries(TICKET_CATEGORIES).map(([slug, cfg]) => [cfg.enumValue, slug as TicketCategorySlug]),
-) as Record<string, TicketCategorySlug>;
 
 async function loadStats(where: { requesterId?: string; requesterEmail?: string }) {
   const expiringLimit = new Date();
@@ -104,7 +100,7 @@ export async function loadHomeData(userEmail: string | null): Promise<HomeData> 
     code: t.code,
     title: t.description.length > 70 ? `${t.description.slice(0, 70)}…` : t.description,
     statusLabel: TICKET_STATUS_LABEL[t.status] ?? t.status,
-    href: `/chamados/${ENUM_TO_SLUG[t.category]}/${t.id}`,
+    href: `/chamados/${CATEGORY_ENUM_TO_SLUG[t.category]}/${t.id}`,
     updatedAt: t.updatedAt,
   }));
 

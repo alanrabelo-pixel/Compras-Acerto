@@ -23,3 +23,10 @@ export const TICKET_STATUS_LABEL: Record<string, string> = {
   EM_ANDAMENTO: "Em Andamento",
   CONCLUIDO: "Concluído",
 };
+
+// Caminho inverso enumValue -> slug de URL — usado por qualquer tela que
+// precise montar um link /chamados/[slug]/[id] a partir de um SimpleTicket
+// (ver home-data.ts, dashboard-data.ts).
+export const CATEGORY_ENUM_TO_SLUG = Object.fromEntries(
+  Object.entries(TICKET_CATEGORIES).map(([slug, cfg]) => [cfg.enumValue, slug as TicketCategorySlug]),
+) as Record<string, TicketCategorySlug>;
