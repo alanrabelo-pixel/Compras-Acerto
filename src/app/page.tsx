@@ -4,6 +4,10 @@ import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserAvatar } from "@/components/UserAvatar";
+import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
+import { loadCurrentUser } from "@/lib/current-user";
+import { countRecentAnnouncements } from "@/lib/announcements";
 import { ServiceCatalog, type ServiceOption } from "@/components/home/ServiceCatalog";
 
 const OPTIONS: ServiceOption[] = [
@@ -60,7 +64,11 @@ export default async function HomePage() {
     : (session?.user as { name?: string | null; email?: string | null; roles?: string[] } | undefined);
   const isAdmin = user?.roles?.includes("ADMIN");
 
-  const homeData = await loadHomeData(session?.user?.email ?? null);
+  const [homeData, currentUser, recentAnnouncementsCount] = await Promise.all([
+    loadHomeData(session?.user?.email ?? null),
+    loadCurrentUser(),
+    countRecentAnnouncements(),
+  ]);
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   // Só usa o primeiro nome quando há personalização real (sessão SSO
   // resolvida a um User) — em bypass local, user.name é só o rótulo "Modo
@@ -96,6 +104,7 @@ export default async function HomePage() {
             <span aria-hidden>🔔</span>
             {pendingCount > 0 && <span className="exec-topbar-badge" aria-hidden>{pendingCount > 9 ? "9+" : pendingCount}</span>}
           </a>
+          <AnnouncementsPanel isAdmin={Boolean(isAdmin)} authorName={currentUser?.name ?? user?.name ?? ""} recentCount={recentAnnouncementsCount} />
           <ThemeToggle />
           {isAdmin && (
             <a href="/admin/acessos" className="exec-topbar-icon-link" title="Acessos (Administração)" aria-label="Acessos (Administração)">
@@ -104,6 +113,7 @@ export default async function HomePage() {
           )}
           {user && (
             <div className="exec-user-chip">
+              <UserAvatar userId={currentUser?.id ?? null} avatarUrl={currentUser?.avatarUrl ?? null} name={user.name ?? user.email ?? "?"} size={28} />
               <span className="exec-user-chip-name">{user.name ?? user.email}</span>
               <a href="/api/auth/signout" className="exec-user-chip-signout">Sair</a>
             </div>

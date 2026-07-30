@@ -3,6 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
+import { UserAvatar } from "@/components/UserAvatar";
+import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
+import { loadCurrentUser } from "@/lib/current-user";
+import { countRecentAnnouncements } from "@/lib/announcements";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -32,6 +36,12 @@ export async function AppShell({ active, children }: { active?: string; children
     ? LOCAL_BYPASS_USER
     : (session?.user as { name?: string | null; email?: string | null; roles?: string[] } | undefined);
   const isAdmin = user?.roles?.includes("ADMIN");
+  // Identidade real (id + avatar) — null em bypass/sem sessão, ver
+  // src/lib/current-user.ts. UserAvatar só permite upload quando não-nulo.
+  const [currentUser, recentAnnouncementsCount] = await Promise.all([
+    loadCurrentUser(),
+    countRecentAnnouncements(),
+  ]);
 
   return (
     <div className="app-shell">
@@ -75,9 +85,15 @@ export async function AppShell({ active, children }: { active?: string; children
 
         {user && (
           <div className="sidebar-footer">
-            <span className="sidebar-user">{user.name ?? user.email}</span>
-            <ThemeToggle />
-            <a href="/api/auth/signout" className="sidebar-signout">Sair</a>
+            <div className="sidebar-footer-identity">
+              <UserAvatar userId={currentUser?.id ?? null} avatarUrl={currentUser?.avatarUrl ?? null} name={user.name ?? user.email ?? "?"} size={26} />
+              <span className="sidebar-user">{user.name ?? user.email}</span>
+            </div>
+            <div className="sidebar-footer-actions">
+              <AnnouncementsPanel isAdmin={Boolean(isAdmin)} authorName={currentUser?.name ?? user.name ?? ""} recentCount={recentAnnouncementsCount} align="left" dropUp />
+              <ThemeToggle />
+              <a href="/api/auth/signout" className="sidebar-signout">Sair</a>
+            </div>
           </div>
         )}
       </aside>

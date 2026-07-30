@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { loadCurrentUser } from "@/lib/current-user";
+
+// GET /api/announcements — lista os comunicados mais recentes (leitura
+// aberta a qualquer pessoa autenticada/bypass, sem alçada).
+export async function GET() {
+  const announcements = await prisma.announcement.findMany({ orderBy: { createdAt: "desc" }, take: 20 });
+  return NextResponse.json(announcements);
+}
+
+// POST /api/announcements — publica um novo comunicado geral. Só ADMIN (em
+// LOCAL_BYPASS_AUTH, ver .env, o "Modo local" sempre atua como ADMIN — mesma
+// regra já usada em AppShell.tsx/rbac.ts).
+export async function POST(req: NextRequest) {
+  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  if (!bypass) {
+    const currentUser = await loadCurrentUser();
+    if (!currentUser?.isAdmin) {
+      return NextResponse.json({ error: "Só administradores podem publicar comunicados." }, { status: 403 });
+    }
+  }
+
+  const body = await req.json();
+  const { title, body: message, authorName } = body;
+  if (!title || !message || !authorName) {
+    return NextResponse.json({ error: "Campos obrigatórios: title, body, authorName." }, { status: 400 });
+  }
+
+  const announcement = await prisma.announcement.create({ data: { title, body: message, authorName } });
+  return NextResponse.json(announcement, { status: 201 });
+}

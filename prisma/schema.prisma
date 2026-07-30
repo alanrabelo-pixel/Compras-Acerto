@@ -56,6 +56,11 @@ model User {
   // inteiro é restrita.
   canViewBoard  Boolean  @default(false)
   createdAt     DateTime @default(now())
+  // Foto de perfil — chave de armazenamento local (ver src/lib/storage.ts),
+  // igual ao padrão já usado em Attachment.storageUrl. Só editável pela
+  // própria pessoa (ver /api/users/[id]/avatar), e só quando há sessão SSO
+  // real — sem isso não há uma identidade confiável para anexar a foto.
+  avatarUrl     String?
 
   // Chaves de IA pessoais (pedido do usuário): todo mundo na Acerto já tem
   // acesso próprio a Claude e Gemini, então os Assistentes de IA (ver
@@ -441,6 +446,19 @@ model Attachment {
   createdAt  DateTime @default(now())
 
   budgetExceptions BudgetException[]
+}
+
+// Comunicados gerais (botão de foguete na Home/AppShell) — avisos simples de
+// leitura para todo mundo, sem alçada nem fluxo. Só ADMIN publica (ver
+// POST /api/announcements); qualquer usuário autenticado lê. Sem tabela de
+// "lido/não lido" por pessoa por enquanto — o badge de "novo" no botão usa
+// só a contagem dos últimos dias (ver src/lib/announcements.ts).
+model Announcement {
+  id         String   @id @default(cuid())
+  title      String
+  body       String   @db.Text
+  authorName String
+  createdAt  DateTime @default(now())
 }
 
 // ----------------------------------------------------------------------------

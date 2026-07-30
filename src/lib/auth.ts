@@ -68,9 +68,10 @@ export const authOptions: NextAuthOptions = {
           where: { email: session.user.email },
           include: { roles: true },
         });
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean }).id = dbUser?.id;
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean }).roles = dbUser?.roles.map((r) => r.role);
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean }).canViewBoard = dbUser?.canViewBoard ?? Boolean(token.canViewBoard);
+        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).id = dbUser?.id;
+        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).roles = dbUser?.roles.map((r) => r.role);
+        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).canViewBoard = dbUser?.canViewBoard ?? Boolean(token.canViewBoard);
+        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).avatarUrl = dbUser?.avatarUrl ?? null;
       }
       return session;
     },
