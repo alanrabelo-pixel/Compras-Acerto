@@ -467,6 +467,37 @@ button:focus-visible,
   text-decoration: underline;
 }
 
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.theme-toggle-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--surface);
+  border: none;
+  color: var(--ink-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.theme-toggle-option + .theme-toggle-option {
+  border-left: 1px solid var(--border);
+}
+.theme-toggle-option:hover {
+  color: var(--ink-soft);
+}
+.theme-toggle-option.active {
+  background: var(--acerto-green-dark);
+  color: #fff;
+}
+
 .app-content {
   flex: 1;
   min-width: 0;

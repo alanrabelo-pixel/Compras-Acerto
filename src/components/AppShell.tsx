@@ -62,7 +62,7 @@ export async function AppShell({ active, children }: { active?: string; children
                 href="/admin/acessos"
                 className={`sidebar-link${active === "/admin/acessos" ? " active" : ""}`}
               >
-                <span className="sidebar-link-icon" aria-hidden>⚙</span>
+                <span className="sidebar-link-icon" aria-hidden>⚙️</span>
                 Acessos
               </Link>
             </>

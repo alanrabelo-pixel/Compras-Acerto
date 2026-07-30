@@ -98,7 +98,7 @@ export default async function HomePage() {
           <ThemeToggle />
           {isAdmin && (
             <a href="/admin/acessos" className="exec-topbar-icon-link" title="Acessos (Administração)" aria-label="Acessos (Administração)">
-              <span aria-hidden>⚙</span>
+              <span aria-hidden>⚙️</span>
             </a>
           )}
           {user && (
