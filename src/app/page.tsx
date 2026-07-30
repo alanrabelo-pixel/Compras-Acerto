@@ -3,9 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
 import { CommandPalette } from "@/components/CommandPalette";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { UserAvatar } from "@/components/UserAvatar";
-import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
+import { UserMenu } from "@/components/UserMenu";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { ServiceCatalog, type ServiceOption } from "@/components/home/ServiceCatalog";
@@ -49,13 +47,6 @@ function formatUpdatedAt(date: Date) {
   return date.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
-}
-
 export default async function HomePage() {
   const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
   const session = bypass ? null : await getServerSession(authOptions);
@@ -70,10 +61,6 @@ export default async function HomePage() {
     countRecentAnnouncements(),
   ]);
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
-  // Só usa o primeiro nome quando há personalização real (sessão SSO
-  // resolvida a um User) — em bypass local, user.name é só o rótulo "Modo
-  // local (sem SSO)", não o nome de ninguém, então a saudação fica genérica.
-  const firstName = homeData.personalized ? homeData.requesterName.split(" ")[0] : null;
   const pendingCount = homeData.personalized ? homeData.pendingCount : 0;
 
   return (
@@ -95,36 +82,28 @@ export default async function HomePage() {
         </div>
 
         <div className="exec-topbar-actions">
-          <a
-            href="/solicitacoes/pendencias"
-            className="exec-topbar-icon-link"
-            title="Minhas Pendências"
-            aria-label={pendingCount > 0 ? `Minhas Pendências (${pendingCount} aguardando ação)` : "Minhas Pendências"}
-          >
-            <span aria-hidden>🔔</span>
-            {pendingCount > 0 && <span className="exec-topbar-badge" aria-hidden>{pendingCount > 9 ? "9+" : pendingCount}</span>}
-          </a>
-          <AnnouncementsPanel isAdmin={Boolean(isAdmin)} authorName={currentUser?.name ?? user?.name ?? ""} recentCount={recentAnnouncementsCount} />
-          <ThemeToggle />
-          {isAdmin && (
-            <a href="/admin/acessos" className="exec-topbar-icon-link" title="Acessos (Administração)" aria-label="Acessos (Administração)">
-              <span aria-hidden>⚙️</span>
-            </a>
-          )}
           {user && (
-            <div className="exec-user-chip">
-              <UserAvatar userId={currentUser?.id ?? null} avatarUrl={currentUser?.avatarUrl ?? null} name={user.name ?? user.email ?? "?"} size={28} />
-              <span className="exec-user-chip-name">{user.name ?? user.email}</span>
-              <a href="/api/auth/signout" className="exec-user-chip-signout">Sair</a>
-            </div>
+            <UserMenu
+              userId={currentUser?.id ?? null}
+              avatarUrl={currentUser?.avatarUrl ?? null}
+              name={user.name ?? user.email ?? "?"}
+              isAdmin={Boolean(isAdmin)}
+              pendingCount={pendingCount}
+              recentAnnouncementsCount={recentAnnouncementsCount}
+              authorName={currentUser?.name ?? user.name ?? ""}
+            />
           )}
         </div>
       </header>
 
       <div className="exec-welcome-banner">
-        <p>
-          {greeting()}{firstName ? `, ${firstName}` : ""} — o que você precisa hoje?
-        </p>
+        <div className="exec-welcome-banner-heading">
+          <p className="exec-welcome-banner-title">Como podemos ajudar hoje?</p>
+          <p className="exec-welcome-banner-subtitle">
+            Solicite serviços, acompanhe o andamento das suas demandas e encontre tudo o que você precisa em um único
+            lugar.
+          </p>
+        </div>
         <p className="exec-welcome-banner-date">{today}</p>
       </div>
 

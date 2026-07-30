@@ -1,0 +1,125 @@
+"use client";
+
+import { useState } from "react";
+import { UserAvatar } from "@/components/UserAvatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { AnnouncementsBody } from "@/components/AnnouncementsBody";
+
+type View = "menu" | "comunicados";
+
+/**
+ * Menu único do usuário no topbar da Home — reúne Minhas Pendências,
+ * Comunicados, Tema, Acessos (Administração) e Sair num só lugar, disparado
+ * a partir do avatar/nome ("Modo local (sem SSO)" em bypass), em vez de
+ * espalhar cada um como um ícone separado no topbar.
+ */
+export function UserMenu({
+  userId, avatarUrl, name, isAdmin, pendingCount, recentAnnouncementsCount, authorName,
+}: {
+  userId: string | null;
+  avatarUrl: string | null;
+  name: string;
+  isAdmin: boolean;
+  pendingCount: number;
+  recentAnnouncementsCount: number;
+  authorName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState<View>("menu");
+
+  function close() {
+    setOpen(false);
+    setView("menu");
+  }
+
+  return (
+    <div className="user-menu-wrap">
+      {/* Não é um <button> porque envolve o <button> do próprio UserAvatar
+          (upload de foto) — botão dentro de botão é HTML inválido e trava o
+          clique. Div com role="button" mantém a semântica/teclado sem
+          aninhar elementos interativos. */}
+      <div
+        className="user-menu-trigger"
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <span onClick={(e) => userId && e.stopPropagation()}>
+          <UserAvatar userId={userId} avatarUrl={avatarUrl} name={name} size={28} />
+        </span>
+        <span className="user-menu-trigger-name">{name}</span>
+        {(pendingCount > 0 || recentAnnouncementsCount > 0) && (
+          <span className="user-menu-trigger-dot" aria-hidden />
+        )}
+        <span className="user-menu-trigger-caret" aria-hidden>▾</span>
+      </div>
+
+      {open && (
+        <>
+          <div className="announcements-backdrop" onClick={close} role="presentation" />
+          <div className="user-menu-panel" role="menu" aria-label="Menu do usuário">
+            {view === "menu" ? (
+              <div className="user-menu-list">
+                <a href="/solicitacoes/pendencias" className="user-menu-item" role="menuitem">
+                  <span aria-hidden>🔔</span>
+                  <span>Minhas Pendências</span>
+                  {pendingCount > 0 && <span className="user-menu-badge">{pendingCount > 9 ? "9+" : pendingCount}</span>}
+                </a>
+
+                <button
+                  type="button"
+                  className="user-menu-item"
+                  role="menuitem"
+                  onClick={() => setView("comunicados")}
+                >
+                  <span aria-hidden>🚀</span>
+                  <span>Comunicados</span>
+                  {recentAnnouncementsCount > 0 && (
+                    <span className="user-menu-badge">
+                      {recentAnnouncementsCount > 9 ? "9+" : recentAnnouncementsCount}
+                    </span>
+                  )}
+                  <span className="user-menu-item-arrow" aria-hidden>›</span>
+                </button>
+
+                <div className="user-menu-item user-menu-theme-row">
+                  <span><span aria-hidden>🌓</span> Tema</span>
+                  <ThemeToggle />
+                </div>
+
+                {isAdmin && (
+                  <a href="/admin/acessos" className="user-menu-item" role="menuitem">
+                    <span aria-hidden>⚙️</span>
+                    <span>Acessos (Administração)</span>
+                  </a>
+                )}
+
+                <div className="user-menu-divider" />
+
+                <a href="/api/auth/signout" className="user-menu-item user-menu-item-danger" role="menuitem">
+                  <span aria-hidden>↪</span>
+                  <span>Sair</span>
+                </a>
+              </div>
+            ) : (
+              <div className="user-menu-sub">
+                <button type="button" className="user-menu-back" onClick={() => setView("menu")}>
+                  <span aria-hidden>‹</span> Voltar
+                </button>
+                <AnnouncementsBody isAdmin={isAdmin} authorName={authorName} />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
