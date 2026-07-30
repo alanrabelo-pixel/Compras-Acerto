@@ -19,7 +19,7 @@ export type SupplierOption = {
  * o cadastro (o formulário aceita texto livre se o fornecedor ainda não
  * tiver Supplier cadastrado).
  */
-export function SupplierPicker({ onSelect }: { onSelect: (supplier: SupplierOption) => void }) {
+export function SupplierPicker({ onSelect, id }: { onSelect: (supplier: SupplierOption) => void; id?: string }) {
   const [suppliers, setSuppliers] = useState<SupplierOption[] | null>(null);
   const [value, setValue] = useState("");
 
@@ -35,6 +35,7 @@ export function SupplierPicker({ onSelect }: { onSelect: (supplier: SupplierOpti
 
   return (
     <select
+      id={id}
       className="input"
       value={value}
       onChange={(e) => {

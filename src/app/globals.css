@@ -135,6 +135,54 @@ a {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Acessibilidade (WCAG 2.2 AA) — Fase 5                                   */
+/* ---------------------------------------------------------------------- */
+
+/* Anel de foco de marca — sem isso, links/botões/linhas de tabela clicáveis
+   dependiam só do anel padrão do navegador (fino, cor variável por browser,
+   sem garantia de contraste no tema escuro). Não cobre .input/.command-
+   palette-input, que já têm seu próprio destaque de foco (ver "Forms" acima). */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--acerto-green-dark);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Pular para o conteúdo — invisível até receber foco por teclado (ver
+   AppShell.tsx: primeiro elemento focável da página, antes da navegação
+   lateral, para quem usa teclado não precisar tabular por 4-5 links de nav
+   em toda página só para chegar ao conteúdo). */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  background: var(--acerto-green-dark);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Layout                                                                  */
 /* ---------------------------------------------------------------------- */
 

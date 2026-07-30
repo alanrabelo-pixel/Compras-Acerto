@@ -35,6 +35,7 @@ export async function AppShell({ active, children }: { active?: string; children
 
   return (
     <div className="app-shell">
+      <a href="#main-content" className="skip-link">Pular para o conteúdo</a>
       <aside className="sidebar">
         <Link href="/" className="sidebar-brand" title="Voltar ao menu de apps da Acerto">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -81,7 +82,7 @@ export async function AppShell({ active, children }: { active?: string; children
         )}
       </aside>
 
-      <div className="app-content">{children}</div>
+      <div id="main-content" className="app-content">{children}</div>
     </div>
   );
 }

@@ -11,8 +11,8 @@ type UserOption = { id: string; name: string; email: string; roles: RoleName[] }
  * continua sendo o id do usuário (o que as rotas de API esperam).
  */
 export function UserPicker({
-  value, onChange, role, placeholder = "Selecione um usuário",
-}: { value: string; onChange: (userId: string) => void; role?: RoleName; placeholder?: string }) {
+  value, onChange, role, placeholder = "Selecione um usuário", id,
+}: { value: string; onChange: (userId: string) => void; role?: RoleName; placeholder?: string; id?: string }) {
   const [users, setUsers] = useState<UserOption[] | null>(null);
 
   useEffect(() => {
@@ -24,11 +24,11 @@ export function UserPicker({
   }, [role]);
 
   if (users === null) {
-    return <select className="input" disabled><option>Carregando usuários…</option></select>;
+    return <select id={id} className="input" disabled><option>Carregando usuários…</option></select>;
   }
 
   return (
-    <select className="input" value={value} onChange={(e) => onChange(e.target.value)}>
+    <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)}>
       <option value="">{placeholder}</option>
       {users.map((u) => (
         <option key={u.id} value={u.id}>
