@@ -18,9 +18,14 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/tickets — cria um novo chamado (nome, e-mail, descrição livre).
+// supplierName/supplierContact* são exclusivos do fluxo de NDA (ver
+// NdaRequestForm.tsx) e opcionais — ficam undefined para Viagens/Facilities.
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { category: categorySlug, requesterName, requesterEmail, description } = body;
+  const {
+    category: categorySlug, requesterName, requesterEmail, description,
+    supplierName, supplierContactName, supplierContactRole, supplierContactEmail, supplierContactPhone,
+  } = body;
 
   if (!isTicketCategorySlug(categorySlug)) {
     return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
@@ -34,7 +39,14 @@ export async function POST(req: NextRequest) {
   const code = `${config.prefix}-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
 
   const ticket = await prisma.simpleTicket.create({
-    data: { code, category: config.enumValue, requesterName, requesterEmail, description },
+    data: {
+      code, category: config.enumValue, requesterName, requesterEmail, description,
+      supplierName: supplierName || undefined,
+      supplierContactName: supplierContactName || undefined,
+      supplierContactRole: supplierContactRole || undefined,
+      supplierContactEmail: supplierContactEmail || undefined,
+      supplierContactPhone: supplierContactPhone || undefined,
+    },
   });
 
   const link = `${process.env.APP_URL}/chamados/${categorySlug}/${ticket.id}`;

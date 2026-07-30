@@ -730,6 +730,7 @@ model Notification {
 enum TicketCategory {
   VIAGENS
   FACILITIES
+  NDA
 }
 
 enum TicketStatus {
@@ -748,6 +749,16 @@ model SimpleTicket {
   status         TicketStatus   @default(ABERTO)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  // Campos exclusivos do fluxo de Envio de NDA (opcionais, ver
+  // src/components/NdaRequestForm.tsx) — dados de contato do fornecedor com
+  // quem o termo de confidencialidade será compartilhado. Vazios para
+  // chamados de Viagens/Facilities.
+  supplierName         String?
+  supplierContactName  String?
+  supplierContactRole  String?
+  supplierContactEmail String?
+  supplierContactPhone String?
 
   messages TicketMessage[]
 }

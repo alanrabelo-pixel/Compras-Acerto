@@ -6,17 +6,18 @@ import { cx } from "./cx";
  * subtítulo opcional + conteúdo), agora um único componente compartilhado.
  */
 export function Card({
-  title, icon, subtitle, accent, className, children,
+  title, icon, subtitle, accent, className, style, children,
 }: {
   title?: string;
   icon?: string;
   subtitle?: string;
   accent?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
   return (
-    <section className={cx("card", className)}>
+    <section className={cx("card", className)} style={style}>
       {title && (
         <h2 className={cx("card-title", accent && "accent")}>
           {icon && <span aria-hidden>{icon}</span>}

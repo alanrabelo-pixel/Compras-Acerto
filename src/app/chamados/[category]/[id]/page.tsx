@@ -39,6 +39,24 @@ export default async function ChamadoDetailPage({ params }: { params: { category
           <p style={{ fontSize: 12.5, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{ticket.description}</p>
         </section>
 
+        {ticket.supplierName && (
+          <section className="card section-gap">
+            <h2 className="card-title">Contato do fornecedor</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px", fontSize: 12.5 }}>
+              <p style={{ margin: 0 }}><span className="text-muted">Fornecedor:</span> {ticket.supplierName}</p>
+              {ticket.supplierContactName && (
+                <p style={{ margin: 0 }}><span className="text-muted">Contato:</span> {ticket.supplierContactName}{ticket.supplierContactRole ? ` — ${ticket.supplierContactRole}` : ""}</p>
+              )}
+              {ticket.supplierContactEmail && (
+                <p style={{ margin: 0 }}><span className="text-muted">E-mail:</span> {ticket.supplierContactEmail}</p>
+              )}
+              {ticket.supplierContactPhone && (
+                <p style={{ margin: 0 }}><span className="text-muted">Telefone:</span> {ticket.supplierContactPhone}</p>
+              )}
+            </div>
+          </section>
+        )}
+
         <ChamadoThread
           ticketId={ticket.id}
           status={ticket.status}

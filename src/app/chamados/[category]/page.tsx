@@ -65,7 +65,9 @@ export default async function ChamadosBoardPage({ params }: { params: { category
                       <p style={{ margin: "0 0 8px", fontSize: 12.5, lineHeight: 1.35, color: "var(--ink)" }}>
                         {t.description.length > 100 ? `${t.description.slice(0, 100)}…` : t.description}
                       </p>
-                      <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>{t.requesterName}</div>
+                      <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                        {t.requesterName}{t.supplierName ? ` · ${t.supplierName}` : ""}
+                      </div>
                     </a>
                   ))}
                   {items.length === 0 && <p style={{ fontSize: 11, color: "var(--ink-muted)", padding: "8px 4px" }}>Nenhum chamado aqui.</p>}

@@ -1,16 +1,15 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
+import { ChamadoRequestForm } from "@/components/ChamadoRequestForm";
+import { NdaRequestForm } from "@/components/NdaRequestForm";
 
-export default function NovoChamadoPage() {
-  const router = useRouter();
-  const params = useParams<{ category: string }>();
-  const categorySlug = params.category;
+export const dynamic = "force-dynamic";
 
-  if (!isTicketCategorySlug(categorySlug)) {
+export default async function NovoChamadoPage({ params }: { params: { category: string } }) {
+  if (!isTicketCategorySlug(params.category)) {
     return (
       <main className="page-narrow" style={{ paddingTop: 60, textAlign: "center" }}>
         <p>Categoria de chamado inválida.</p>
@@ -18,40 +17,30 @@ export default function NovoChamadoPage() {
       </main>
     );
   }
+  const categorySlug = params.category;
   const config = TICKET_CATEGORIES[categorySlug];
 
-  const [requesterName, setRequesterName] = useState("");
-  const [requesterEmail, setRequesterEmail] = useState("");
-  const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/tickets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: categorySlug, requesterName, requesterEmail, description }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erro ao abrir chamado.");
-      router.push(`/chamados/${categorySlug}/${data.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro inesperado.");
-      setLoading(false);
-    }
-  }
-
-  const canSubmit = requesterName && requesterEmail && description;
+  // Mesmo padrão de solicitacoes/nova/page.tsx: com SSO real, quem abre o
+  // pedido já é conhecido pela sessão — sem sessão (LOCAL_BYPASS_AUTH), fica
+  // null e o formulário (NdaRequestForm) volta a mostrar o seletor manual.
+  const session = await getServerSession(authOptions);
+  const sessionRequester = session?.user?.email
+    ? await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, name: true, email: true },
+      })
+    : null;
 
   return (
     <>
       <ChamadoHeader categoryLabel={config.label} backHref={`/chamados/${categorySlug}`} backLabel="← voltar aos chamados" />
       <main className="page-narrow" style={{ paddingTop: 28 }}>
-        <h1 className="page-title">Novo chamado — {config.label}</h1>
-        <p className="page-subtitle">Preencha seus dados e descreva o que você precisa.</p>
+        <h1 className="page-title">Nova solicitação — {config.label}</h1>
+        <p className="page-subtitle">
+          {categorySlug === "nda"
+            ? "Preencha as informações abaixo para solicitar o envio de um termo de confidencialidade."
+            : "Preencha seus dados e descreva o que você precisa."}
+        </p>
 
         {categorySlug === "viagens" && (
           <div
@@ -67,34 +56,11 @@ export default function NovoChamadoPage() {
           </div>
         )}
 
-        <div className="card section-gap" style={{ display: "grid", gap: 16 }}>
-          <div className="field">
-            <label className="label">Seu nome</label>
-            <input className="input" value={requesterName} onChange={(e) => setRequesterName(e.target.value)} />
-          </div>
-          <div className="field">
-            <label className="label">Seu e-mail</label>
-            <input className="input" type="email" value={requesterEmail} onChange={(e) => setRequesterEmail(e.target.value)} placeholder="voce@acerto.com.br" />
-          </div>
-          <div className="field">
-            <label className="label">O que você precisa?</label>
-            <textarea
-              className="input"
-              style={{ minHeight: 120, resize: "vertical" }}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva sua solicitação com o máximo de detalhes possível."
-            />
-          </div>
-
-          {error && <p style={{ fontSize: 12.5, color: "var(--danger)", margin: 0 }}>{error}</p>}
-
-          <div>
-            <button className="btn btn-primary" disabled={loading || !canSubmit} onClick={submit}>
-              {loading ? "Enviando…" : "Abrir chamado"}
-            </button>
-          </div>
-        </div>
+        {categorySlug === "nda" ? (
+          <NdaRequestForm sessionRequester={sessionRequester} />
+        ) : (
+          <ChamadoRequestForm categorySlug={categorySlug} />
+        )}
       </main>
     </>
   );
