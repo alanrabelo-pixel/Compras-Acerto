@@ -66,6 +66,7 @@ export default async function HomePage() {
   // resolvida a um User) — em bypass local, user.name é só o rótulo "Modo
   // local (sem SSO)", não o nome de ninguém, então a saudação fica genérica.
   const firstName = homeData.personalized ? homeData.requesterName.split(" ")[0] : null;
+  const pendingCount = homeData.personalized ? homeData.pendingCount : 0;
 
   return (
     <main className="exec-home">
@@ -85,8 +86,14 @@ export default async function HomePage() {
         </div>
 
         <div className="exec-topbar-actions">
-          <a href="/solicitacoes/pendencias" className="exec-topbar-icon-link" title="Minhas Pendências" aria-label="Minhas Pendências">
+          <a
+            href="/solicitacoes/pendencias"
+            className="exec-topbar-icon-link"
+            title="Minhas Pendências"
+            aria-label={pendingCount > 0 ? `Minhas Pendências (${pendingCount} aguardando ação)` : "Minhas Pendências"}
+          >
             <span aria-hidden>🔔</span>
+            {pendingCount > 0 && <span className="exec-topbar-badge" aria-hidden>{pendingCount > 9 ? "9+" : pendingCount}</span>}
           </a>
           <ThemeToggle />
           {isAdmin && (

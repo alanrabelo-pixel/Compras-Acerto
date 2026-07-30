@@ -80,7 +80,9 @@ export function ServiceCatalog({ services, popularHref }: { services: ServiceOpt
               <div className="exec-tile-icon-wrap">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={opt.illustration} alt="" className="exec-tile-icon" />
-                {opt.href === popularHref && <span className="exec-tile-badge">Mais usado</span>}
+                {opt.href === popularHref && (
+                  <span className="exec-tile-badge" title="Mais solicitado nos últimos 30 dias">Mais usado</span>
+                )}
               </div>
               <span className="exec-tile-eyebrow">{opt.eyebrow}</span>
               <span className="exec-tile-title">{opt.title}</span>
