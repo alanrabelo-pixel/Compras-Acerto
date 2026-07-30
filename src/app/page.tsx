@@ -28,7 +28,7 @@ const OPTIONS: ServiceOption[] = [
   {
     href: "/chamados/facilities",
     eyebrow: "Facilities",
-    title: "Facilities",
+    title: "Gestão de Facilities",
     description: "Manutenção, infraestrutura do escritório e materiais.",
     illustration: "/illustrations/dupla-parceria.png",
   },

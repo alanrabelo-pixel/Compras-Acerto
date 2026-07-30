@@ -1707,7 +1707,14 @@ a.table-row:hover {
 .exec-brand-footer-inner {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 26px 24px 22px;
+  padding: 32px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.exec-brand-footer-links {
+  width: 100%;
+  text-align: center;
 }
 .exec-brand-footer-links-title {
   text-align: center;
@@ -1716,7 +1723,13 @@ a.table-row:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: rgba(255, 255, 255, 0.75);
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+}
+/* Largura máxima centralizada faz os 5 links quebrarem em duas linhas
+   equilibradas (3+2) em vez de deixar o 5º link sozinho e descentralizado. */
+.exec-brand-footer-links .exec-footer {
+  max-width: 640px;
+  margin: 0 auto;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
    verde — mesma marcação/links, só a aparência muda aqui dentro. */
@@ -1736,11 +1749,14 @@ a.table-row:hover {
 .exec-brand-footer-company {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 14px;
   flex-wrap: wrap;
-  margin-top: 22px;
-  padding-top: 18px;
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.18);
+  text-align: center;
 }
 .exec-brand-footer-logo {
   height: 20px;
@@ -1749,6 +1765,7 @@ a.table-row:hover {
 }
 .exec-brand-footer-company p {
   margin: 0;
+  max-width: 640px;
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.88);
   line-height: 1.5;
