@@ -29,7 +29,7 @@ const OPTIONS = [
     eyebrow: "Jurídico",
     title: "Envio de NDA (Termo de Confidencialidade)",
     description: "Solicite o envio de um termo de confidencialidade para formalizar uma negociação com fornecedor ou parceiro.",
-    illustration: "/brand/documento-generico.png",
+    illustration: "/illustrations/computador-digital.png",
   },
 ];
 
