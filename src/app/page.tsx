@@ -179,6 +179,21 @@ export default async function HomePage() {
           <img src="/brand/livro-aberto.png" alt="" />
           Política de Compras
         </a>
+        <a href="https://drive.google.com/file/d/1EkfPd3uldUSi3vt9GYyFAF75PvklAdbk/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/documento-generico.png" alt="" />
+          Política de Viagem
+        </a>
+        <a href="https://drive.google.com/file/d/1MCQiA9w9GJa711nvImbEDWcb8LfGEgxD/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/documento-generico.png" alt="" />
+          Política de Reembolso
+        </a>
+        <a href="https://drive.google.com/file/d/1oQH4yxyUR10iX1-ae6dk1vcEy6QeCXo_/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/documento-generico.png" alt="" />
+          Política de Uso do Uber Corporativo
+        </a>
       </div>
 
       <footer className="exec-company-footer">
