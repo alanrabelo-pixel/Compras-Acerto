@@ -28,12 +28,25 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
+// Paginação — antes, tanto o Kanban quanto a Lista carregavam a base inteira
+// a cada visita (invisível em dezenas de registros, custoso em milhares).
+// Kanban: mostra até KANBAN_CAP_PER_STAGE cards por coluna (a contagem do
+// badge continua exata, via groupBy) com link "ver todas" para a Lista já
+// filtrada por aquela etapa quando há mais. Lista: paginação de verdade
+// (page/pageSize) com Anterior/Próxima.
+const PAGE_SIZE = 20;
+const KANBAN_CAP_PER_STAGE = 12;
+
 export default async function SolicitacoesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; diretoria?: string; costCenterId?: string; priority?: string; demandType?: string; view?: string };
+  searchParams: {
+    q?: string; diretoria?: string; costCenterId?: string; priority?: string; demandType?: string;
+    view?: string; stage?: string; page?: string;
+  };
 }) {
   const viewMode = searchParams.view === "lista" ? "lista" : "kanban";
+  const page = Math.max(1, Number(searchParams.page) || 1);
   const viewHref = (view: string) => {
     const params = new URLSearchParams();
     if (searchParams.q) params.set("q", searchParams.q);
@@ -44,12 +57,34 @@ export default async function SolicitacoesPage({
     params.set("view", view);
     return `?${params.toString()}`;
   };
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    if (searchParams.q) params.set("q", searchParams.q);
+    if (searchParams.diretoria) params.set("diretoria", searchParams.diretoria);
+    if (searchParams.costCenterId) params.set("costCenterId", searchParams.costCenterId);
+    if (searchParams.priority) params.set("priority", searchParams.priority);
+    if (searchParams.demandType) params.set("demandType", searchParams.demandType);
+    params.set("view", "lista");
+    params.set("page", String(targetPage));
+    return `?${params.toString()}`;
+  };
+  const stageViewAllHref = (stage: Stage) => {
+    const params = new URLSearchParams();
+    if (searchParams.diretoria) params.set("diretoria", searchParams.diretoria);
+    if (searchParams.costCenterId) params.set("costCenterId", searchParams.costCenterId);
+    if (searchParams.priority) params.set("priority", searchParams.priority);
+    if (searchParams.demandType) params.set("demandType", searchParams.demandType);
+    params.set("view", "lista");
+    params.set("stage", stage);
+    return `?${params.toString()}`;
+  };
 
   const where: Prisma.PurchaseRequestWhereInput = {};
   if (searchParams.diretoria) where.diretoria = searchParams.diretoria as Diretoria;
   if (searchParams.costCenterId) where.costCenterId = searchParams.costCenterId;
   if (searchParams.priority) where.priority = searchParams.priority as Priority;
   if (searchParams.demandType) where.demandType = searchParams.demandType as DemandType;
+  if (searchParams.stage) where.currentStage = searchParams.stage as Stage;
   if (searchParams.q) {
     where.OR = [
       { code: { contains: searchParams.q, mode: "insensitive" } },
@@ -58,14 +93,38 @@ export default async function SolicitacoesPage({
     ];
   }
 
-  const [requests, costCenters] = await Promise.all([
-    prisma.purchaseRequest.findMany({
-      where,
-      include: { requester: true, costCenter: true },
-      orderBy: { createdAt: "desc" },
-    }),
+  const include = { requester: true, costCenter: true } as const;
+  const stageOrder = (Object.keys(STAGES) as Stage[]).filter((s) => s !== "CANCELADO");
+
+  const [totalCount, costCenters] = await Promise.all([
+    prisma.purchaseRequest.count({ where }),
     prisma.costCenter.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
   ]);
+
+  let requests: Prisma.PurchaseRequestGetPayload<{ include: typeof include }>[] = [];
+  let stageCountMap = new Map<Stage, number>();
+  let totalPages = 1;
+
+  if (viewMode === "lista") {
+    totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    requests = await prisma.purchaseRequest.findMany({
+      where, include, orderBy: { createdAt: "desc" },
+      skip: (Math.min(page, totalPages) - 1) * PAGE_SIZE, take: PAGE_SIZE,
+    });
+  } else {
+    const [counts, perStage] = await Promise.all([
+      prisma.purchaseRequest.groupBy({ by: ["currentStage"], where, _count: { _all: true } }),
+      Promise.all(
+        stageOrder.map((stage) =>
+          prisma.purchaseRequest.findMany({
+            where: { ...where, currentStage: stage }, include, orderBy: { createdAt: "desc" }, take: KANBAN_CAP_PER_STAGE,
+          })
+        )
+      ),
+    ]);
+    stageCountMap = new Map(counts.map((c) => [c.currentStage, c._count._all]));
+    requests = perStage.flat();
+  }
 
   const byStage = new Map<Stage, typeof requests>();
   for (const r of requests) {
@@ -80,7 +139,7 @@ export default async function SolicitacoesPage({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10 }}>
           <div>
             <h1 className="page-title">Solicitações de Compra</h1>
-            <p className="page-subtitle">{requests.length} solicitação(ões) no recorte atual</p>
+            <p className="page-subtitle">{totalCount} solicitação(ões) no recorte atual</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div className="view-toggle">
@@ -107,11 +166,12 @@ export default async function SolicitacoesPage({
             .filter((s) => s.stage !== "CANCELADO")
             .map((stageDef) => {
               const items = byStage.get(stageDef.stage) ?? [];
+              const stageTotal = stageCountMap.get(stageDef.stage) ?? items.length;
               return (
                 <div key={stageDef.stage} style={{ minWidth: 268, flex: "0 0 268px", background: "var(--surface-muted)", borderRadius: 14, padding: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 10px" }}>
                     <h2 style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)", margin: 0 }}>{stageDef.label}</h2>
-                    <span className="badge badge-neutral">{items.length}</span>
+                    <span className="badge badge-neutral">{stageTotal}</span>
                   </div>
                   <div style={{ display: "grid", gap: 8 }}>
                     {items.map((r) => (
@@ -141,6 +201,11 @@ export default async function SolicitacoesPage({
                     ))}
                     {items.length === 0 && (
                       <p style={{ fontSize: 11, color: "var(--ink-muted)", padding: "8px 4px" }}>Nenhuma solicitação aqui.</p>
+                    )}
+                    {stageTotal > items.length && (
+                      <a href={stageViewAllHref(stageDef.stage)} style={{ fontSize: 11, color: "var(--acerto-green-dark)", fontWeight: 600, textDecoration: "none", padding: "6px 4px" }}>
+                        Ver todas ({stageTotal}) →
+                      </a>
                     )}
                   </div>
                 </div>
@@ -174,6 +239,28 @@ export default async function SolicitacoesPage({
             <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma solicitação encontrada neste recorte.</p>
           )}
         </div>
+        )}
+
+        {viewMode === "lista" && totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginTop: 16 }}>
+            <a
+              href={pageHref(page - 1)}
+              className="btn btn-secondary"
+              aria-disabled={page <= 1}
+              style={page <= 1 ? { pointerEvents: "none", opacity: 0.4 } : undefined}
+            >
+              ← Anterior
+            </a>
+            <span style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Página {Math.min(page, totalPages)} de {totalPages}</span>
+            <a
+              href={pageHref(page + 1)}
+              className="btn btn-secondary"
+              aria-disabled={page >= totalPages}
+              style={page >= totalPages ? { pointerEvents: "none", opacity: 0.4 } : undefined}
+            >
+              Próxima →
+            </a>
+          </div>
         )}
       </main>
     </AppShell>

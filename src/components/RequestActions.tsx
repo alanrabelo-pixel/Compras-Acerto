@@ -7,6 +7,7 @@ import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { AiInsightPanel } from "@/components/AiInsightPanel";
 import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL } from "@/lib/workflow";
+import { Button, Card } from "@/components/ui";
 
 // Identidade de quem está logado (server session — ver src/lib/auth.ts),
 // repassada de solicitacoes/[id]/page.tsx. Com SSO real ligado, o servidor
@@ -145,10 +146,9 @@ export function RequestActions({ request, sessionActor = null }: { request: Requ
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="card section-gap">
-      <h2 className="card-title accent">{title}</h2>
+    <Card title={title} accent className="section-gap">
       {children}
-    </section>
+    </Card>
   );
 }
 
@@ -191,20 +191,20 @@ function TriagemForm({
           </div>
           <ErrorBox error={error} />
           <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="btn btn-primary"
+            <Button
+              variant="primary"
               disabled={loading || !buyerId}
               onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "AVANCAR" })}
             >
               Avançar direto para Jurídico (Cancelamento)
-            </button>
-            <button
-              className="btn btn-secondary"
+            </Button>
+            <Button
+              variant="secondary"
               disabled={loading || !buyerId}
               onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas — favor detalhar." })}
             >
               Devolver ao solicitante
-            </button>
+            </Button>
           </div>
         </div>
       </Panel>
@@ -275,8 +275,8 @@ function TriagemForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn btn-primary"
+          <Button
+            variant="primary"
             disabled={loading || !buyerId || (needsEstimatedValue && estimatedValue <= 0)}
             onClick={() =>
               onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", {
@@ -288,14 +288,14 @@ function TriagemForm({
             }
           >
             Avançar para Validação Orçamentária
-          </button>
-          <button
-            className="btn btn-secondary"
+          </Button>
+          <Button
+            variant="secondary"
             disabled={loading || !buyerId}
             onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas — favor detalhar." })}
           >
             Devolver ao solicitante
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -329,8 +329,8 @@ function ValidacaoForm({
             />
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="btn btn-primary"
+            <Button
+              variant="primary"
               disabled={loading || !budgetActorId}
               onClick={() =>
                 onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", {
@@ -339,14 +339,14 @@ function ValidacaoForm({
               }
             >
               Há orçamento disponível
-            </button>
-            <button
-              className="btn btn-secondary"
+            </Button>
+            <Button
+              variant="secondary"
               disabled={loading}
               onClick={() => onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", { budgetOk: false })}
             >
               Sem orçamento — abrir exceção
-            </button>
+            </Button>
           </div>
         </div>
         <div className="form-section">
@@ -364,8 +364,8 @@ function ValidacaoForm({
             <input className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="btn btn-primary"
+            <Button
+              variant="primary"
               disabled={loading}
               onClick={() =>
                 onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", {
@@ -374,9 +374,9 @@ function ValidacaoForm({
               }
             >
               Aprovar exceção
-            </button>
-            <button
-              className="btn btn-secondary"
+            </Button>
+            <Button
+              variant="secondary"
               disabled={loading}
               onClick={() =>
                 onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", {
@@ -385,7 +385,7 @@ function ValidacaoForm({
               }
             >
               Reprovar exceção
-            </button>
+            </Button>
           </div>
         </div>
         <ErrorBox error={error} />
@@ -416,12 +416,12 @@ function DueDiligenceForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-primary" disabled={loading || !decidedBy} onClick={() => onSubmit(`/api/requests/${request.id}/due-diligence`, "PATCH", { decidedBy, approved: true, justification })}>
+          <Button variant="primary" disabled={loading || !decidedBy} onClick={() => onSubmit(`/api/requests/${request.id}/due-diligence`, "PATCH", { decidedBy, approved: true, justification })}>
             Aprovar
-          </button>
-          <button className="btn btn-danger" disabled={loading || !decidedBy} onClick={() => onSubmit(`/api/requests/${request.id}/due-diligence`, "PATCH", { decidedBy, approved: false, justification })}>
+          </Button>
+          <Button variant="danger" disabled={loading || !decidedBy} onClick={() => onSubmit(`/api/requests/${request.id}/due-diligence`, "PATCH", { decidedBy, approved: false, justification })}>
             Reprovar
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -479,8 +479,8 @@ function CotacaoForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
             disabled={loading || !actorId || !supplierName || !paymentCondition}
             onClick={() => {
               onSubmit(`/api/requests/${request.id}/cotacao`, "POST", { addedBy: actorId, supplierName, initialValue, negotiatedValue, paymentCondition });
@@ -488,10 +488,10 @@ function CotacaoForm({
             }}
           >
             Adicionar cotação
-          </button>
-          <button className="btn btn-primary" disabled={loading || !actorId} onClick={() => onSubmit(`/api/requests/${request.id}/cotacao`, "PATCH", { actorId })}>
+          </Button>
+          <Button variant="primary" disabled={loading || !actorId} onClick={() => onSubmit(`/api/requests/${request.id}/cotacao`, "PATCH", { actorId })}>
             Avançar para Mapa de Cotação
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -527,9 +527,9 @@ function MapaCotacaoForm({
         </div>
         <AiInsightPanel requestId={request.id} stage="MAPA_COTACAO" actorId={actorId} />
         <ErrorBox error={error} />
-        <button className="btn btn-primary" disabled={loading || !actorId || !selectedQuoteId} onClick={() => onSubmit(`/api/requests/${request.id}/mapa-cotacao`, "PATCH", { actorId, selectedQuoteId })}>
+        <Button variant="primary" disabled={loading || !actorId || !selectedQuoteId} onClick={() => onSubmit(`/api/requests/${request.id}/mapa-cotacao`, "PATCH", { actorId, selectedQuoteId })}>
           Selecionar vencedor e avançar para Aprovação
-        </button>
+        </Button>
       </div>
     </Panel>
   );
@@ -576,13 +576,13 @@ function AprovacaoForm({
             {hasConflict && (
               <input className="input" style={{ marginTop: 8 }} placeholder="Detalhe o conflito" value={conflictDetails} onChange={(e) => setConflictDetails(e.target.value)} />
             )}
-            <button
-              className="btn btn-secondary" style={{ marginTop: 8 }}
+            <Button
+              variant="secondary" style={{ marginTop: 8 }}
               disabled={loading || !declaredBy || (hasConflict && !conflictDetails)}
               onClick={() => onSubmit(`/api/requests/${request.id}/conflito-interesse`, "POST", { declaredBy, hasConflict, details: conflictDetails })}
             >
               Registrar declaração
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -591,9 +591,9 @@ function AprovacaoForm({
               <label className="label">Aprovador</label>
               <div style={{ display: "flex", gap: 8 }}>
                 <UserPicker value={approverId} onChange={setApproverId} role="APROVADOR" />
-                <button className="btn btn-secondary" disabled={loading || !approverId} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", { approverId })}>
+                <Button variant="secondary" disabled={loading || !approverId} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", { approverId })}>
                   Criar
-                </button>
+                </Button>
               </div>
             </div>
             <div className="form-section">
@@ -620,8 +620,8 @@ function AprovacaoForm({
                 <UserPicker value={manualPersonifiedBy} onChange={setManualPersonifiedBy} role="COMPRADOR" placeholder="Nenhum (aprovador real decide)" />
               )}
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button
-                  className="btn btn-primary"
+                <Button
+                  variant="primary"
                   disabled={loading || !approvalId}
                   onClick={() =>
                     onSubmit(`/api/requests/${request.id}/aprovacao`, "PATCH", {
@@ -630,9 +630,9 @@ function AprovacaoForm({
                   }
                 >
                   Aprovar
-                </button>
-                <button
-                  className="btn btn-secondary"
+                </Button>
+                <Button
+                  variant="secondary"
                   disabled={loading || !approvalId}
                   onClick={() =>
                     onSubmit(`/api/requests/${request.id}/aprovacao`, "PATCH", {
@@ -641,7 +641,7 @@ function AprovacaoForm({
                   }
                 >
                   Reprovar
-                </button>
+                </Button>
               </div>
             </div>
           </>
@@ -692,20 +692,20 @@ function JuridicoForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
             disabled={loading || !actorId}
             onClick={() => onSubmit(`/api/requests/${request.id}/juridico`, "PATCH", { actorId, minutaUrl, signedDocUrl, observations, signed: false })}
           >
             Salvar minuta (em andamento)
-          </button>
-          <button
-            className="btn btn-primary"
+          </Button>
+          <Button
+            variant="primary"
             disabled={loading || !actorId || !signedDocUrl}
             onClick={() => onSubmit(`/api/requests/${request.id}/juridico`, "PATCH", { actorId, minutaUrl, signedDocUrl, observations, signed: true })}
           >
             Marcar como assinado e avançar
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -818,22 +818,22 @@ function PedidoCompraForm({
                 <input className="input" type="number" placeholder="Qtd" value={it.quantidade} onChange={(e) => updateItem(i, { quantidade: Number(e.target.value) })} />
                 <input className="input" type="number" placeholder="Vlr. unitário" value={it.valorUnitario} onChange={(e) => updateItem(i, { valorUnitario: Number(e.target.value) })} />
                 <input className="input" type="number" placeholder="Impostos %" value={it.impostosPercent} onChange={(e) => updateItem(i, { impostosPercent: Number(e.target.value) })} />
-                <button
-                  className="btn btn-secondary" style={{ padding: "8px 10px" }}
+                <Button
+                  variant="secondary" style={{ padding: "8px 10px" }}
                   disabled={items.length === 1}
                   onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}
                 >
                   ×
-                </button>
+                </Button>
               </div>
             ))}
           </div>
-          <button
-            className="btn btn-secondary" style={{ marginTop: 6 }}
+          <Button
+            variant="secondary" style={{ marginTop: 6 }}
             onClick={() => setItems((prev) => [...prev, emptyItem()])}
           >
             + Adicionar item
-          </button>
+          </Button>
           {validItems.length > 0 && (
             <p style={{ fontSize: 12.5, fontWeight: 700, textAlign: "right", marginTop: 8 }}>
               Total (com impostos): {totalValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -882,8 +882,8 @@ function PedidoCompraForm({
           </label>
         </div>
         <ErrorBox error={error} />
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="primary"
           disabled={loading || !actorId || !supplierLegalName || !supplierCnpj || !contactName || !contactPhone || !contactEmail || !prazoEntrega || !localEntrega || validItems.length === 0}
           onClick={() =>
             onSubmit(`/api/requests/${request.id}/pedido-compra`, "POST", {
@@ -900,7 +900,7 @@ function PedidoCompraForm({
           }
         >
           Gerar PC
-        </button>
+        </Button>
       </div>
     </Panel>
   );
@@ -923,9 +923,9 @@ function AguardandoEntregaForm({
           <ActorField label="Comprador responsável" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="COMPRADOR" />
         </div>
         <ErrorBox error={error} />
-        <button className="btn btn-primary" disabled={loading || !actorId} onClick={() => onSubmit(`/api/requests/${request.id}/aguardando-entrega`, "PATCH", { actorId })}>
+        <Button variant="primary" disabled={loading || !actorId} onClick={() => onSubmit(`/api/requests/${request.id}/aguardando-entrega`, "PATCH", { actorId })}>
           Confirmar entrega/recebimento e avançar
-        </button>
+        </Button>
       </div>
     </Panel>
   );
@@ -962,20 +962,20 @@ function MedicaoForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn btn-primary"
+          <Button
+            variant="primary"
             disabled={loading || !actorId || !scopeExecuted}
             onClick={() => onSubmit(`/api/requests/${request.id}/medicao`, "PATCH", { actorId, scopeExecuted, quantities, reviewComment, technicalApproval: "APROVADO" })}
           >
             Aprovar e avançar para Fiscal
-          </button>
-          <button
-            className="btn btn-secondary"
+          </Button>
+          <Button
+            variant="secondary"
             disabled={loading || !actorId || !scopeExecuted}
             onClick={() => onSubmit(`/api/requests/${request.id}/medicao`, "PATCH", { actorId, scopeExecuted, quantities, reviewComment, technicalApproval: "REPROVADO" })}
           >
             Registrar reprovação (permanece na etapa)
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -1008,12 +1008,12 @@ function FiscalForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-primary" disabled={loading || !actorId || !documentUrl} onClick={() => onSubmit(`/api/requests/${request.id}/fiscal`, "PATCH", { actorId, documentUrl, reviewComment, approved: true })}>
+          <Button variant="primary" disabled={loading || !actorId || !documentUrl} onClick={() => onSubmit(`/api/requests/${request.id}/fiscal`, "PATCH", { actorId, documentUrl, reviewComment, approved: true })}>
             Aprovar e avançar para Tesouraria
-          </button>
-          <button className="btn btn-danger" disabled={loading || !actorId || !documentUrl} onClick={() => onSubmit(`/api/requests/${request.id}/fiscal`, "PATCH", { actorId, documentUrl, reviewComment, approved: false })}>
+          </Button>
+          <Button variant="danger" disabled={loading || !actorId || !documentUrl} onClick={() => onSubmit(`/api/requests/${request.id}/fiscal`, "PATCH", { actorId, documentUrl, reviewComment, approved: false })}>
             Reprovar
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -1048,20 +1048,20 @@ function TesourariaForm({
         </div>
         <ErrorBox error={error} />
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
             disabled={loading || !actorId}
             onClick={() => onSubmit(`/api/requests/${request.id}/tesouraria`, "PATCH", { actorId, scheduledDate, status: "PROGRAMADO", erpConfirmed: false })}
           >
             Programar pagamento
-          </button>
-          <button
-            className="btn btn-primary"
+          </Button>
+          <Button
+            variant="primary"
             disabled={loading || !actorId || !paidDate}
             onClick={() => onSubmit(`/api/requests/${request.id}/tesouraria`, "PATCH", { actorId, scheduledDate, paidDate, status: "PAGO", erpConfirmed: true })}
           >
             Confirmar pagamento no ERP e avançar
-          </button>
+          </Button>
         </div>
       </div>
     </Panel>
@@ -1216,8 +1216,8 @@ function MapeamentoContratoForm({
           </div>
         </div>
         <ErrorBox error={error} />
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="primary"
           disabled={loading || !actorId || !supplierName || !startDate || !endDate || !renewalDate || !contractManagerId || !area}
           onClick={() =>
             onSubmit(`/api/requests/${request.id}/mapeamento-contrato`, "POST", {
@@ -1228,7 +1228,7 @@ function MapeamentoContratoForm({
           }
         >
           Cadastrar contrato e concluir
-        </button>
+        </Button>
       </div>
     </Panel>
   );
@@ -1257,9 +1257,9 @@ function ConcluidoPanel({
             <input className="input" type="number" min={0} max={10} value={score} onChange={(e) => setScore(Number(e.target.value))} />
             <input className="input" placeholder="Comentário (opcional)" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
             <ErrorBox error={error} />
-            <button className="btn btn-primary" disabled={loading} onClick={() => onSubmit(`/api/requests/${request.id}/avaliacao`, "POST", { score, feedback })}>
+            <Button variant="primary" disabled={loading} onClick={() => onSubmit(`/api/requests/${request.id}/avaliacao`, "POST", { score, feedback })}>
               Enviar avaliação
-            </button>
+            </Button>
           </>
         )}
       </div>

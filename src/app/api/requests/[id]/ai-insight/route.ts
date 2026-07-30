@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { RoleName } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
+import { decryptSecret } from "@/lib/crypto";
 import {
   generateInsight,
   buildTriagemPrompt,
@@ -151,8 +152,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const { anthropic, gemini } = await generateInsight(prompt, {
-    anthropicApiKey: actor?.anthropicApiKey ?? null,
-    geminiApiKey: actor?.geminiApiKey ?? null,
+    anthropicApiKey: actor?.anthropicApiKey ? decryptSecret(actor.anthropicApiKey) : null,
+    geminiApiKey: actor?.geminiApiKey ? decryptSecret(actor.geminiApiKey) : null,
   });
 
   const insight = await prisma.aiInsight.create({

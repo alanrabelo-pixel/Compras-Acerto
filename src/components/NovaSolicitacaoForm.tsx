@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
+import { Button, Field } from "@/components/ui";
 
 type CostCenter = { id: string; name: string };
 type BudgetLine = { id: string; description: string; externalCode: string };
@@ -23,25 +24,26 @@ const DEMAND_TYPES = [
   { value: "CANCELAMENTO", label: "Cancelamento de Contrato, Serviços e Ferramentas" },
 ];
 
+// Categoria de gasto (ver SpendCategory no schema) — alimenta a análise de
+// "quais categorias mais gastam" no Dashboard; distinta do Tipo de Demanda
+// acima (que descreve o tipo de processo, não a natureza do gasto).
+const SPEND_CATEGORIES = [
+  { value: "TI", label: "TI" },
+  { value: "MARKETING", label: "Marketing" },
+  { value: "RH", label: "RH" },
+  { value: "FACILITIES", label: "Facilities" },
+  { value: "LOGISTICA", label: "Logística" },
+  { value: "INDUSTRIAL", label: "Industrial" },
+  { value: "SERVICOS_GERAIS", label: "Serviços Gerais" },
+  { value: "OUTROS", label: "Outros" },
+];
+
 const PRIORITIES = [
   { value: "BAIXA", label: "Baixa" },
   { value: "MEDIA", label: "Média" },
   { value: "ALTA", label: "Alta" },
   { value: "CRITICA", label: "Crítica (Urgência Máxima)" },
 ];
-
-function Field({ label, help, required, children }: { label: string; help?: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div className="field">
-      <label className="label">
-        {label}
-        {required && <span style={{ color: "var(--danger)" }}> *</span>}
-      </label>
-      {help && <p className="help">{help}</p>}
-      {children}
-    </div>
-  );
-}
 
 type SessionRequester = { id: string; name: string; email: string } | null;
 
@@ -63,6 +65,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [approverManagerId, setApproverManagerId] = useState("");
   const [budgetLineId, setBudgetLineId] = useState("");
   const [demandType, setDemandType] = useState("COMPRA_SERVICO");
+  const [category, setCategory] = useState("TI");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
   const [priority, setPriority] = useState("MEDIA");
@@ -111,7 +114,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
           approverManagerId,
           budgetLineId: isExtraBudget ? undefined : budgetLineId || undefined,
           extraBudget: isExtraBudget,
-          demandType, shortDescription, longDescription,
+          demandType, category, shortDescription, longDescription,
           priority, suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
           quantity, estimatedValue: estimatedValue === "" ? undefined : estimatedValue,
           indicatedSupplierWebsite, affectedUsers: demandType === "FERRAMENTA_USUARIOS" ? affectedUsers : undefined,
@@ -243,6 +246,14 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
           </select>
         </Field>
 
+        <Field label="Categoria de Gasto" required help="Área/natureza da despesa — usada na análise de gastos por categoria no Dashboard.">
+          <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
+            {SPEND_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </Field>
+
         <Field
           label="Descrição Resumida da Demanda"
           required
@@ -338,9 +349,9 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         )}
 
         <div>
-          <button className="btn btn-primary" style={{ padding: "10px 22px", fontSize: 13.5 }} disabled={loading || !canSubmit} onClick={submit}>
+          <Button variant="primary" style={{ padding: "10px 22px", fontSize: 13.5 }} disabled={loading || !canSubmit} onClick={submit}>
             {loading ? "Enviando…" : "Enviar"}
-          </button>
+          </Button>
         </div>
       </div>
     </main>

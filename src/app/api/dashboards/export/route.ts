@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
-import type { Prisma, Diretoria, DemandType, Stage } from "@prisma/client";
+import { buildDashboardWhere } from "@/lib/dashboard-data";
 
 export const dynamic = "force-dynamic";
 
@@ -15,17 +15,18 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
 
-  const where: Prisma.PurchaseRequestWhereInput = {};
-  const diretoria = sp.get("diretoria");
-  const costCenterId = sp.get("costCenterId");
-  const demandType = sp.get("demandType");
-  const stage = sp.get("stage");
   const de = sp.get("de");
   const ate = sp.get("ate");
-  if (diretoria) where.diretoria = diretoria as Diretoria;
-  if (costCenterId) where.costCenterId = costCenterId;
-  if (demandType) where.demandType = demandType as DemandType;
-  if (stage) where.currentStage = stage as Stage;
+  const where = buildDashboardWhere({
+    diretoria: sp.get("diretoria") ?? undefined,
+    costCenterId: sp.get("costCenterId") ?? undefined,
+    demandType: sp.get("demandType") ?? undefined,
+    category: sp.get("category") ?? undefined,
+    stage: sp.get("stage") ?? undefined,
+    status: sp.get("status") ?? undefined,
+    buyerId: sp.get("buyerId") ?? undefined,
+    supplierId: sp.get("supplierId") ?? undefined,
+  });
   if (de || ate) {
     where.createdAt = {
       ...(de ? { gte: new Date(de) } : {}),
@@ -122,7 +123,7 @@ export async function GET(req: NextRequest) {
 
   const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-  const parts = [de, ate, diretoria, costCenterId, demandType, stage].filter(Boolean);
+  const parts = Array.from(sp.keys());
   const suffix = parts.length > 0 ? "-filtrado" : "";
   return new NextResponse(buffer, {
     headers: {

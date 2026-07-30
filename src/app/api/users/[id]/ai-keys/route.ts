@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { encryptSecret } from "@/lib/crypto";
 
 /**
  * GET /api/users/[id]/ai-keys — status das chaves pessoais de IA (Claude e
@@ -57,9 +58,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json();
   const { anthropicApiKey, geminiApiKey } = body as { anthropicApiKey?: string; geminiApiKey?: string };
 
+  // Criptografadas em repouso (ver src/lib/crypto.ts) — nunca gravamos texto
+  // puro a partir daqui, mesmo que a leitura (ai-insight route) ainda saiba
+  // lidar com chaves antigas não criptografadas por compatibilidade.
   const data: { anthropicApiKey?: string | null; geminiApiKey?: string | null } = {};
-  if (anthropicApiKey !== undefined) data.anthropicApiKey = anthropicApiKey.trim() || null;
-  if (geminiApiKey !== undefined) data.geminiApiKey = geminiApiKey.trim() || null;
+  if (anthropicApiKey !== undefined) data.anthropicApiKey = anthropicApiKey.trim() ? encryptSecret(anthropicApiKey.trim()) : null;
+  if (geminiApiKey !== undefined) data.geminiApiKey = geminiApiKey.trim() ? encryptSecret(geminiApiKey.trim()) : null;
 
   await prisma.user.update({ where: { id: params.id }, data });
 

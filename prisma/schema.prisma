@@ -191,6 +191,23 @@ enum Priority {
   CRITICA
 }
 
+// Categoria de gasto (revisão: pedido do usuário no redesign do Dashboard —
+// "quais categorias mais gastam" precisa de uma categoria de compra de
+// verdade, não de demandType (que descreve o TIPO de processo — produto,
+// serviço, ferramenta nova — não a área de gasto) nem de CostCenter (que é o
+// time/área organizacional, não a natureza da despesa). Nullable para não
+// quebrar solicitações já existentes antes desta migração.
+enum SpendCategory {
+  TI
+  MARKETING
+  RH
+  FACILITIES
+  LOGISTICA
+  INDUSTRIAL
+  SERVICOS_GERAIS
+  OUTROS
+}
+
 enum ValueType {
   FIXO
   VARIAVEL
@@ -252,6 +269,9 @@ model PurchaseRequest {
 
   priority         Priority
   demandType       DemandType
+  // Ver comentário no enum SpendCategory — nullable só para não quebrar
+  // solicitações anteriores a esta migração; Nova Solicitação passa a exigir.
+  category         SpendCategory?
   shortDescription String
   longDescription  String   @db.Text
   quantity         Int

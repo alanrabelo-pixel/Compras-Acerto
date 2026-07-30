@@ -3,25 +3,41 @@ import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { ContractImportUpload } from "@/components/ContractImportUpload";
+import { TableWrap, TableHeadRow, TableRow, TableEmpty, Badge } from "@/components/ui";
 import type { Prisma, Diretoria } from "@prisma/client";
+import type { BadgeVariant } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_BADGE: Record<string, string> = {
-  ATIVO: "badge-green",
-  RENOVACAO_EM_ANDAMENTO: "badge-warning",
-  CANCELADO: "badge-danger",
+const STATUS_BADGE: Record<string, BadgeVariant> = {
+  ATIVO: "green",
+  RENOVACAO_EM_ANDAMENTO: "warning",
+  CANCELADO: "danger",
 };
 
 function daysUntil(date: Date) {
   return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
+// Antes, esta tela carregava a tabela de contratos inteira a cada visita —
+// invisível em dezenas de registros, custoso conforme a base cresce.
+const PAGE_SIZE = 20;
+
 export default async function ContratosPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; diretoria?: string };
+  searchParams: { q?: string; status?: string; diretoria?: string; page?: string };
 }) {
+  const page = Math.max(1, Number(searchParams.page) || 1);
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    if (searchParams.q) params.set("q", searchParams.q);
+    if (searchParams.status) params.set("status", searchParams.status);
+    if (searchParams.diretoria) params.set("diretoria", searchParams.diretoria);
+    params.set("page", String(targetPage));
+    return `?${params.toString()}`;
+  };
+
   const where: Prisma.ContractWhereInput = {};
   const and: Prisma.ContractWhereInput[] = [];
   if (searchParams.status) where.status = searchParams.status;
@@ -44,10 +60,14 @@ export default async function ContratosPage({
   }
   if (and.length > 0) where.AND = and;
 
+  const totalCount = await prisma.contract.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const contracts = await prisma.contract.findMany({
     where,
     include: { contractManager: true, request: true },
     orderBy: { renewalDate: "asc" },
+    skip: (Math.min(page, totalPages) - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
   });
 
   return (
@@ -57,7 +77,7 @@ export default async function ContratosPage({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12 }}>
           <div>
             <h1 className="page-title" style={{ margin: 0 }}>Gestão de Contratos</h1>
-            <p className="page-subtitle">{contracts.length} contrato(s) no recorte atual</p>
+            <p className="page-subtitle">{totalCount} contrato(s) no recorte atual</p>
           </div>
           <ContractImportUpload />
         </div>
@@ -70,19 +90,19 @@ export default async function ContratosPage({
           ]}
         />
 
-        <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "2fr 1fr 1.4fr 1fr 1fr" }}>
+        <TableWrap className="section-gap">
+          <TableHeadRow columns="2fr 1fr 1.4fr 1fr 1fr">
             <span>Fornecedor</span>
             <span>Diretoria</span>
             <span>Vigência</span>
             <span>Dias Faltantes</span>
             <span>Status</span>
-          </div>
+          </TableHeadRow>
           {contracts.map((c) => {
             const days = daysUntil(c.renewalDate);
             const daysColor = days < 0 ? "var(--danger)" : days <= 30 ? "var(--warning)" : "var(--ink-soft)";
             return (
-              <a key={c.id} href={`/contratos/${c.id}`} className="table-row" style={{ gridTemplateColumns: "2fr 1fr 1.4fr 1fr 1fr", alignItems: "center" }}>
+              <TableRow key={c.id} href={`/contratos/${c.id}`} columns="2fr 1fr 1.4fr 1fr 1fr" style={{ alignItems: "center" }}>
                 <span>
                   <span style={{ fontWeight: 700, display: "block" }}>{c.supplierName}</span>
                   {c.supplierTradeName && <span className="text-soft" style={{ fontSize: 11 }}>{c.supplierTradeName}{c.supplierCnpj ? ` · ${c.supplierCnpj}` : ""}</span>}
@@ -90,14 +110,34 @@ export default async function ContratosPage({
                 <span className="text-soft">{c.request?.diretoria ?? c.diretoria ?? "—"}</span>
                 <span className="text-soft">{formatDateOnly(c.startDate)} → {formatDateOnly(c.endDate)}</span>
                 <span style={{ fontWeight: 700, color: daysColor }}>{days < 0 ? `${Math.abs(days)}d vencido` : `${days}d`}</span>
-                <span><span className={`badge ${STATUS_BADGE[c.status] ?? "badge-neutral"}`}>{c.status}</span></span>
-              </a>
+                <span><Badge variant={STATUS_BADGE[c.status] ?? "neutral"}>{c.status}</Badge></span>
+              </TableRow>
             );
           })}
-          {contracts.length === 0 && (
-            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum contrato encontrado neste recorte.</p>
-          )}
-        </div>
+          {contracts.length === 0 && <TableEmpty>Nenhum contrato encontrado neste recorte.</TableEmpty>}
+        </TableWrap>
+
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginTop: 16 }}>
+            <a
+              href={pageHref(page - 1)}
+              className="btn btn-secondary"
+              aria-disabled={page <= 1}
+              style={page <= 1 ? { pointerEvents: "none", opacity: 0.4 } : undefined}
+            >
+              ← Anterior
+            </a>
+            <span style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Página {Math.min(page, totalPages)} de {totalPages}</span>
+            <a
+              href={pageHref(page + 1)}
+              className="btn btn-secondary"
+              aria-disabled={page >= totalPages}
+              style={page >= totalPages ? { pointerEvents: "none", opacity: 0.4 } : undefined}
+            >
+              Próxima →
+            </a>
+          </div>
+        )}
       </main>
     </AppShell>
   );

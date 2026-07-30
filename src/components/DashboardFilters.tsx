@@ -12,6 +12,23 @@ const DEMAND_TYPES = [
   { value: "CANCELAMENTO", label: "Cancelamento de Contrato/Serviço/Ferramenta" },
 ];
 
+const CATEGORIES = [
+  { value: "TI", label: "TI" },
+  { value: "MARKETING", label: "Marketing" },
+  { value: "RH", label: "RH" },
+  { value: "FACILITIES", label: "Facilities" },
+  { value: "LOGISTICA", label: "Logística" },
+  { value: "INDUSTRIAL", label: "Industrial" },
+  { value: "SERVICOS_GERAIS", label: "Serviços Gerais" },
+  { value: "OUTROS", label: "Outros" },
+];
+
+const STATUSES = [
+  { value: "ABERTO", label: "Aberto" },
+  { value: "CONCLUIDO", label: "Concluído" },
+  { value: "CANCELADO", label: "Cancelado" },
+];
+
 const DATE_PRESETS = [
   { label: "Últimos 7 dias", days: 7 },
   { label: "Últimos 30 dias", days: 30 },
@@ -19,8 +36,13 @@ const DATE_PRESETS = [
 ];
 
 export function DashboardFilters({
-  costCenters, stages,
-}: { costCenters: { id: string; name: string }[]; stages: { value: string; label: string }[] }) {
+  costCenters, stages, buyers, suppliers,
+}: {
+  costCenters: { id: string; name: string }[];
+  stages: { value: string; label: string }[];
+  buyers: { id: string; name: string }[];
+  suppliers: { id: string; legalName: string }[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,7 +64,7 @@ export function DashboardFilters({
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  const hasFilters = ["de", "ate", "diretoria", "costCenterId", "demandType", "stage"].some((k) => searchParams.get(k));
+  const hasFilters = ["de", "ate", "diretoria", "costCenterId", "demandType", "category", "stage", "status", "buyerId", "supplierId"].some((k) => searchParams.get(k));
 
   return (
     <div className="dashboard-filters">
@@ -114,19 +136,51 @@ export function DashboardFilters({
           </select>
         </div>
 
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label className="label">Categoria</label>
+          <select className="input" value={searchParams.get("category") ?? ""} onChange={(e) => setParam("category", e.target.value)}>
+            <option value="">Todas</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label className="label">Status</label>
+          <select className="input" value={searchParams.get("status") ?? ""} onChange={(e) => setParam("status", e.target.value)}>
+            <option value="">Todos</option>
+            {STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label className="label">Comprador</label>
+          <select className="input" value={searchParams.get("buyerId") ?? ""} onChange={(e) => setParam("buyerId", e.target.value)}>
+            <option value="">Todos</option>
+            {buyers.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label className="label">Fornecedor</label>
+          <select className="input" value={searchParams.get("supplierId") ?? ""} onChange={(e) => setParam("supplierId", e.target.value)}>
+            <option value="">Todos</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>{s.legalName}</option>
+            ))}
+          </select>
+        </div>
+
         {hasFilters && (
           <button className="btn btn-secondary" style={{ alignSelf: "flex-end" }} onClick={() => router.push(pathname)}>
             Limpar filtros
           </button>
         )}
-
-        <a
-          className="btn btn-primary"
-          style={{ alignSelf: "flex-end", textDecoration: "none" }}
-          href={`/api/dashboards/export?${searchParams.toString()}`}
-        >
-          ⬇ Baixar Excel{hasFilters ? " (recorte atual)" : ""}
-        </a>
       </div>
     </div>
   );
