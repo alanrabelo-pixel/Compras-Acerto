@@ -39,6 +39,83 @@
   --font-sans: var(--font-montserrat), "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* ----------------------------------------------------------------------------
+   Dark mode — mesmos NOMES de token, valores diferentes. Toda tela já usa
+   var(--token) em vez de hex cru (checado nesta sessão), então isto se aplica
+   automaticamente em qualquer lugar sem precisar tocar cada componente.
+   Duas fontes possíveis, a mesma lista de tokens nas duas: a preferência do
+   SO (@media) e o toggle manual (ver src/components/ThemeToggle.tsx), que
+   grava data-theme em <html> e sempre vence sobre a preferência do SO.
+   ---------------------------------------------------------------------------- */
+:root[data-theme="dark"] {
+  --acerto-green: #2fe377;
+  --acerto-green-dark: #25d366;
+  --acerto-green-50: #10321f;
+  --acerto-green-100: #163a26;
+
+  --ink: #e7eaf0;
+  --ink-soft: #aeb7c6;
+  --ink-muted: #7e8aa0;
+
+  --border: #263042;
+  --border-soft: #1d2634;
+  --surface: #131a26;
+  --surface-muted: #1a222f;
+  --bg: #0b0f17;
+
+  --danger: #f97066;
+  --danger-bg: #2a1414;
+  --warning: #fdb022;
+  --warning-bg: #2a2010;
+  --info: #6ba6f2;
+  --info-bg: #10203a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --acerto-green: #2fe377;
+    --acerto-green-dark: #25d366;
+    --acerto-green-50: #10321f;
+    --acerto-green-100: #163a26;
+
+    --ink: #e7eaf0;
+    --ink-soft: #aeb7c6;
+    --ink-muted: #7e8aa0;
+
+    --border: #263042;
+    --border-soft: #1d2634;
+    --surface: #131a26;
+    --surface-muted: #1a222f;
+    --bg: #0b0f17;
+
+    --danger: #f97066;
+    --danger-bg: #2a1414;
+    --warning: #fdb022;
+    --warning-bg: #2a2010;
+    --info: #6ba6f2;
+    --info-bg: #10203a;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+}
+
+html {
+  background: var(--bg);
+  color-scheme: light dark;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }

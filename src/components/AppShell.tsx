@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -71,6 +72,7 @@ export async function AppShell({ active, children }: { active?: string; children
         {user && (
           <div className="sidebar-footer">
             <span className="sidebar-user">{user.name ?? user.email}</span>
+            <ThemeToggle />
             <a href="/api/auth/signout" className="sidebar-signout">Sair</a>
           </div>
         )}

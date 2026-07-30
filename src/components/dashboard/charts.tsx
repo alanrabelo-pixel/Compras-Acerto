@@ -12,13 +12,16 @@ import {
   PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
 
+// Tokens (não hex cru) — para os gráficos reagirem ao dark mode como o resto
+// do app. Navegadores modernos resolvem var() em atributos de apresentação
+// SVG (fill/stroke), então isso funciona igual a passar a cor computada.
 export const CHART_COLORS = {
-  green: "#25d366",
-  greenDark: "#1a9c4a",
-  blue: "#175cd3",
-  orange: "#b54708",
-  red: "#d92d20",
-  gray: "#667085",
+  green: "var(--acerto-green)",
+  greenDark: "var(--acerto-green-dark)",
+  blue: "var(--info)",
+  orange: "var(--warning)",
+  red: "var(--danger)",
+  gray: "var(--ink-muted)",
 };
 
 export const CATEGORY_PALETTE = ["#175cd3", "#25d366", "#b54708", "#7c3aed", "#d92d20", "#0891b2", "#667085", "#c026d3"];
