@@ -69,6 +69,7 @@ export default async function HomePage() {
   const pendingCount = homeData.personalized ? homeData.pendingCount : 0;
 
   return (
+    <>
     <main className="exec-home">
       <header className="exec-topbar">
         <div className="exec-topbar-brand">
@@ -77,7 +78,7 @@ export default async function HomePage() {
           <span className="exec-topbar-divider" aria-hidden />
           <div>
             <p className="exec-topbar-subtitle">Portal de Serviços Corporativos</p>
-            <h1 className="exec-topbar-title">Acerto Compras</h1>
+            <h1 className="exec-topbar-title">Compras | F&amp;NC</h1>
           </div>
         </div>
 
@@ -170,43 +171,53 @@ export default async function HomePage() {
         <ServiceCatalog services={OPTIONS} popularHref={homeData.popularHref} />
       </section>
 
-      <div className="exec-footer">
-        <a href="/api/manual/pdf" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/documento-generico.png" alt="" />
-          Baixar manual do processo (PDF)
-        </a>
-        <a
-          href="https://acerto.atlassian.net/wiki/spaces/~712020937f655593794b57918a9de7aea12eac/pages/1562738748/POL+TICA+DE+COMPRAS+V.04.25"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="exec-footer-link"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/livro-aberto.png" alt="" />
-          Política de Compras
-        </a>
-        <a href="https://drive.google.com/file/d/1EkfPd3uldUSi3vt9GYyFAF75PvklAdbk/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/documento-generico.png" alt="" />
-          Política de Viagem
-        </a>
-        <a href="https://drive.google.com/file/d/1MCQiA9w9GJa711nvImbEDWcb8LfGEgxD/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/documento-generico.png" alt="" />
-          Política de Reembolso
-        </a>
-        <a href="https://drive.google.com/file/d/1oQH4yxyUR10iX1-ae6dk1vcEy6QeCXo_/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/documento-generico.png" alt="" />
-          Política de Uso do Uber Corporativo
-        </a>
+      <div className="exec-footer-links-section">
+        <p className="exec-section-title">Links úteis</p>
+        <div className="exec-footer">
+          <a href="/api/manual/pdf" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/documento-generico.png" alt="" />
+            Baixar manual do processo (PDF)
+          </a>
+          <a
+            href="https://acerto.atlassian.net/wiki/spaces/~712020937f655593794b57918a9de7aea12eac/pages/1562738748/POL+TICA+DE+COMPRAS+V.04.25"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="exec-footer-link"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/livro-aberto.png" alt="" />
+            Política de Compras
+          </a>
+          <a href="https://drive.google.com/file/d/1EkfPd3uldUSi3vt9GYyFAF75PvklAdbk/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/documento-generico.png" alt="" />
+            Política de Viagem
+          </a>
+          <a href="https://drive.google.com/file/d/1MCQiA9w9GJa711nvImbEDWcb8LfGEgxD/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/documento-generico.png" alt="" />
+            Política de Reembolso
+          </a>
+          <a href="https://drive.google.com/file/d/1oQH4yxyUR10iX1-ae6dk1vcEy6QeCXo_/view" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/documento-generico.png" alt="" />
+            Política de Uso do Uber Corporativo
+          </a>
+        </div>
       </div>
-
-      <footer className="exec-company-footer">
-        Time de Compras 💚 · acerto.com.br · Rua Bernardo Mascarenhas, 46 - Cidade Jardim, Belo Horizonte/MG. CEP:
-        30.380-010.
-      </footer>
     </main>
+
+    <footer className="exec-brand-footer">
+      <div className="exec-brand-footer-inner">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/acerto-logo.svg" alt="Acerto" className="exec-brand-footer-logo" />
+        <p>
+          Time de Compras 💚 · acerto.com.br · Rua Bernardo Mascarenhas, 46 - Cidade Jardim, Belo Horizonte/MG. CEP:
+          30.380-010.
+        </p>
+      </div>
+    </footer>
+    </>
   );
 }
