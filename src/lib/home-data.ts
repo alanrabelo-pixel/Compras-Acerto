@@ -22,8 +22,26 @@ export type HomeStats = {
 };
 
 export type HomeData =
-  | { personalized: true; requesterName: string; items: HomeActivityItem[]; stats: HomeStats }
-  | { personalized: false; stats: HomeStats };
+  | { personalized: true; requesterName: string; items: HomeActivityItem[]; stats: HomeStats; popularHref: string | null }
+  | { personalized: false; stats: HomeStats; popularHref: string | null };
+
+// "Mais usado" no cardápio de serviços — contagem histórica real (não um
+// número inventado): total de solicitações de Compras já abertas vs. total
+// de chamados já abertos por categoria. Sempre um recorte organizacional
+// (não muda com sessão/usuário).
+async function loadPopularServiceHref(): Promise<string | null> {
+  const [requestCount, ticketCounts] = await Promise.all([
+    prisma.purchaseRequest.count(),
+    prisma.simpleTicket.groupBy({ by: ["category"], _count: { _all: true } }),
+  ]);
+  const counts: { href: string; count: number }[] = [{ href: "/solicitacoes", count: requestCount }];
+  for (const t of ticketCounts) {
+    const slug = CATEGORY_ENUM_TO_SLUG[t.category];
+    if (slug) counts.push({ href: `/chamados/${slug}`, count: t._count._all });
+  }
+  const top = counts.sort((a, b) => b.count - a.count)[0];
+  return top && top.count > 0 ? top.href : null;
+}
 
 async function loadStats(where: { requesterId?: string; requesterEmail?: string }) {
   const expiringLimit = new Date();
@@ -67,11 +85,11 @@ export async function loadHomeData(userEmail: string | null): Promise<HomeData> 
     : null;
 
   if (!user) {
-    const stats = await loadStats({});
-    return { personalized: false, stats };
+    const [stats, popularHref] = await Promise.all([loadStats({}), loadPopularServiceHref()]);
+    return { personalized: false, stats, popularHref };
   }
 
-  const [requests, tickets, stats] = await Promise.all([
+  const [requests, tickets, stats, popularHref] = await Promise.all([
     prisma.purchaseRequest.findMany({
       where: { requesterId: user.id },
       orderBy: { updatedAt: "desc" },
@@ -85,6 +103,7 @@ export async function loadHomeData(userEmail: string | null): Promise<HomeData> 
       select: { id: true, code: true, category: true, description: true, status: true, updatedAt: true },
     }),
     loadStats({ requesterId: user.id, requesterEmail: user.email }),
+    loadPopularServiceHref(),
   ]);
 
   const requestItems: HomeActivityItem[] = requests.map((r) => ({
@@ -108,5 +127,5 @@ export async function loadHomeData(userEmail: string | null): Promise<HomeData> 
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
     .slice(0, 5);
 
-  return { personalized: true, requesterName: user.name, items, stats };
+  return { personalized: true, requesterName: user.name, items, stats, popularHref };
 }

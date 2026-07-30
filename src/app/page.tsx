@@ -2,33 +2,42 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
+import { CommandPalette } from "@/components/CommandPalette";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ServiceCatalog, type ServiceOption } from "@/components/home/ServiceCatalog";
 
-const OPTIONS = [
+const OPTIONS: ServiceOption[] = [
   {
     href: "/solicitacoes",
     eyebrow: "Compras",
     title: "Solicitação de Compras",
+    description: "Abra e acompanhe processos de compra, da solicitação ao pagamento.",
     illustration: "/illustrations/cartao-dinheiro.png",
   },
   {
     href: "/chamados/viagens",
     eyebrow: "Viagens",
     title: "Viagens Acerto",
+    description: "Dúvidas ou imprevistos de viagem a trabalho (passagens: use o Onfly).",
     illustration: "/illustrations/homem-escada.png",
   },
   {
     href: "/chamados/facilities",
     eyebrow: "Facilities",
     title: "Facilities",
+    description: "Manutenção, infraestrutura do escritório e materiais.",
     illustration: "/illustrations/dupla-parceria.png",
   },
   {
     href: "/chamados/nda",
     eyebrow: "Jurídico",
     title: "Envio de NDA (Termo de Confidencialidade)",
+    description: "Solicite o envio de um termo de confidencialidade a um fornecedor.",
     illustration: "/illustrations/computador-digital.png",
   },
 ];
+
+const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +45,27 @@ function formatUpdatedAt(date: Date) {
   return date.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 export default async function HomePage() {
-  const session = await getServerSession(authOptions);
+  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  const session = bypass ? null : await getServerSession(authOptions);
+  const user = bypass
+    ? LOCAL_BYPASS_USER
+    : (session?.user as { name?: string | null; email?: string | null; roles?: string[] } | undefined);
+  const isAdmin = user?.roles?.includes("ADMIN");
+
   const homeData = await loadHomeData(session?.user?.email ?? null);
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  // Só usa o primeiro nome quando há personalização real (sessão SSO
+  // resolvida a um User) — em bypass local, user.name é só o rótulo "Modo
+  // local (sem SSO)", não o nome de ninguém, então a saudação fica genérica.
+  const firstName = homeData.personalized ? homeData.requesterName.split(" ")[0] : null;
 
   return (
     <main className="exec-home">
@@ -53,8 +79,36 @@ export default async function HomePage() {
             <h1 className="exec-topbar-title">Acerto Compras</h1>
           </div>
         </div>
-        <p className="exec-topbar-meta">{today}</p>
+
+        <div className="exec-topbar-search">
+          <CommandPalette />
+        </div>
+
+        <div className="exec-topbar-actions">
+          <a href="/solicitacoes/pendencias" className="exec-topbar-icon-link" title="Minhas Pendências" aria-label="Minhas Pendências">
+            <span aria-hidden>🔔</span>
+          </a>
+          <ThemeToggle />
+          {isAdmin && (
+            <a href="/admin/acessos" className="exec-topbar-icon-link" title="Acessos (Administração)" aria-label="Acessos (Administração)">
+              <span aria-hidden>⚙</span>
+            </a>
+          )}
+          {user && (
+            <div className="exec-user-chip">
+              <span className="exec-user-chip-name">{user.name ?? user.email}</span>
+              <a href="/api/auth/signout" className="exec-user-chip-signout">Sair</a>
+            </div>
+          )}
+        </div>
       </header>
+
+      <div className="exec-welcome-banner">
+        <p>
+          {greeting()}{firstName ? `, ${firstName}` : ""} — o que você precisa hoje?
+        </p>
+        <p className="exec-welcome-banner-date">{today}</p>
+      </div>
 
       <div className="exec-kpi-row" role="group" aria-label="Resumo geral">
         <div className="exec-kpi">
@@ -106,18 +160,7 @@ export default async function HomePage() {
         <div className="exec-section-header">
           <p className="exec-section-title">Serviços</p>
         </div>
-        <div className="exec-tile-grid">
-          {OPTIONS.map((opt) => (
-            <a key={opt.href} href={opt.href} className="exec-tile">
-              <div className="exec-tile-icon-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={opt.illustration} alt="" className="exec-tile-icon" />
-              </div>
-              <span className="exec-tile-eyebrow">{opt.eyebrow}</span>
-              <span className="exec-tile-title">{opt.title}</span>
-            </a>
-          ))}
-        </div>
+        <ServiceCatalog services={OPTIONS} popularHref={homeData.popularHref} />
       </section>
 
       <div className="exec-footer">

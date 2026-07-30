@@ -1,0 +1,100 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+export type ServiceOption = {
+  href: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  illustration: string;
+};
+
+/**
+ * Cardápio de serviços da Home — busca instantânea + chips de categoria,
+ * filtrando localmente (só 4 serviços hoje; busca global de verdade — por
+ * código de solicitação/contrato — já existe via CommandPalette no topo da
+ * página, então isto aqui é só "encontrar o serviço certo", não um segundo
+ * mecanismo de busca de dados).
+ */
+export function ServiceCatalog({ services, popularHref }: { services: ServiceOption[]; popularHref: string | null }) {
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("Todos");
+
+  const categories = useMemo(() => {
+    const seen: string[] = [];
+    for (const s of services) if (!seen.includes(s.eyebrow)) seen.push(s.eyebrow);
+    return ["Todos", ...seen];
+  }, [services]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return services.filter((s) => {
+      const matchesCategory = activeCategory === "Todos" || s.eyebrow === activeCategory;
+      const matchesQuery =
+        q.length === 0 ||
+        s.title.toLowerCase().includes(q) ||
+        s.eyebrow.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q);
+      return matchesCategory && matchesQuery;
+    });
+  }, [services, query, activeCategory]);
+
+  function clearFilters() {
+    setQuery("");
+    setActiveCategory("Todos");
+  }
+
+  return (
+    <div>
+      <div className="exec-catalog-controls">
+        <label className="exec-catalog-search">
+          <span aria-hidden>⌕</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar um serviço (ex: viagem, contrato, NDA...)"
+            aria-label="Buscar serviço no cardápio"
+          />
+        </label>
+        <div className="exec-catalog-chips" role="group" aria-label="Filtrar por categoria">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              className={`exec-catalog-chip${activeCategory === cat ? " active" : ""}`}
+              aria-pressed={activeCategory === cat}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filtered.length > 0 ? (
+        <div className="exec-tile-grid">
+          {filtered.map((opt) => (
+            <a key={opt.href} href={opt.href} className="exec-tile">
+              <div className="exec-tile-icon-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={opt.illustration} alt="" className="exec-tile-icon" />
+                {opt.href === popularHref && <span className="exec-tile-badge">Mais usado</span>}
+              </div>
+              <span className="exec-tile-eyebrow">{opt.eyebrow}</span>
+              <span className="exec-tile-title">{opt.title}</span>
+              <p className="exec-tile-desc">{opt.description}</p>
+              <span className="exec-tile-cta">Acessar →</span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="exec-catalog-empty">
+          <p>Nenhum serviço encontrado para os filtros atuais.</p>
+          <button type="button" className="exec-catalog-empty-clear" onClick={clearFilters}>Limpar filtros</button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1066,13 +1066,14 @@ a.table-row:hover {
   gap: 16px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 22px;
+  margin-bottom: 0;
   flex-wrap: wrap;
 }
 .exec-topbar-brand {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-shrink: 0;
 }
 .exec-topbar-logo {
   height: 24px;
@@ -1101,6 +1102,90 @@ a.table-row:hover {
   color: var(--ink-muted);
   text-transform: capitalize;
   margin: 0;
+}
+
+/* A busca global (CommandPalette) fica no topo da Home também — mesmo
+   componente/atalho Ctrl+K de dentro do app, só com o gatilho visual
+   adaptado (largura livre, sem a margem pensada para a barra lateral). */
+.exec-topbar-search {
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+.exec-topbar-search .sidebar-search-trigger {
+  width: 100%;
+  margin-bottom: 0;
+}
+.exec-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.exec-topbar-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 15px;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.exec-topbar-icon-link:hover {
+  border-color: var(--acerto-green);
+  color: var(--acerto-green-dark);
+}
+.exec-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+  margin-left: 2px;
+}
+.exec-user-chip-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exec-user-chip-signout {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.exec-user-chip-signout:hover {
+  color: var(--danger);
+  text-decoration: underline;
+}
+
+.exec-welcome-banner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 4px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.exec-welcome-banner p {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.exec-welcome-banner-date {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--ink-muted) !important;
+  text-transform: capitalize;
 }
 
 .exec-kpi-row {
@@ -1196,9 +1281,90 @@ a.table-row:hover {
   font-variant-numeric: tabular-nums;
 }
 
+.exec-catalog-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.exec-catalog-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+  max-width: 320px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+}
+.exec-catalog-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.exec-catalog-search input::placeholder {
+  color: var(--ink-muted);
+}
+.exec-catalog-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.exec-catalog-chip {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+.exec-catalog-chip:hover {
+  border-color: var(--acerto-green);
+  color: var(--acerto-green-dark);
+}
+.exec-catalog-chip.active {
+  background: var(--acerto-green-dark);
+  border-color: var(--acerto-green-dark);
+  color: #fff;
+}
+
+.exec-catalog-empty {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 32px 20px;
+  text-align: center;
+}
+.exec-catalog-empty p {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.exec-catalog-empty-clear {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--acerto-green-dark);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .exec-tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 .exec-tile {
@@ -1206,11 +1372,11 @@ a.table-row:hover {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px 12px;
+  padding: 16px 14px;
   text-decoration: none;
   color: var(--ink);
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -1220,6 +1386,7 @@ a.table-row:hover {
   box-shadow: var(--shadow-sm);
 }
 .exec-tile-icon-wrap {
+  position: relative;
   width: 100%;
   height: 76px;
   border-radius: var(--radius-sm);
@@ -1228,11 +1395,25 @@ a.table-row:hover {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  margin-bottom: 4px;
 }
 .exec-tile-icon {
   height: 64px;
   width: auto;
   object-fit: contain;
+}
+.exec-tile-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--acerto-green-dark);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 7px;
+  border-radius: 999px;
 }
 .exec-tile-eyebrow {
   font-size: 9.5px;
@@ -1245,6 +1426,23 @@ a.table-row:hover {
   font-size: 12.5px;
   font-weight: 700;
   line-height: 1.3;
+}
+.exec-tile-desc {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.exec-tile-cta {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--acerto-green-dark);
 }
 
 .exec-footer {
