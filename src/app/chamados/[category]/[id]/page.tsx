@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, isTicketCategorySlug } from "@/lib/tickets";
+import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
 import { ChamadoThread } from "@/components/ChamadoThread";
 
@@ -12,15 +13,33 @@ const STATUS_BADGE: Record<string, string> = {
   CONCLUIDO: "badge-green",
 };
 
-export default async function ChamadoDetailPage({ params }: { params: { category: string; id: string } }) {
+export default async function ChamadoDetailPage({
+  params, searchParams,
+}: { params: { category: string; id: string }; searchParams: { userId?: string } }) {
   if (!isTicketCategorySlug(params.category)) notFound();
   const config = TICKET_CATEGORIES[params.category];
+  const viewer = await resolveChamadoViewer(searchParams.userId);
 
   const ticket = await prisma.simpleTicket.findUnique({
     where: { id: params.id },
     include: { messages: { orderBy: { createdAt: "asc" } } },
   });
   if (!ticket || ticket.category !== config.enumValue) notFound();
+
+  // Quem só tem o papel Solicitante só pode ver o próprio chamado (por
+  // e-mail — SimpleTicket não tem FK pra User, ver chamados-viewer.ts).
+  if (!viewer.showFullBoard && ticket.requesterEmail !== viewer.email) {
+    return (
+      <>
+        <ChamadoHeader categoryLabel={config.label} backHref={`/chamados/${params.category}`} backLabel="← voltar aos chamados" />
+        <main className="page-narrow" style={{ paddingTop: 28 }}>
+          <div className="card" style={{ marginTop: 20, padding: 28, textAlign: "center", color: "var(--ink-muted)" }}>
+            Este chamado não é seu — você só pode ver os chamados que você mesmo abriu.
+          </div>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
@@ -60,6 +79,7 @@ export default async function ChamadoDetailPage({ params }: { params: { category
         <ChamadoThread
           ticketId={ticket.id}
           status={ticket.status}
+          canChangeStatus={viewer.showFullBoard}
           messages={ticket.messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))}
         />
       </main>

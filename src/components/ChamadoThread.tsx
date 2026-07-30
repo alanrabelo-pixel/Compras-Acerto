@@ -7,8 +7,8 @@ import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 type Message = { id: string; authorName: string; body: string; createdAt: string };
 
 export function ChamadoThread({
-  ticketId, messages, status,
-}: { ticketId: string; messages: Message[]; status: string }) {
+  ticketId, messages, status, canChangeStatus = true,
+}: { ticketId: string; messages: Message[]; status: string; canChangeStatus?: boolean }) {
   const router = useRouter();
   const [authorName, setAuthorName] = useState("");
   const [body, setBody] = useState("");
@@ -55,17 +55,21 @@ export function ChamadoThread({
       <section className="card section-gap">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 className="card-title accent" style={{ margin: 0 }}>Status</h2>
-          <select
-            className="input"
-            style={{ width: "auto" }}
-            value={status}
-            disabled={statusLoading}
-            onChange={(e) => changeStatus(e.target.value)}
-          >
-            {Object.entries(TICKET_STATUS_LABEL).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
+          {canChangeStatus ? (
+            <select
+              className="input"
+              style={{ width: "auto" }}
+              value={status}
+              disabled={statusLoading}
+              onChange={(e) => changeStatus(e.target.value)}
+            >
+              {Object.entries(TICKET_STATUS_LABEL).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="badge badge-neutral">{TICKET_STATUS_LABEL[status] ?? status}</span>
+          )}
         </div>
       </section>
 

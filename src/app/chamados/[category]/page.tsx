@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, isTicketCategorySlug } from "@/lib/tickets";
+import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
 import type { TicketStatus } from "@prisma/client";
 
@@ -8,12 +9,20 @@ export const dynamic = "force-dynamic";
 
 const STATUSES: TicketStatus[] = ["ABERTO", "EM_ANDAMENTO", "CONCLUIDO"];
 
-export default async function ChamadosBoardPage({ params }: { params: { category: string } }) {
+export default async function ChamadosBoardPage({
+  params, searchParams,
+}: { params: { category: string }; searchParams: { userId?: string } }) {
   if (!isTicketCategorySlug(params.category)) notFound();
   const config = TICKET_CATEGORIES[params.category];
+  const viewer = await resolveChamadoViewer(searchParams.userId);
 
+  // Quem só tem o papel Solicitante (sem canViewBoard) vê só os próprios
+  // chamados — mesmo recorte de Minhas Solicitações, ver src/lib/roles.ts.
   const tickets = await prisma.simpleTicket.findMany({
-    where: { category: config.enumValue },
+    where: {
+      category: config.enumValue,
+      ...(viewer.showFullBoard ? {} : { requesterEmail: viewer.email }),
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -31,7 +40,7 @@ export default async function ChamadosBoardPage({ params }: { params: { category
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
             <h1 className="page-title">{config.label}</h1>
-            <p className="page-subtitle">{tickets.length} chamado(s) no total</p>
+            <p className="page-subtitle">{tickets.length} chamado(s) {viewer.showFullBoard ? "no total" : "seus"}</p>
           </div>
           <a href={`/chamados/${params.category}/novo`} className="btn btn-primary">+ Novo Chamado</a>
         </div>
