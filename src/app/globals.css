@@ -1492,15 +1492,6 @@ a.table-row:hover {
   color: var(--acerto-green-dark);
 }
 
-.exec-footer-links-section {
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
-}
-.exec-footer-links-section .exec-section-title {
-  text-align: center;
-  margin-bottom: 14px;
-}
 .exec-footer {
   display: flex;
   justify-content: center;
@@ -1539,18 +1530,47 @@ a.table-row:hover {
 .exec-brand-footer-inner {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 22px 24px;
+  padding: 26px 24px 22px;
+}
+.exec-brand-footer-links-title {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 12px;
+}
+/* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
+   verde — mesma marcação/links, só a aparência muda aqui dentro. */
+.exec-brand-footer-links .exec-footer-link {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+.exec-brand-footer-links .exec-footer-link:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+.exec-brand-footer-links .exec-footer-link img {
+  filter: brightness(0) invert(1);
+}
+.exec-brand-footer-company {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 .exec-brand-footer-logo {
   height: 20px;
   filter: brightness(0) invert(1);
   flex-shrink: 0;
 }
-.exec-brand-footer-inner p {
+.exec-brand-footer-company p {
   margin: 0;
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.88);
