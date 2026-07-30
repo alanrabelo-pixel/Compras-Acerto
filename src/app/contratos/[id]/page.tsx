@@ -4,6 +4,7 @@ import { ContractActions } from "@/components/ContractActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
+import { Breadcrumb } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
   return (
     <AppShell active="/contratos">
       <main className="page-narrow" style={{ paddingTop: 28 }}>
-        <a href="/contratos" className="back-link">← voltar aos contratos</a>
+        <Breadcrumb items={[{ label: "Contratos", href: "/contratos" }, { label: contract.supplierName }]} />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 14 }}>
           <div>

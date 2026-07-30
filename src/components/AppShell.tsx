@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CommandPalette } from "@/components/CommandPalette";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -39,6 +40,8 @@ export async function AppShell({ active, children }: { active?: string; children
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="sidebar-logo" />
         </Link>
+
+        <CommandPalette />
 
         <nav className="sidebar-nav">
           {NAV_ITEMS.map((item) => (

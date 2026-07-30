@@ -13,5 +13,7 @@ export { Input, Select, Textarea } from "./Input";
 export { Field } from "./Field";
 export { Card } from "./Card";
 export { TableWrap, TableHeadRow, TableRow, TableEmpty } from "./Table";
+export { Breadcrumb } from "./Breadcrumb";
+export type { BreadcrumbItem } from "./Breadcrumb";
 export { Modal } from "./Modal";
 export { cx } from "./cx";

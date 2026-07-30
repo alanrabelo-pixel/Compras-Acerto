@@ -10,6 +10,7 @@ import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { StageOverrideControls } from "@/components/StageOverrideControls";
 import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
+import { Breadcrumb } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   return (
     <AppShell active="/solicitacoes">
       <main className="page" style={{ paddingTop: 28 }}>
-        <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
+        <Breadcrumb items={[{ label: "Quadro", href: "/solicitacoes" }, { label: request.code }]} />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 14 }}>
           <div>
