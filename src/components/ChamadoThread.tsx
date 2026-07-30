@@ -7,8 +7,8 @@ import { TICKET_STATUS_LABEL } from "@/lib/tickets";
 type Message = { id: string; authorName: string; body: string; createdAt: string };
 
 export function ChamadoThread({
-  ticketId, messages, status, canChangeStatus = true,
-}: { ticketId: string; messages: Message[]; status: string; canChangeStatus?: boolean }) {
+  ticketId, messages, status, canChangeStatus = true, devUserId,
+}: { ticketId: string; messages: Message[]; status: string; canChangeStatus?: boolean; devUserId?: string }) {
   const router = useRouter();
   const [authorName, setAuthorName] = useState("");
   const [body, setBody] = useState("");
@@ -16,11 +16,18 @@ export function ChamadoThread({
   const [error, setError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
 
+  // `devUserId` (?userId= na URL) só existe em modo bypass local, pra
+  // pré-visualizar a visão de um Solicitante puro sem SSO real — repassado
+  // aqui pra que a API (src/app/api/tickets/[id]/...) valide a mesma
+  // identidade simulada, em vez de sempre cair no admin padrão do bypass.
+  // Fora do bypass, a API ignora esse parâmetro e usa só a sessão real.
+  const devQuery = devUserId ? `?userId=${devUserId}` : "";
+
   async function sendMessage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/tickets/${ticketId}/messages`, {
+      const res = await fetch(`/api/tickets/${ticketId}/messages${devQuery}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ authorName, body }),
@@ -39,7 +46,7 @@ export function ChamadoThread({
   async function changeStatus(newStatus: string) {
     setStatusLoading(true);
     try {
-      await fetch(`/api/tickets/${ticketId}`, {
+      await fetch(`/api/tickets/${ticketId}${devQuery}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

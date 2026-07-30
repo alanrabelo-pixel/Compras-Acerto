@@ -80,6 +80,7 @@ export default async function ChamadoDetailPage({
           ticketId={ticket.id}
           status={ticket.status}
           canChangeStatus={viewer.showFullBoard}
+          devUserId={searchParams.userId}
           messages={ticket.messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))}
         />
       </main>
