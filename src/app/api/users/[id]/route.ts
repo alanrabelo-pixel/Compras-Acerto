@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { RoleName } from "@prisma/client";
+import { BOARD_ROLES } from "@/lib/roles";
 
 /**
  * PATCH /api/users/[id] — gerencia os "5 tipos de acesso" (Admin, Compras,
@@ -25,7 +26,6 @@ import type { RoleName } from "@prisma/client";
  * SSO real não está configurado.
  */
 const MANAGED_ROLES: RoleName[] = ["ADMIN", "COMPRADOR", "SOLICITANTE", "APROVADOR", "CONTROLADORIA"];
-const BOARD_ROLES: RoleName[] = ["ADMIN", "COMPRADOR", "APROVADOR", "CONTROLADORIA"];
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (process.env.LOCAL_BYPASS_AUTH !== "true") {

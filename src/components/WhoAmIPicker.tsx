@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
 
 /**
- * Seletor de identidade para Minhas Pendências — só aparece quando não há
- * sessão real (LOCAL_BYPASS_AUTH ligado / SSO ainda não configurado, ver
- * src/app/solicitacoes/pendencias/page.tsx). Quando o SSO estiver ativo, a
- * página resolve a pessoa direto pela sessão e este seletor nem aparece.
+ * Seletor de identidade para páginas "minhas coisas" (Minhas Pendências,
+ * Minhas Solicitações) — só aparece quando não há sessão real
+ * (LOCAL_BYPASS_AUTH ligado / SSO ainda não configurado). Quando o SSO
+ * estiver ativo, a página resolve a pessoa direto pela sessão e este
+ * seletor nem aparece.
  */
-export function WhoAmIPicker() {
+export function WhoAmIPicker({
+  targetPath = "/solicitacoes/pendencias",
+  buttonLabel = "Ver minhas pendências",
+}: { targetPath?: string; buttonLabel?: string } = {}) {
   const router = useRouter();
   const [userId, setUserId] = useState("");
 
@@ -20,9 +24,9 @@ export function WhoAmIPicker() {
       <button
         className="btn btn-primary"
         disabled={!userId}
-        onClick={() => router.push(`/solicitacoes/pendencias?userId=${userId}`)}
+        onClick={() => router.push(`${targetPath}?userId=${userId}`)}
       >
-        Ver minhas pendências
+        {buttonLabel}
       </button>
     </div>
   );

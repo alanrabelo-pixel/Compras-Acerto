@@ -7,14 +7,25 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
+import { canViewBoard } from "@/lib/roles";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
-const NAV_ITEMS = [
+// Quadro geral, Minhas Pendências, Contratos e Dashboards são telas de
+// gestão — só fazem sentido para quem tem acesso ao quadro (ver
+// src/lib/roles.ts). Quem só tem o papel Solicitante nunca vê essas telas
+// (o middleware já bloqueia o acesso direto por URL); pra essa pessoa a nav
+// mostra só "Minhas Solicitações", o próprio recorte dela.
+type NavItem = { href: string; label: string; icon: string; sub?: boolean };
+
+const BOARD_NAV_ITEMS: NavItem[] = [
   { href: "/solicitacoes", label: "Quadro", icon: "☰" },
   { href: "/solicitacoes/pendencias", label: "Minhas Pendências", icon: "●", sub: true },
   { href: "/contratos", label: "Contratos", icon: "▤" },
   { href: "/dashboards", label: "Dashboards", icon: "◫" },
+];
+const SOLICITANTE_NAV_ITEMS: NavItem[] = [
+  { href: "/solicitacoes/minhas", label: "Minhas Solicitações", icon: "☰" },
 ];
 
 /**
@@ -26,7 +37,8 @@ const NAV_ITEMS = [
  * Chamados (Viagens/Facilities) e a página inicial continuam com seu
  * próprio cabeçalho simples (ChamadoHeader), por serem fluxos à parte.
  *
- * `active` identifica o item de nav atual (ver valores em NAV_ITEMS) — cada
+ * `active` identifica o item de nav atual (ver valores em BOARD_NAV_ITEMS /
+ * SOLICITANTE_NAV_ITEMS) — cada
  * página passa o seu explicitamente, mesmo padrão que o TopNav já usava.
  */
 export async function AppShell({ active, children }: { active?: string; children: React.ReactNode }) {
@@ -36,6 +48,8 @@ export async function AppShell({ active, children }: { active?: string; children
     ? LOCAL_BYPASS_USER
     : (session?.user as { name?: string | null; email?: string | null; roles?: string[] } | undefined);
   const isAdmin = user?.roles?.includes("ADMIN");
+  const showBoard = canViewBoard(user?.roles ?? []);
+  const navItems = showBoard ? BOARD_NAV_ITEMS : SOLICITANTE_NAV_ITEMS;
   // Identidade real (id + avatar) — null em bypass/sem sessão, ver
   // src/lib/current-user.ts. UserAvatar só permite upload quando não-nulo.
   const [currentUser, recentAnnouncementsCount] = await Promise.all([
@@ -55,7 +69,7 @@ export async function AppShell({ active, children }: { active?: string; children
         <CommandPalette />
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}

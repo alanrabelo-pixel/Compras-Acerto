@@ -5,16 +5,18 @@ import { getToken } from "next-auth/jwt";
 /**
  * Controle de acesso às telas internas.
  *
- * - /, /solicitacoes/nova, /chamados/*: qualquer pessoa autenticada
- *   (@acerto.com.br, ver signIn callback em
+ * - /, /solicitacoes/nova, /solicitacoes/minhas, /chamados/*: qualquer pessoa
+ *   autenticada (@acerto.com.br, ver signIn callback em
  *   src/app/api/auth/[...nextauth]/route.ts) pode entrar. O login é pedido
  *   já na porta de entrada (URL raiz) e vale para os três cardápios
  *   (Solicitação de Compras, Viagens Acerto, Facilities) — não é pedido de
- *   novo a cada seção, é a mesma sessão.
+ *   novo a cada seção, é a mesma sessão. /solicitacoes/minhas é o recorte de
+ *   quem só tem o papel Solicitante (sem acesso ao quadro geral) — mostra só
+ *   as próprias solicitações, ver src/app/solicitacoes/minhas/page.tsx.
  * - /solicitacoes (quadro), /solicitacoes/[id], /contratos, /dashboards:
- *   restrito a quem tem User.canViewBoard = true — lista explícita,
- *   gerenciada em /admin/acessos (ADMIN). Ver decisão registrada com o
- *   usuário: acesso por pessoa, não por papel.
+ *   restrito a quem tem User.canViewBoard = true (ver src/lib/roles.ts) —
+ *   ADMIN, COMPRADOR, APROVADOR ou CONTROLADORIA. Gerenciado em
+ *   /admin/acessos (ADMIN).
  * - /admin: restrito a quem tem papel ADMIN.
  *
  * Roda no runtime edge — não pode usar Prisma diretamente. getToken() só lê
@@ -34,7 +36,12 @@ export async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
 
-  if (pathname === "/" || pathname.startsWith("/solicitacoes/nova") || pathname.startsWith("/chamados")) {
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/solicitacoes/nova") ||
+    pathname.startsWith("/solicitacoes/minhas") ||
+    pathname.startsWith("/chamados")
+  ) {
     const token = await getToken({ req });
     if (!token) return signInRedirect(req);
     return NextResponse.next();
