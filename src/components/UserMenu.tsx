@@ -4,6 +4,7 @@ import { useState } from "react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AnnouncementsBody } from "@/components/AnnouncementsBody";
+import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
 
 type View = "menu" | "comunicados";
 
@@ -26,6 +27,7 @@ export function UserMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>("menu");
+  const { count: unseenCount, markSeen } = useAnnouncementsUnseen(recentAnnouncementsCount);
 
   function close() {
     setOpen(false);
@@ -56,7 +58,7 @@ export function UserMenu({
           <UserAvatar userId={userId} avatarUrl={avatarUrl} name={name} size={28} />
         </span>
         <span className="user-menu-trigger-name">{name}</span>
-        {(pendingCount > 0 || recentAnnouncementsCount > 0) && (
+        {(pendingCount > 0 || unseenCount > 0) && (
           <span className="user-menu-trigger-dot" aria-hidden />
         )}
         <span className="user-menu-trigger-caret" aria-hidden>▾</span>
@@ -78,13 +80,13 @@ export function UserMenu({
                   type="button"
                   className="user-menu-item"
                   role="menuitem"
-                  onClick={() => setView("comunicados")}
+                  onClick={() => { setView("comunicados"); markSeen(); }}
                 >
                   <span aria-hidden>🚀</span>
                   <span>Comunicados</span>
-                  {recentAnnouncementsCount > 0 && (
+                  {unseenCount > 0 && (
                     <span className="user-menu-badge">
-                      {recentAnnouncementsCount > 9 ? "9+" : recentAnnouncementsCount}
+                      {unseenCount > 9 ? "9+" : unseenCount}
                     </span>
                   )}
                   <span className="user-menu-item-arrow" aria-hidden>›</span>
