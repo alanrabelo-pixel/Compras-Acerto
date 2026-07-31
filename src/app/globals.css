@@ -1871,7 +1871,11 @@ a.table-row:hover {
 }
 .exec-brand-footer-company {
   display: flex;
-  align-items: center;
+  /* flex-start (não center): o texto quebra em 2 linhas neste tamanho de
+     coluna, e centralizar a logo em relação às 2 linhas a deixava flutuando
+     no meio delas, sem alinhar com nenhuma — flex-start alinha com o topo
+     da primeira linha. */
+  align-items: flex-start;
   justify-content: center;
   gap: 14px;
   flex-wrap: wrap;
@@ -1883,6 +1887,7 @@ a.table-row:hover {
 }
 .exec-brand-footer-logo {
   height: 20px;
+  margin-top: 1px;
   filter: brightness(0) invert(1);
   flex-shrink: 0;
 }
