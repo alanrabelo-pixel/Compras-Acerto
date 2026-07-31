@@ -376,13 +376,14 @@ button:focus-visible,
 .sidebar-search-kbd {
   /* Sem caixa/preenchimento de propósito — uma "cápsula" com fundo (mesmo
      sutil) chamava atenção demais para um hint discreto de atalho de
-     teclado. Só o texto, direto sobre o fundo do botão, em --ink-muted:
-     legível o suficiente pra notar, neutro o suficiente pra não competir
-     com o resto do topbar. */
+     teclado. Só o texto, direto sobre o fundo do botão, peso normal (não
+     semi-negrito) e opacidade reduzida sobre --ink-muted: mal se nota até
+     procurar, sem sumir de vez. */
   margin-left: auto;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--ink-muted);
+  opacity: 0.65;
 }
 
 /* margin-top: auto empurra o botão (e o footer, que vem logo depois) para o
