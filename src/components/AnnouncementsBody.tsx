@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Modal } from "@/components/ui";
 
 type Announcement = { id: string; title: string; body: string; authorName: string; createdAt: string };
 
@@ -20,6 +21,7 @@ export function AnnouncementsBody({
   const [authorName, setAuthorName] = useState(initialAuthorName);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Announcement | null>(null);
 
   useEffect(() => {
     if (items === null) {
@@ -90,15 +92,34 @@ export function AnnouncementsBody({
         {items === null && <p className="announcements-empty">Carregando…</p>}
         {items?.length === 0 && <p className="announcements-empty">Nenhum comunicado ainda.</p>}
         {items?.map((a) => (
-          <div key={a.id} className="announcements-item">
+          <button
+            key={a.id}
+            type="button"
+            className="announcements-item"
+            onClick={() => setSelected(a)}
+          >
             <p className="announcements-item-title">{a.title}</p>
             <p className="announcements-item-body">{a.body}</p>
             <p className="announcements-item-meta">
               {a.authorName} · {new Date(a.createdAt).toLocaleDateString("pt-BR")}
             </p>
-          </div>
+          </button>
         ))}
       </div>
+
+      {/* Cartão da lista mostra só as primeiras linhas (tamanho fixo, ver
+          .announcements-item-body no CSS) — clicar abre a mensagem inteira
+          aqui, num modal central destacado em verde claro. */}
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.title} panelClassName="announcement-modal-panel">
+        {selected && (
+          <>
+            <p className="announcement-modal-body">{selected.body}</p>
+            <p className="announcement-modal-meta">
+              {selected.authorName} · {new Date(selected.createdAt).toLocaleDateString("pt-BR")}
+            </p>
+          </>
+        )}
+      </Modal>
     </>
   );
 }

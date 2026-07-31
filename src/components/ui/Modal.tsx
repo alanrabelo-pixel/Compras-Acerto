@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { cx } from "./cx";
 
 /**
  * Modal simples (sem dependência externa) — nenhuma tela usa isso ainda hoje
@@ -11,8 +12,8 @@ import { useEffect } from "react";
  * conta própria, para não mudar o comportamento de nada sem pedido explícito.
  */
 export function Modal({
-  open, onClose, title, children,
-}: { open: boolean; onClose: () => void; title?: string; children: React.ReactNode }) {
+  open, onClose, title, children, panelClassName,
+}: { open: boolean; onClose: () => void; title?: string; children: React.ReactNode; panelClassName?: string }) {
   useEffect(() => {
     if (!open) return;
     function onKeyDown(e: KeyboardEvent) {
@@ -27,7 +28,7 @@ export function Modal({
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
-        className="modal-panel"
+        className={cx("modal-panel", panelClassName)}
         role="dialog"
         aria-modal="true"
         aria-label={title}
