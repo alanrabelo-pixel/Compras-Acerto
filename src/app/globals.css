@@ -374,13 +374,17 @@ button:focus-visible,
   color: var(--ink-soft);
 }
 .sidebar-search-kbd {
+  /* --border-soft por cima de --surface-muted (fundo do botão) tinha quase
+     nenhum contraste — a "cápsula" ficava quase invisível. --surface +
+     borda cria um recorte "keycap" nítido nos dois temas. */
   margin-left: auto;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
-  background: var(--border-soft);
-  color: var(--ink-muted);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-soft);
 }
 
 /* margin-top: auto empurra o botão (e o footer, que vem logo depois) para o
