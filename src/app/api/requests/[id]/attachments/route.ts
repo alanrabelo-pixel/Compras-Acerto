@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { saveLocalFile } from "@/lib/storage";
+import { saveFile } from "@/lib/storage";
 import type { AttachmentCategory, Stage } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const fileName = (file as File).name;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const storageUrl = await saveLocalFile(request.id, fileName, buffer);
+  const storageUrl = await saveFile(request.id, fileName, buffer);
 
   const attachment = await prisma.attachment.create({
     data: { requestId: request.id, fileName, storageUrl, uploadedBy, stage: stage as Stage, category },

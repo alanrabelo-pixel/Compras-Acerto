@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { readLocalFile } from "@/lib/storage";
+import { readFile } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -15,12 +15,12 @@ const MIME_BY_EXT: Record<string, string> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 
-// GET /api/attachments/[id]/file — baixa o anexo (stand-in local; ver src/lib/storage.ts).
+// GET /api/attachments/[id]/file — baixa o anexo (local em dev, Vercel Blob em produção; ver src/lib/storage.ts).
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const attachment = await prisma.attachment.findUnique({ where: { id: params.id } });
   if (!attachment) return NextResponse.json({ error: "Anexo não encontrado" }, { status: 404 });
 
-  const buffer = await readLocalFile(attachment.storageUrl);
+  const buffer = await readFile(attachment.storageUrl);
   const ext = attachment.fileName.split(".").pop()?.toLowerCase() ?? "";
 
   return new NextResponse(new Uint8Array(buffer), {

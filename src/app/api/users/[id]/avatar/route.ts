@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { saveLocalFile, readLocalFile } from "@/lib/storage";
+import { saveFile, readFile } from "@/lib/storage";
 import { loadCurrentUser } from "@/lib/current-user";
 
 export const runtime = "nodejs";
@@ -35,20 +35,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const storageUrl = await saveLocalFile(`avatars/${params.id}`, `avatar.${ext}`, buffer);
+  const storageUrl = await saveFile(`avatars/${params.id}`, `avatar.${ext}`, buffer);
   await prisma.user.update({ where: { id: params.id }, data: { avatarUrl: storageUrl } });
 
   return NextResponse.json({ avatarUrl: `/api/users/${params.id}/avatar` }, { status: 200 });
 }
 
-// GET /api/users/[id]/avatar — serve a imagem (stand-in local; ver src/lib/storage.ts).
+// GET /api/users/[id]/avatar — serve a imagem (local em dev, Vercel Blob em produção; ver src/lib/storage.ts).
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const user = await prisma.user.findUnique({ where: { id: params.id }, select: { avatarUrl: true } });
   if (!user?.avatarUrl) {
     return NextResponse.json({ error: "Sem foto de perfil." }, { status: 404 });
   }
 
-  const buffer = await readLocalFile(user.avatarUrl);
+  const buffer = await readFile(user.avatarUrl);
   const ext = user.avatarUrl.split(".").pop()?.toLowerCase() ?? "";
   const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 
