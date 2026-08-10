@@ -5,6 +5,7 @@ import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
 import { ChamadoRequestForm } from "@/components/ChamadoRequestForm";
 import { NdaRequestForm } from "@/components/NdaRequestForm";
+import { AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -45,14 +46,17 @@ export default async function NovoChamadoPage({ params }: { params: { category: 
         {categorySlug === "viagens" && (
           <div
             className="section-gap"
-            style={{ background: "var(--warning-bg)", border: "1px solid #fbdba0", borderRadius: 10, padding: 12, fontSize: 12.5, color: "var(--warning)", lineHeight: 1.5 }}
+            style={{ display: "flex", gap: 8, background: "var(--warning-bg)", border: "1px solid #fbdba0", borderRadius: 10, padding: 12, fontSize: 12.5, color: "var(--warning)", lineHeight: 1.5 }}
           >
-            ⚠ Este canal é só para resolver problemas com viagens (dúvidas, imprevistos, alterações). Para solicitar
-            passagens aéreas, rodoviárias ou hospedagem, use o <strong>Onfly</strong> em{" "}
-            <a href="https://app.onfly.com" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", fontWeight: 700 }}>
-              app.onfly.com
-            </a>
-            .
+            <AlertTriangle size={15} strokeWidth={1.75} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
+            <span>
+              Este canal é só para resolver problemas com viagens (dúvidas, imprevistos, alterações). Para solicitar
+              passagens aéreas, rodoviárias ou hospedagem, use o <strong>Onfly</strong> em{" "}
+              <a href="https://app.onfly.com" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", fontWeight: 700 }}>
+                app.onfly.com
+              </a>
+              .
+            </span>
           </div>
         )}
 

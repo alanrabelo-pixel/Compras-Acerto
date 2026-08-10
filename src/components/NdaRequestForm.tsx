@@ -4,6 +4,7 @@ import { useState } from "react";
 import { UserPicker, type UserOption } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
+import { AlertTriangle } from "lucide-react";
 
 type SessionRequester = { id: string; name: string; email: string } | null;
 
@@ -161,8 +162,8 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
       </div>
 
       {error && (
-        <p role="alert" style={{ fontSize: 12.5, color: "var(--danger)", background: "var(--danger-bg)", border: "1px solid #f8b4ac", borderRadius: 8, padding: "10px 12px", margin: 0 }}>
-          ⚠ {error}
+        <p role="alert" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--danger)", background: "var(--danger-bg)", border: "1px solid #f8b4ac", borderRadius: 8, padding: "10px 12px", margin: 0 }}>
+          <AlertTriangle size={14} strokeWidth={1.75} aria-hidden /> {error}
         </p>
       )}
 

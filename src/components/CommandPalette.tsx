@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 
 type SearchResult = { type: "solicitacao" | "contrato"; id: string; title: string; subtitle: string; href: string };
 type Item = { key: string; title: string; subtitle: string; href: string; group: string };
@@ -119,7 +120,7 @@ export function CommandPalette() {
       {/* Gatilho visível — sem isso, o atalho Ctrl+K seria invisível para
           quem não soubesse que ele existe. */}
       <button type="button" className="sidebar-search-trigger" onClick={() => setOpen(true)}>
-        <span aria-hidden>⌕</span>
+        <span aria-hidden><Search size={14} strokeWidth={1.75} /></span>
         Buscar
         <span className="sidebar-search-kbd">Ctrl K</span>
       </button>
@@ -128,7 +129,7 @@ export function CommandPalette() {
         <div className="command-palette-overlay" onClick={() => setOpen(false)} role="presentation">
           <div className="command-palette" role="dialog" aria-modal="true" aria-label="Busca global" onClick={(e) => e.stopPropagation()}>
             <div className="command-palette-input-row">
-              <span aria-hidden style={{ color: "var(--ink-muted)" }}>⌕</span>
+              <span aria-hidden style={{ color: "var(--ink-muted)", display: "flex" }}><Search size={16} strokeWidth={1.75} /></span>
               <input
                 ref={inputRef}
                 className="command-palette-input"

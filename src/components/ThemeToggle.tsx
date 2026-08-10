@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 type ThemeChoice = "light" | "dark";
 const STORAGE_KEY = "acerto-compras-theme";
@@ -45,7 +46,7 @@ export function ThemeToggle() {
         title="Tema claro"
         onClick={() => select("light")}
       >
-        <span aria-hidden>☀</span>
+        <span aria-hidden><Sun size={14} strokeWidth={1.75} /></span>
       </button>
       <button
         type="button"
@@ -54,7 +55,7 @@ export function ThemeToggle() {
         title="Tema escuro"
         onClick={() => select("dark")}
       >
-        <span aria-hidden>☾</span>
+        <span aria-hidden><Moon size={14} strokeWidth={1.75} /></span>
       </button>
     </div>
   );

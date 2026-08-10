@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnnouncementsBody } from "@/components/AnnouncementsBody";
 import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
+import { Rocket } from "lucide-react";
 
 /**
  * Botão de foguete — comunicados gerais para todo mundo (avisos simples,
@@ -35,7 +36,7 @@ export function AnnouncementsPanel({
         title="Comunicados"
         aria-label={unseenCount > 0 ? `Comunicados (${unseenCount} novo(s))` : "Comunicados"}
       >
-        <span aria-hidden>🚀</span>
+        <span aria-hidden><Rocket size={16} strokeWidth={1.75} /></span>
         {unseenCount > 0 && <span className="exec-topbar-badge" aria-hidden>{unseenCount > 9 ? "9+" : unseenCount}</span>}
       </button>
 

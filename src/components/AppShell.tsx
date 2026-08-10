@@ -8,6 +8,7 @@ import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { canViewBoard } from "@/lib/roles";
+import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, type LucideIcon } from "lucide-react";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -16,16 +17,16 @@ const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.c
 // src/lib/roles.ts). Quem só tem o papel Solicitante nunca vê essas telas
 // (o middleware já bloqueia o acesso direto por URL); pra essa pessoa a nav
 // mostra só "Minhas Solicitações", o próprio recorte dela.
-type NavItem = { href: string; label: string; icon: string; sub?: boolean };
+type NavItem = { href: string; label: string; icon: LucideIcon; sub?: boolean };
 
 const BOARD_NAV_ITEMS: NavItem[] = [
-  { href: "/solicitacoes", label: "Quadro", icon: "☰" },
-  { href: "/solicitacoes/pendencias", label: "Minhas Pendências", icon: "●", sub: true },
-  { href: "/contratos", label: "Contratos", icon: "▤" },
-  { href: "/dashboards", label: "Dashboards", icon: "◫" },
+  { href: "/solicitacoes", label: "Quadro", icon: LayoutGrid },
+  { href: "/solicitacoes/pendencias", label: "Minhas Pendências", icon: ListChecks, sub: true },
+  { href: "/contratos", label: "Contratos", icon: FileText },
+  { href: "/dashboards", label: "Dashboards", icon: LayoutDashboard },
 ];
 const SOLICITANTE_NAV_ITEMS: NavItem[] = [
-  { href: "/solicitacoes/minhas", label: "Minhas Solicitações", icon: "☰" },
+  { href: "/solicitacoes/minhas", label: "Minhas Solicitações", icon: LayoutGrid },
 ];
 
 /**
@@ -69,16 +70,19 @@ export async function AppShell({ active, children }: { active?: string; children
         <CommandPalette />
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`sidebar-link${item.sub ? " sub" : ""}${active === item.href ? " active" : ""}`}
-            >
-              <span className="sidebar-link-icon" aria-hidden>{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`sidebar-link${item.sub ? " sub" : ""}${active === item.href ? " active" : ""}`}
+              >
+                <span className="sidebar-link-icon" aria-hidden><Icon size={16} strokeWidth={1.75} /></span>
+                {item.label}
+              </Link>
+            );
+          })}
           {isAdmin && (
             <>
               <p className="sidebar-section-label">Administração</p>
@@ -86,7 +90,7 @@ export async function AppShell({ active, children }: { active?: string; children
                 href="/admin/acessos"
                 className={`sidebar-link${active === "/admin/acessos" ? " active" : ""}`}
               >
-                <span className="sidebar-link-icon" aria-hidden>⚙️</span>
+                <span className="sidebar-link-icon" aria-hidden><Settings size={16} strokeWidth={1.75} /></span>
                 Acessos
               </Link>
             </>

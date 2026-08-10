@@ -274,7 +274,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         <Field
           label="Prioridade de Aquisição"
           required
-          help="📌 Classificação de Urgência — 🔴 Crítica (Urgência Máxima) · 🟠 Alta (Urgente, mas não crítica) · 🟡 Média (Importante, mas não urgente) · 🟢 Baixa (Rotineira ou Não Urgente)"
+          help="Classificação de Urgência — Crítica (Urgência Máxima) · Alta (Urgente, mas não crítica) · Média (Importante, mas não urgente) · Baixa (Rotineira ou Não Urgente)"
         >
           <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}>
             {PRIORITIES.map((p) => (

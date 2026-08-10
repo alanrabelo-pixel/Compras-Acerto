@@ -13,13 +13,19 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { loadDashboardData, money, CATEGORY_LABEL } from "@/lib/dashboard-data";
 import { STAGES } from "@/lib/workflow";
 import { TableWrap, TableHeadRow, TableRow } from "@/components/ui";
+import {
+  Wallet, FileText, Package, Hourglass, Truck, Banknote, TrendingUp, CheckCircle2, Users,
+  Tags, Building2, Factory, Briefcase, Compass, FileSignature, Target, Timer, Ticket, Inbox,
+  Calendar, Shield, Bell, type LucideIcon,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-function Panel({ title, subtitle, icon, children }: { title: string; subtitle?: string; icon?: string; children: React.ReactNode }) {
+function Panel({ title, subtitle, icon, children }: { title: string; subtitle?: string; icon?: LucideIcon; children: React.ReactNode }) {
+  const Icon = icon;
   return (
     <section className="card">
-      <h2 className="dash-section-title">{icon && <span aria-hidden>{icon}</span>}{title}</h2>
+      <h2 className="dash-section-title">{Icon && <span aria-hidden style={{ display: "inline-flex" }}><Icon size={16} strokeWidth={1.75} /></span>}{title}</h2>
       {subtitle && <p className="dash-section-subtitle">{subtitle}</p>}
       {children}
     </section>
@@ -62,23 +68,23 @@ export default async function DashboardsPage({
 
         {/* ---- KPIs ---- */}
         <div className="kpi-grid">
-          <KpiCard icon="💰" label="Valor Comprado" formattedValue={money(data.kpis.totalSpend.value)} deltaPct={data.kpis.totalSpend.deltaPct} direction={data.kpis.totalSpend.direction} />
-          <KpiCard icon="📄" label="Solicitações" formattedValue={String(Math.round(data.kpis.requestCount.value))} deltaPct={data.kpis.requestCount.deltaPct} direction={data.kpis.requestCount.direction} />
-          <KpiCard icon="📦" label="Pedidos Emitidos" formattedValue={String(Math.round(data.kpis.poCount.value))} deltaPct={data.kpis.poCount.deltaPct} direction={data.kpis.poCount.direction} />
-          <KpiCard icon="⏳" label="Ciclo de Compra" formattedValue={`${data.kpis.avgCycleDays.value.toFixed(1)}d`} deltaPct={data.kpis.avgCycleDays.deltaPct} direction={data.kpis.avgCycleDays.direction} goodDirection="down" />
+          <KpiCard icon={<Wallet size={18} strokeWidth={1.75} />} label="Valor Comprado" formattedValue={money(data.kpis.totalSpend.value)} deltaPct={data.kpis.totalSpend.deltaPct} direction={data.kpis.totalSpend.direction} />
+          <KpiCard icon={<FileText size={18} strokeWidth={1.75} />} label="Solicitações" formattedValue={String(Math.round(data.kpis.requestCount.value))} deltaPct={data.kpis.requestCount.deltaPct} direction={data.kpis.requestCount.direction} />
+          <KpiCard icon={<Package size={18} strokeWidth={1.75} />} label="Pedidos Emitidos" formattedValue={String(Math.round(data.kpis.poCount.value))} deltaPct={data.kpis.poCount.deltaPct} direction={data.kpis.poCount.direction} />
+          <KpiCard icon={<Hourglass size={18} strokeWidth={1.75} />} label="Ciclo de Compra" formattedValue={`${data.kpis.avgCycleDays.value.toFixed(1)}d`} deltaPct={data.kpis.avgCycleDays.deltaPct} direction={data.kpis.avgCycleDays.direction} goodDirection="down" />
           <KpiCard
-            icon="🚀" label="Lead Time (PO → Entrega)"
+            icon={<Truck size={18} strokeWidth={1.75} />} label="Lead Time (PO → Entrega)"
             formattedValue={data.avgLeadTimeDays === null ? "—" : `${data.avgLeadTimeDays.toFixed(1)}d`}
             deltaPct={null} direction="flat" goodDirection="down"
           />
-          <KpiCard icon="💵" label="Saving Obtido" formattedValue={money(data.kpis.totalSaving.value)} deltaPct={data.kpis.totalSaving.deltaPct} direction={data.kpis.totalSaving.direction} />
-          <KpiCard icon="📈" label="Saving %" formattedValue={`${data.kpis.savingPct.value.toFixed(1)}%`} deltaPct={data.kpis.savingPct.deltaPct} direction={data.kpis.savingPct.direction} />
+          <KpiCard icon={<Banknote size={18} strokeWidth={1.75} />} label="Saving Obtido" formattedValue={money(data.kpis.totalSaving.value)} deltaPct={data.kpis.totalSaving.deltaPct} direction={data.kpis.totalSaving.direction} />
+          <KpiCard icon={<TrendingUp size={18} strokeWidth={1.75} />} label="Saving %" formattedValue={`${data.kpis.savingPct.value.toFixed(1)}%`} deltaPct={data.kpis.savingPct.deltaPct} direction={data.kpis.savingPct.direction} />
           <KpiCard
-            icon="✔" label="SLA Cumprido"
+            icon={<CheckCircle2 size={18} strokeWidth={1.75} />} label="SLA Cumprido"
             formattedValue={data.current.slaCompliancePct === null ? "—" : `${data.current.slaCompliancePct.toFixed(0)}%`}
             deltaPct={data.kpis.slaCompliancePct.deltaPct} direction={data.kpis.slaCompliancePct.direction}
           />
-          <KpiCard icon="👥" label="Fornecedores Ativos" formattedValue={String(Math.round(data.kpis.activeSuppliers.value))} deltaPct={data.kpis.activeSuppliers.deltaPct} direction={data.kpis.activeSuppliers.direction} />
+          <KpiCard icon={<Users size={18} strokeWidth={1.75} />} label="Fornecedores Ativos" formattedValue={String(Math.round(data.kpis.activeSuppliers.value))} deltaPct={data.kpis.activeSuppliers.deltaPct} direction={data.kpis.activeSuppliers.direction} />
         </div>
 
         {/* ---- Evolução ---- */}
@@ -88,36 +94,36 @@ export default async function DashboardsPage({
 
         {/* ---- Categoria / Centro de Custo ---- */}
         <div className="dash-grid-2">
-          <Panel title="Compras por Categoria" icon="🗂" subtitle="Valor estimado do recorte atual (pipeline completo, não só o já emitido)">
+          <Panel title="Compras por Categoria" icon={Tags} subtitle="Valor estimado do recorte atual (pipeline completo, não só o já emitido)">
             <CategoryDonut data={data.categoryBreakdown.map((c) => ({ label: CATEGORY_LABEL[c.key] ?? c.label, value: c.value }))} />
           </Panel>
-          <Panel title="Compras por Centro de Custo" icon="🏢">
+          <Panel title="Compras por Centro de Custo" icon={Building2}>
             <CostCenterBarHorizontal data={data.costCenterBreakdown} />
           </Panel>
         </div>
 
         {/* ---- Fornecedores / Compradores / Pipeline ---- */}
         <div className="dash-grid-3">
-          <Panel title="Top Fornecedores" icon="🏭">
+          <Panel title="Top Fornecedores" icon={Factory}>
             <TopSuppliersTable rows={data.topSuppliers} />
           </Panel>
-          <Panel title="Top Compradores" icon="🧑‍💼">
+          <Panel title="Top Compradores" icon={Briefcase}>
             <BuyerRanking rows={data.buyerRanking} />
           </Panel>
-          <Panel title="Pipeline de Compras" icon="🧭" subtitle="Clique numa etapa para ver as solicitações">
+          <Panel title="Pipeline de Compras" icon={Compass} subtitle="Clique numa etapa para ver as solicitações">
             <PipelineFunnel stages={data.pipeline} />
           </Panel>
         </div>
 
         {/* ---- Contratos / SLA / Ciclo ---- */}
         <div className="dash-grid-3">
-          <Panel title="Contratos" icon="📑">
+          <Panel title="Contratos" icon={FileSignature}>
             <ContractsPanel data={data.contractsPanel} />
           </Panel>
-          <Panel title="SLA" icon="🎯">
+          <Panel title="SLA" icon={Target}>
             <SlaGauge pct={data.current.slaCompliancePct} />
           </Panel>
-          <Panel title="Tempo de Ciclo" icon="⏱" subtitle="Distribuição das solicitações concluídas, por faixa de dias">
+          <Panel title="Tempo de Ciclo" icon={Timer} subtitle="Distribuição das solicitações concluídas, por faixa de dias">
             <CycleHistogram data={data.cycleHistogram} />
           </Panel>
         </div>
@@ -125,21 +131,21 @@ export default async function DashboardsPage({
         {/* ---- Chamados (Viagens Acerto / Facilities / NDA) ---- */}
         <Panel
           title="Chamados (Viagens · Facilities · NDA)"
-          icon="🎫"
+          icon={Ticket}
           subtitle="Fluxo simples fora do processo de Compras — mesmo período do filtro acima; demais filtros não se aplicam"
         >
           <div className="kpi-grid" style={{ marginBottom: 16 }}>
             <KpiCard
-              icon="🎫" label="Chamados no período"
+              icon={<Ticket size={18} strokeWidth={1.75} />} label="Chamados no período"
               formattedValue={String(data.ticketsPanel.total.value)}
               deltaPct={data.ticketsPanel.total.deltaPct} direction={data.ticketsPanel.total.direction}
             />
             <KpiCard
-              icon="⏱" label="Tempo médio de resolução"
+              icon={<Timer size={18} strokeWidth={1.75} />} label="Tempo médio de resolução"
               formattedValue={data.ticketsPanel.avgResolutionDays === null ? "—" : `${data.ticketsPanel.avgResolutionDays.toFixed(1)}d`}
               deltaPct={null} direction="flat" goodDirection="down"
             />
-            <KpiCard icon="📬" label="Chamados em aberto" formattedValue={String(data.ticketsPanel.openCount)} deltaPct={null} direction="flat" />
+            <KpiCard icon={<Inbox size={18} strokeWidth={1.75} />} label="Chamados em aberto" formattedValue={String(data.ticketsPanel.openCount)} deltaPct={null} direction="flat" />
           </div>
 
           <TableWrap>
@@ -177,12 +183,12 @@ export default async function DashboardsPage({
         </Panel>
 
         {/* ---- Sazonalidade ---- */}
-        <Panel title="Sazonalidade" icon="📅" subtitle="Quando as solicitações são abertas — ajuda a antecipar picos de demanda">
+        <Panel title="Sazonalidade" icon={Calendar} subtitle="Quando as solicitações são abertas — ajuda a antecipar picos de demanda">
           <SeasonalityHeatmap matrix={data.heatmap} monthLabels={data.heatmapMonthLabels} weekdayLabels={data.weekdayLabels} max={data.heatmapMax} />
         </Panel>
 
         {/* ---- Mapa de riscos ---- */}
-        <Panel title="Mapa de Riscos e Compliance" icon="🛡">
+        <Panel title="Mapa de Riscos e Compliance" icon={Shield}>
           <RiskMap data={data.riskMap} />
           {data.overdue.length > 0 && (
             <div style={{ marginTop: 14, borderTop: "1px solid var(--border-soft)", paddingTop: 12 }}>
@@ -201,7 +207,7 @@ export default async function DashboardsPage({
         </Panel>
 
         {/* ---- Alertas inteligentes ---- */}
-        <Panel title="Alertas Inteligentes" icon="🔔">
+        <Panel title="Alertas Inteligentes" icon={Bell}>
           <AlertsPanel alerts={data.alerts} />
         </Panel>
       </main>

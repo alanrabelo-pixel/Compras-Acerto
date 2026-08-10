@@ -1,19 +1,21 @@
 "use client";
 
 import { Sparkline, CHART_COLORS } from "./charts";
+import type { ReactNode } from "react";
 
 /**
  * Card de KPI executivo — ícone, valor, comparação com o período anterior,
  * tendência (seta + %), sparkline e cor inteligente (verde = favorável,
  * vermelho = desfavorável, seguindo `goodDirection`).
  *
- * Recebe o valor JÁ FORMATADO pelo servidor (não uma função) — funções não
- * podem atravessar a fronteira Server → Client Component do Next.js.
+ * Recebe o valor JÁ FORMATADO pelo servidor e o ícone JÁ RENDERIZADO
+ * (elemento, não a referência do componente) — funções não podem atravessar
+ * a fronteira Server → Client Component do Next.js, mas elementos JSX podem.
  */
 export function KpiCard({
   icon, label, formattedValue, deltaPct, direction, sparkline, goodDirection = "up", subtitle,
 }: {
-  icon: string;
+  icon: ReactNode;
   label: string;
   formattedValue: string;
   deltaPct: number | null;
@@ -29,7 +31,7 @@ export function KpiCard({
   return (
     <div className="kpi-card">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 18 }} aria-hidden>{icon}</span>
+        <span style={{ color: "var(--ink-soft)", display: "flex" }} aria-hidden>{icon}</span>
         {deltaPct !== null && (
           <span style={{ fontSize: 11.5, fontWeight: 700, color: deltaColor, display: "flex", alignItems: "center", gap: 3 }}>
             {arrow} {Math.abs(deltaPct).toFixed(1)}%

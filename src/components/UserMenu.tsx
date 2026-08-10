@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AnnouncementsBody } from "@/components/AnnouncementsBody";
 import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
+import { Bell, Rocket, SunMoon, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 type View = "menu" | "comunicados";
 
@@ -61,7 +62,7 @@ export function UserMenu({
         {(pendingCount > 0 || unseenCount > 0) && (
           <span className="user-menu-trigger-dot" aria-hidden />
         )}
-        <span className="user-menu-trigger-caret" aria-hidden>▾</span>
+        <span className="user-menu-trigger-caret" aria-hidden><ChevronDown size={14} strokeWidth={2} /></span>
       </div>
 
       {open && (
@@ -71,7 +72,7 @@ export function UserMenu({
             {view === "menu" ? (
               <div className="user-menu-list">
                 <a href="/solicitacoes/pendencias" className="user-menu-item" role="menuitem">
-                  <span aria-hidden>🔔</span>
+                  <span aria-hidden><Bell size={16} strokeWidth={1.75} /></span>
                   <span>Minhas Pendências</span>
                   {pendingCount > 0 && <span className="user-menu-badge">{pendingCount > 9 ? "9+" : pendingCount}</span>}
                 </a>
@@ -82,24 +83,24 @@ export function UserMenu({
                   role="menuitem"
                   onClick={() => { setView("comunicados"); markSeen(); }}
                 >
-                  <span aria-hidden>🚀</span>
+                  <span aria-hidden><Rocket size={16} strokeWidth={1.75} /></span>
                   <span>Comunicados</span>
                   {unseenCount > 0 && (
                     <span className="user-menu-badge">
                       {unseenCount > 9 ? "9+" : unseenCount}
                     </span>
                   )}
-                  <span className="user-menu-item-arrow" aria-hidden>›</span>
+                  <span className="user-menu-item-arrow" aria-hidden><ChevronRight size={14} strokeWidth={1.75} /></span>
                 </button>
 
                 <div className="user-menu-item user-menu-theme-row">
-                  <span><span aria-hidden>🌓</span> Tema</span>
+                  <span><span aria-hidden><SunMoon size={16} strokeWidth={1.75} /></span> Tema</span>
                   <ThemeToggle />
                 </div>
 
                 {isAdmin && (
                   <a href="/admin/acessos" className="user-menu-item" role="menuitem">
-                    <span aria-hidden>⚙️</span>
+                    <span aria-hidden><Settings size={16} strokeWidth={1.75} /></span>
                     <span>Acessos (Administração)</span>
                   </a>
                 )}
@@ -107,14 +108,14 @@ export function UserMenu({
                 <div className="user-menu-divider" />
 
                 <a href="/api/auth/signout" className="user-menu-item user-menu-item-danger" role="menuitem">
-                  <span aria-hidden>↪</span>
+                  <span aria-hidden><LogOut size={16} strokeWidth={1.75} /></span>
                   <span>Sair</span>
                 </a>
               </div>
             ) : (
               <div className="user-menu-sub">
                 <button type="button" className="user-menu-back" onClick={() => setView("menu")}>
-                  <span aria-hidden>‹</span> Voltar
+                  <span aria-hidden><ChevronLeft size={14} strokeWidth={1.75} /></span> Voltar
                 </button>
                 <AnnouncementsBody isAdmin={isAdmin} authorName={authorName} />
               </div>

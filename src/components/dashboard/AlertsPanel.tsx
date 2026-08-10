@@ -1,3 +1,5 @@
+import { CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
+
 export type Alert = { severity: "danger" | "warning"; text: string; href?: string };
 
 /**
@@ -8,8 +10,8 @@ export type Alert = { severity: "danger" | "warning"; text: string; href?: strin
 export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
   if (alerts.length === 0) {
     return (
-      <p style={{ fontSize: 12.5, color: "var(--acerto-green-dark)", fontWeight: 600 }}>
-        ✔ Nenhum alerta no momento — operação dentro dos parâmetros esperados neste recorte.
+      <p style={{ fontSize: 12.5, color: "var(--acerto-green-dark)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+        <CheckCircle2 size={15} strokeWidth={1.75} aria-hidden /> Nenhum alerta no momento — operação dentro dos parâmetros esperados neste recorte.
       </p>
     );
   }
@@ -23,7 +25,9 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
         };
         const content = (
           <>
-            <span aria-hidden>{a.severity === "danger" ? "🔴" : "🟠"}</span>
+            <span aria-hidden style={{ display: "flex", marginTop: 1 }}>
+              {a.severity === "danger" ? <AlertCircle size={15} strokeWidth={1.75} /> : <AlertTriangle size={15} strokeWidth={1.75} />}
+            </span>
             <span>{a.text}</span>
           </>
         );

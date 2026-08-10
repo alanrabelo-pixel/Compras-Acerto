@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 
 export type ServiceOption = {
   href: string;
@@ -49,7 +50,7 @@ export function ServiceCatalog({ services, popularHref }: { services: ServiceOpt
     <div>
       <div className="exec-catalog-controls">
         <label className="exec-catalog-search">
-          <span aria-hidden>⌕</span>
+          <span aria-hidden style={{ display: "flex" }}><Search size={16} strokeWidth={1.75} /></span>
           <input
             type="search"
             value={query}

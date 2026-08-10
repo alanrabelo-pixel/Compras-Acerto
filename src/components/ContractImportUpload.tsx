@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
 
 type ImportResult = {
   created: number;
@@ -44,7 +45,7 @@ export function ContractImportUpload() {
   if (!open) {
     return (
       <button className="btn btn-secondary" onClick={() => setOpen(true)}>
-        📥 Importar planilha
+        <Download size={14} strokeWidth={1.75} /> Importar planilha
       </button>
     );
   }

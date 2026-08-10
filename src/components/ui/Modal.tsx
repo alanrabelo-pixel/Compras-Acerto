@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { X } from "lucide-react";
 import { cx } from "./cx";
 
 /**
@@ -37,7 +38,7 @@ export function Modal({
         {title && (
           <div className="modal-header">
             <h2 className="modal-title">{title}</h2>
-            <button className="modal-close" onClick={onClose} aria-label="Fechar">✕</button>
+            <button className="modal-close" onClick={onClose} aria-label="Fechar"><X size={16} strokeWidth={1.75} /></button>
           </div>
         )}
         <div className="modal-body">{children}</div>
