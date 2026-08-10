@@ -10,17 +10,11 @@ import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { StageOverrideControls } from "@/components/StageOverrideControls";
 import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
-import { Breadcrumb } from "@/components/ui";
+import { Breadcrumb, Badge } from "@/components/ui";
 import { AlertTriangle } from "lucide-react";
+import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
-
-const PRIORITY_BADGE: Record<string, string> = {
-  CRITICA: "badge-danger",
-  ALTA: "badge-warning",
-  MEDIA: "badge-info",
-  BAIXA: "badge-neutral",
-};
 
 export default async function RequestDetailPage({ params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
@@ -106,8 +100,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span className={`badge ${PRIORITY_BADGE[request.priority] ?? "badge-neutral"}`}>{request.priority}</span>
-            <span className="badge badge-green">{STAGES[request.currentStage].label}</span>
+            <Badge variant={PRIORITY_BADGE_VARIANT[request.priority] ?? "neutral"}>{request.priority}</Badge>
+            <Badge variant="green">{STAGES[request.currentStage].label}</Badge>
           </div>
         </div>
 

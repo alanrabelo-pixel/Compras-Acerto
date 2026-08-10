@@ -12,25 +12,14 @@ import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { loadDashboardData, money, CATEGORY_LABEL } from "@/lib/dashboard-data";
 import { STAGES } from "@/lib/workflow";
-import { TableWrap, TableHeadRow, TableRow } from "@/components/ui";
+import { TableWrap, TableHeadRow, TableRow, Card } from "@/components/ui";
 import {
   Wallet, FileText, Package, Hourglass, Truck, Banknote, TrendingUp, CheckCircle2, Users,
   Tags, Building2, Factory, Briefcase, Compass, FileSignature, Target, Timer, Ticket, Inbox,
-  Calendar, Shield, Bell, type LucideIcon,
+  Calendar, Shield, Bell,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-function Panel({ title, subtitle, icon, children }: { title: string; subtitle?: string; icon?: LucideIcon; children: React.ReactNode }) {
-  const Icon = icon;
-  return (
-    <section className="card">
-      <h2 className="dash-section-title">{Icon && <span aria-hidden style={{ display: "inline-flex" }}><Icon size={16} strokeWidth={1.75} /></span>}{title}</h2>
-      {subtitle && <p className="dash-section-subtitle">{subtitle}</p>}
-      {children}
-    </section>
-  );
-}
 
 export default async function DashboardsPage({
   searchParams,
@@ -88,50 +77,50 @@ export default async function DashboardsPage({
         </div>
 
         {/* ---- Evolução ---- */}
-        <Panel title="Evolução das Compras e Saving" subtitle="Últimos 12 meses · valor negociado (Pedidos de Compra) e saving mensal">
+        <Card titleSize="lg" title="Evolução das Compras e Saving" subtitle="Últimos 12 meses · valor negociado (Pedidos de Compra) e saving mensal">
           <TrendChart data={data.monthBuckets} />
-        </Panel>
+        </Card>
 
         {/* ---- Categoria / Centro de Custo ---- */}
         <div className="dash-grid-2">
-          <Panel title="Compras por Categoria" icon={Tags} subtitle="Valor estimado do recorte atual (pipeline completo, não só o já emitido)">
+          <Card titleSize="lg" title="Compras por Categoria" icon={<Tags size={16} strokeWidth={1.75} />} subtitle="Valor estimado do recorte atual (pipeline completo, não só o já emitido)">
             <CategoryDonut data={data.categoryBreakdown.map((c) => ({ label: CATEGORY_LABEL[c.key] ?? c.label, value: c.value }))} />
-          </Panel>
-          <Panel title="Compras por Centro de Custo" icon={Building2}>
+          </Card>
+          <Card titleSize="lg" title="Compras por Centro de Custo" icon={<Building2 size={16} strokeWidth={1.75} />}>
             <CostCenterBarHorizontal data={data.costCenterBreakdown} />
-          </Panel>
+          </Card>
         </div>
 
         {/* ---- Fornecedores / Compradores / Pipeline ---- */}
         <div className="dash-grid-3">
-          <Panel title="Top Fornecedores" icon={Factory}>
+          <Card titleSize="lg" title="Top Fornecedores" icon={<Factory size={16} strokeWidth={1.75} />}>
             <TopSuppliersTable rows={data.topSuppliers} />
-          </Panel>
-          <Panel title="Top Compradores" icon={Briefcase}>
+          </Card>
+          <Card titleSize="lg" title="Top Compradores" icon={<Briefcase size={16} strokeWidth={1.75} />}>
             <BuyerRanking rows={data.buyerRanking} />
-          </Panel>
-          <Panel title="Pipeline de Compras" icon={Compass} subtitle="Clique numa etapa para ver as solicitações">
+          </Card>
+          <Card titleSize="lg" title="Pipeline de Compras" icon={<Compass size={16} strokeWidth={1.75} />} subtitle="Clique numa etapa para ver as solicitações">
             <PipelineFunnel stages={data.pipeline} />
-          </Panel>
+          </Card>
         </div>
 
         {/* ---- Contratos / SLA / Ciclo ---- */}
         <div className="dash-grid-3">
-          <Panel title="Contratos" icon={FileSignature}>
+          <Card titleSize="lg" title="Contratos" icon={<FileSignature size={16} strokeWidth={1.75} />}>
             <ContractsPanel data={data.contractsPanel} />
-          </Panel>
-          <Panel title="SLA" icon={Target}>
+          </Card>
+          <Card titleSize="lg" title="SLA" icon={<Target size={16} strokeWidth={1.75} />}>
             <SlaGauge pct={data.current.slaCompliancePct} />
-          </Panel>
-          <Panel title="Tempo de Ciclo" icon={Timer} subtitle="Distribuição das solicitações concluídas, por faixa de dias">
+          </Card>
+          <Card titleSize="lg" title="Tempo de Ciclo" icon={<Timer size={16} strokeWidth={1.75} />} subtitle="Distribuição das solicitações concluídas, por faixa de dias">
             <CycleHistogram data={data.cycleHistogram} />
-          </Panel>
+          </Card>
         </div>
 
         {/* ---- Chamados (Viagens Acerto / Facilities / NDA) ---- */}
-        <Panel
+        <Card titleSize="lg"
           title="Chamados (Viagens · Facilities · NDA)"
-          icon={Ticket}
+          icon={<Ticket size={16} strokeWidth={1.75} />}
           subtitle="Fluxo simples fora do processo de Compras — mesmo período do filtro acima; demais filtros não se aplicam"
         >
           <div className="kpi-grid" style={{ marginBottom: 16 }}>
@@ -180,15 +169,15 @@ export default async function DashboardsPage({
               </div>
             </div>
           )}
-        </Panel>
+        </Card>
 
         {/* ---- Sazonalidade ---- */}
-        <Panel title="Sazonalidade" icon={Calendar} subtitle="Quando as solicitações são abertas — ajuda a antecipar picos de demanda">
+        <Card titleSize="lg" title="Sazonalidade" icon={<Calendar size={16} strokeWidth={1.75} />} subtitle="Quando as solicitações são abertas — ajuda a antecipar picos de demanda">
           <SeasonalityHeatmap matrix={data.heatmap} monthLabels={data.heatmapMonthLabels} weekdayLabels={data.weekdayLabels} max={data.heatmapMax} />
-        </Panel>
+        </Card>
 
         {/* ---- Mapa de riscos ---- */}
-        <Panel title="Mapa de Riscos e Compliance" icon={Shield}>
+        <Card titleSize="lg" title="Mapa de Riscos e Compliance" icon={<Shield size={16} strokeWidth={1.75} />}>
           <RiskMap data={data.riskMap} />
           {data.overdue.length > 0 && (
             <div style={{ marginTop: 14, borderTop: "1px solid var(--border-soft)", paddingTop: 12 }}>
@@ -204,12 +193,12 @@ export default async function DashboardsPage({
               </div>
             </div>
           )}
-        </Panel>
+        </Card>
 
         {/* ---- Alertas inteligentes ---- */}
-        <Panel title="Alertas Inteligentes" icon={Bell}>
+        <Card titleSize="lg" title="Alertas Inteligentes" icon={<Bell size={16} strokeWidth={1.75} />}>
           <AlertsPanel alerts={data.alerts} />
-        </Panel>
+        </Card>
       </main>
     </AppShell>
   );

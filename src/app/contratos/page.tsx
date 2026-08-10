@@ -5,15 +5,9 @@ import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { ContractImportUpload } from "@/components/ContractImportUpload";
 import { TableWrap, TableHeadRow, TableRow, TableEmpty, Badge } from "@/components/ui";
 import type { Prisma, Diretoria } from "@prisma/client";
-import type { BadgeVariant } from "@/components/ui";
+import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_BADGE: Record<string, BadgeVariant> = {
-  ATIVO: "green",
-  RENOVACAO_EM_ANDAMENTO: "warning",
-  CANCELADO: "danger",
-};
 
 function daysUntil(date: Date) {
   return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -110,7 +104,7 @@ export default async function ContratosPage({
                 <span className="text-soft">{c.request?.diretoria ?? c.diretoria ?? "—"}</span>
                 <span className="text-soft">{formatDateOnly(c.startDate)} → {formatDateOnly(c.endDate)}</span>
                 <span style={{ fontWeight: 700, color: daysColor }}>{days < 0 ? `${Math.abs(days)}d vencido` : `${days}d`}</span>
-                <span><Badge variant={STATUS_BADGE[c.status] ?? "neutral"}>{c.status}</Badge></span>
+                <span><Badge variant={CONTRACT_STATUS_BADGE_VARIANT[c.status] ?? "neutral"}>{c.status}</Badge></span>
               </TableRow>
             );
           })}

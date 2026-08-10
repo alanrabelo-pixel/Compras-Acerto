@@ -3,15 +3,10 @@ import { STAGES } from "@/lib/workflow";
 import type { Prisma, Stage, Diretoria, DemandType, Priority } from "@prisma/client";
 import { AppShell } from "@/components/AppShell";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
+import { Badge, TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/components/ui";
+import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
-
-const PRIORITY_BADGE: Record<string, string> = {
-  CRITICA: "badge-danger",
-  ALTA: "badge-warning",
-  MEDIA: "badge-info",
-  BAIXA: "badge-neutral",
-};
 
 const DEMAND_TYPE_LABEL: Record<string, string> = {
   COMPRA_PRODUTO: "Compra de Produtos",
@@ -136,12 +131,12 @@ export default async function SolicitacoesPage({
   return (
     <AppShell active="/solicitacoes">
       <main className="page" style={{ paddingTop: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "var(--space-3)" }}>
           <div>
             <h1 className="page-title">Solicitações de Compra</h1>
             <p className="page-subtitle">{totalCount} solicitação(ões) no recorte atual</p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
             <div className="view-toggle">
               <a href={viewHref("kanban")} className={viewMode === "kanban" ? "active" : ""}>☰ Kanban</a>
               <a href={viewHref("lista")} className={viewMode === "lista" ? "active" : ""}>▤ Lista</a>
@@ -161,32 +156,32 @@ export default async function SolicitacoesPage({
         />
 
         {viewMode === "kanban" ? (
-        <div style={{ display: "flex", gap: 14, overflowX: "auto", marginTop: 22, paddingBottom: 12 }}>
+        <div style={{ display: "flex", gap: "var(--space-4)", overflowX: "auto", marginTop: "var(--space-6)", paddingBottom: "var(--space-3)" }}>
           {Object.values(STAGES)
             .filter((s) => s.stage !== "CANCELADO")
             .map((stageDef) => {
               const items = byStage.get(stageDef.stage) ?? [];
               const stageTotal = stageCountMap.get(stageDef.stage) ?? items.length;
               return (
-                <div key={stageDef.stage} style={{ minWidth: 268, flex: "0 0 268px", background: "var(--surface-muted)", borderRadius: 14, padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 10px" }}>
+                <div key={stageDef.stage} style={{ minWidth: 268, flex: "0 0 268px", background: "var(--surface-muted)", borderRadius: 14, padding: "var(--space-3)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px var(--space-1) var(--space-3)" }}>
                     <h2 style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink)", margin: 0 }}>{stageDef.label}</h2>
-                    <span className="badge badge-neutral">{stageTotal}</span>
+                    <Badge variant="neutral">{stageTotal}</Badge>
                   </div>
-                  <div style={{ display: "grid", gap: 8 }}>
+                  <div style={{ display: "grid", gap: "var(--space-2)" }}>
                     {items.map((r) => (
                       <a
                         key={r.id}
                         href={`/solicitacoes/${r.id}`}
                         className="card"
-                        style={{ padding: 12, textDecoration: "none", color: "inherit", display: "block" }}
+                        style={{ padding: "var(--space-3)", textDecoration: "none", color: "inherit", display: "block" }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
                           <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
-                          <span className={`badge ${PRIORITY_BADGE[r.priority] ?? "badge-neutral"}`}>{r.priority}</span>
+                          <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge>
                         </div>
-                        <p style={{ margin: "0 0 8px", fontSize: 12.5, color: "var(--ink)", lineHeight: 1.35 }}>{r.shortDescription}</p>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <p style={{ margin: "0 0 var(--space-2)", fontSize: 12.5, color: "var(--ink)", lineHeight: 1.35 }}>{r.shortDescription}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
                           <span
                             style={{
                               width: 18, height: 18, borderRadius: "50%", background: "var(--acerto-green-50)", color: "var(--acerto-green-dark)",
@@ -200,10 +195,10 @@ export default async function SolicitacoesPage({
                       </a>
                     ))}
                     {items.length === 0 && (
-                      <p style={{ fontSize: 11, color: "var(--ink-muted)", padding: "8px 4px" }}>Nenhuma solicitação aqui.</p>
+                      <p style={{ fontSize: 11, color: "var(--ink-muted)", padding: "var(--space-2) var(--space-1)" }}>Nenhuma solicitação aqui.</p>
                     )}
                     {stageTotal > items.length && (
-                      <a href={stageViewAllHref(stageDef.stage)} style={{ fontSize: 11, color: "var(--acerto-green-dark)", fontWeight: 600, textDecoration: "none", padding: "6px 4px" }}>
+                      <a href={stageViewAllHref(stageDef.stage)} style={{ fontSize: 11, color: "var(--acerto-green-dark)", fontWeight: 600, textDecoration: "none", padding: "var(--space-1) var(--space-1)" }}>
                         Ver todas ({stageTotal}) →
                       </a>
                     )}
@@ -213,36 +208,29 @@ export default async function SolicitacoesPage({
             })}
         </div>
         ) : (
-        <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "1fr 2.6fr 1.6fr 0.9fr 1.6fr" }}>
+        <TableWrap className="section-gap">
+          <TableHeadRow columns="1fr 2.6fr 1.6fr 0.9fr 1.6fr">
             <span>Código</span>
             <span>Descrição</span>
             <span>Etapa</span>
             <span>Prioridade</span>
             <span>Solicitante</span>
-          </div>
+          </TableHeadRow>
           {requests.map((r) => (
-            <a
-              key={r.id}
-              href={`/solicitacoes/${r.id}`}
-              className="table-row"
-              style={{ gridTemplateColumns: "1fr 2.6fr 1.6fr 0.9fr 1.6fr", alignItems: "center" }}
-            >
+            <TableRow key={r.id} href={`/solicitacoes/${r.id}`} columns="1fr 2.6fr 1.6fr 0.9fr 1.6fr" style={{ alignItems: "center" }}>
               <span style={{ fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
               <span className="text-soft">{r.shortDescription}</span>
-              <span><span className="badge badge-neutral">{STAGES[r.currentStage].label}</span></span>
-              <span><span className={`badge ${PRIORITY_BADGE[r.priority] ?? "badge-neutral"}`}>{r.priority}</span></span>
+              <span><Badge variant="neutral">{STAGES[r.currentStage].label}</Badge></span>
+              <span><Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge></span>
               <span className="text-soft">{r.requester.name} · {r.costCenter.name}</span>
-            </a>
+            </TableRow>
           ))}
-          {requests.length === 0 && (
-            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma solicitação encontrada neste recorte.</p>
-          )}
-        </div>
+          {requests.length === 0 && <TableEmpty>Nenhuma solicitação encontrada neste recorte.</TableEmpty>}
+        </TableWrap>
         )}
 
         {viewMode === "lista" && totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "var(--space-4)", marginTop: "var(--space-4)" }}>
             <a
               href={pageHref(page - 1)}
               className="btn btn-secondary"

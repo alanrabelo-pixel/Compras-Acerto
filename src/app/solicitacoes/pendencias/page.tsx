@@ -6,15 +6,10 @@ import { loadPendingRequestsForUser } from "@/lib/pendencias";
 import type { Stage } from "@prisma/client";
 import { AppShell } from "@/components/AppShell";
 import { WhoAmIPicker } from "@/components/WhoAmIPicker";
+import { Badge } from "@/components/ui";
+import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
-
-const PRIORITY_BADGE: Record<string, string> = {
-  CRITICA: "badge-danger",
-  ALTA: "badge-warning",
-  MEDIA: "badge-info",
-  BAIXA: "badge-neutral",
-};
 
 function daysSince(date: Date): number {
   return Math.max(0, Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)));
@@ -76,7 +71,7 @@ export default async function PendenciasPage({
   return (
     <AppShell active="/solicitacoes/pendencias">
       <main className="page" style={{ paddingTop: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "var(--space-3)" }}>
           <div>
             <h1 className="page-title">Minhas Pendências</h1>
             <p className="page-subtitle">
@@ -92,21 +87,21 @@ export default async function PendenciasPage({
         </div>
 
         {pending.length === 0 && (
-          <div className="card" style={{ marginTop: 20, padding: 28, textAlign: "center", color: "var(--ink-muted)" }}>
+          <div className="card" style={{ marginTop: "var(--space-5)", padding: "var(--space-7)", textAlign: "center", color: "var(--ink-muted)" }}>
             Nenhuma solicitação esperando uma ação sua agora.
           </div>
         )}
 
-        <div style={{ display: "grid", gap: 26, marginTop: 22 }}>
+        <div style={{ display: "grid", gap: "var(--space-6)", marginTop: "var(--space-6)" }}>
           {stageOrder.map((stageDef) => {
             const items = byStage.get(stageDef.stage)!;
             return (
               <section key={stageDef.stage}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
                   <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", margin: 0 }}>{stageDef.label}</h2>
-                  <span className="badge badge-neutral">{items.length}</span>
+                  <Badge variant="neutral">{items.length}</Badge>
                 </div>
-                <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ display: "grid", gap: "var(--space-2)" }}>
                   {items.map((r) => {
                     const waiting = daysSince(r.updatedAt);
                     return (
@@ -114,17 +109,17 @@ export default async function PendenciasPage({
                         key={r.id}
                         href={`/solicitacoes/${r.id}`}
                         className="card"
-                        style={{ padding: 14, textDecoration: "none", color: "inherit", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
+                        style={{ padding: "var(--space-4)", textDecoration: "none", color: "inherit", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-3)" }}
                       >
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-1)" }}>
                             <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
-                            <span className={`badge ${PRIORITY_BADGE[r.priority] ?? "badge-neutral"}`}>{r.priority}</span>
+                            <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge>
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: "var(--ink)", lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {r.shortDescription}
                           </p>
-                          <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--ink-muted)" }}>
+                          <p style={{ margin: "var(--space-1) 0 0", fontSize: 11, color: "var(--ink-muted)" }}>
                             {r.requester.name} · {r.costCenter.name}
                             {r.estimatedValue !== null && <> · R$ {Number(r.estimatedValue).toLocaleString("pt-BR")}</>}
                           </p>

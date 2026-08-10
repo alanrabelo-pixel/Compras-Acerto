@@ -4,15 +4,12 @@ import { ContractActions } from "@/components/ContractActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
-import { Breadcrumb } from "@/components/ui";
+import { Breadcrumb, Badge } from "@/components/ui";
+import type { BadgeVariant } from "@/components/ui";
+import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
+import { Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_BADGE: Record<string, string> = {
-  ATIVO: "badge-green",
-  RENOVACAO_EM_ANDAMENTO: "badge-warning",
-  CANCELADO: "badge-danger",
-};
 
 function monthsBetween(start: Date, end: Date) {
   return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
@@ -53,12 +50,12 @@ export default async function ContractDetailPage({ params }: { params: { id: str
 
   const vigenciaMeses = monthsBetween(contract.startDate, contract.endDate);
   const diasFaltantes = daysUntil(contract.renewalDate);
-  const alertaVencimento =
+  const alertaVencimento: { label: string; variant: BadgeVariant } =
     diasFaltantes < 0
-      ? { label: `Vencido há ${Math.abs(diasFaltantes)} dia(s)`, badge: "badge-danger" }
+      ? { label: `Vencido há ${Math.abs(diasFaltantes)} dia(s)`, variant: "danger" }
       : diasFaltantes <= 30
-      ? { label: `Vence em ${diasFaltantes} dia(s)`, badge: "badge-warning" }
-      : { label: `Normal (${diasFaltantes} dias)`, badge: "badge-green" };
+      ? { label: `Vence em ${diasFaltantes} dia(s)`, variant: "warning" }
+      : { label: `Normal (${diasFaltantes} dias)`, variant: "green" };
 
   return (
     <AppShell active="/contratos">
@@ -70,7 +67,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             <h1 className="page-title">{contract.supplierName}</h1>
             <p className="page-subtitle">{contract.supplierTradeName ?? "Nome fantasia não informado"} · {contract.area} · {contract.costCenter}</p>
           </div>
-          <span className={`badge ${STATUS_BADGE[contract.status] ?? "badge-neutral"}`}>{contract.status}</span>
+          <Badge variant={CONTRACT_STATUS_BADGE_VARIANT[contract.status] ?? "neutral"}>{contract.status}</Badge>
         </div>
 
         {contract.requestId ? (
@@ -115,7 +112,10 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             <Field label="Dias Faltantes">{diasFaltantes < 0 ? `${Math.abs(diasFaltantes)} dias (vencido)` : `${diasFaltantes} dias`}</Field>
           </div>
           <div style={{ marginTop: 10 }}>
-            <span className={`badge ${alertaVencimento.badge}`}>⏰ {alertaVencimento.label}</span>
+            <Badge variant={alertaVencimento.variant}>
+              <Clock size={12} strokeWidth={2} style={{ marginRight: 4, verticalAlign: -1 }} />
+              {alertaVencimento.label}
+            </Badge>
           </div>
         </section>
 
@@ -126,10 +126,10 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           <Field label="Cláusula de Renovação e Rescisão">{contract.terminationClause ?? EMPTY}</Field>
           {(contract.nonCompete || contract.lgpdClause || contract.brandUse || contract.corporateChangeClause) && (
             <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-              {contract.nonCompete && <span className="badge badge-neutral">Não-concorrência</span>}
-              {contract.lgpdClause && <span className="badge badge-neutral">LGPD</span>}
-              {contract.brandUse && <span className="badge badge-neutral">Uso de marca</span>}
-              {contract.corporateChangeClause && <span className="badge badge-neutral">Mudança societária</span>}
+              {contract.nonCompete && <Badge variant="neutral">Não-concorrência</Badge>}
+              {contract.lgpdClause && <Badge variant="neutral">LGPD</Badge>}
+              {contract.brandUse && <Badge variant="neutral">Uso de marca</Badge>}
+              {contract.corporateChangeClause && <Badge variant="neutral">Mudança societária</Badge>}
             </div>
           )}
         </section>

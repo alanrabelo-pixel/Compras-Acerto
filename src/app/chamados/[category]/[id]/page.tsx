@@ -4,14 +4,10 @@ import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, isTicketCategorySlug } from "@/
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
 import { ChamadoThread } from "@/components/ChamadoThread";
+import { Badge } from "@/components/ui";
+import { TICKET_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_BADGE: Record<string, string> = {
-  ABERTO: "badge-info",
-  EM_ANDAMENTO: "badge-warning",
-  CONCLUIDO: "badge-green",
-};
 
 export default async function ChamadoDetailPage({
   params, searchParams,
@@ -50,7 +46,7 @@ export default async function ChamadoDetailPage({
             <h1 className="page-title">{ticket.code}</h1>
             <p className="page-subtitle">{ticket.requesterName} · {ticket.requesterEmail}</p>
           </div>
-          <span className={`badge ${STATUS_BADGE[ticket.status] ?? "badge-neutral"}`}>{TICKET_STATUS_LABEL[ticket.status]}</span>
+          <Badge variant={TICKET_STATUS_BADGE_VARIANT[ticket.status] ?? "neutral"}>{TICKET_STATUS_LABEL[ticket.status]}</Badge>
         </div>
 
         <section className="card section-gap">

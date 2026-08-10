@@ -40,6 +40,19 @@
   --shadow-md: 0 2px 8px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
   --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.10);
 
+  /* Escala de espaçamento — antes cada tela escolhia um px "por olho" no
+     style inline (gap: 6, 8, 10, 12, 14...); usar os mesmos poucos degraus
+     em todo lugar é o que faz o layout parecer desenhado, não improvisado. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
   --font-sans: var(--font-montserrat), "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 

@@ -5,16 +5,9 @@ import { STAGES } from "@/lib/workflow";
 import { AppShell } from "@/components/AppShell";
 import { WhoAmIPicker } from "@/components/WhoAmIPicker";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
-import type { BadgeVariant } from "@/components/ui";
+import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
-
-const PRIORITY_BADGE: Record<string, BadgeVariant> = {
-  CRITICA: "danger",
-  ALTA: "warning",
-  MEDIA: "info",
-  BAIXA: "neutral",
-};
 
 function formatUpdatedAt(date: Date) {
   return date.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -110,7 +103,7 @@ export default async function MinhasSolicitacoesPage({
                 <TableRow key={r.id} columns="0.7fr 2.2fr 0.7fr 1.1fr 0.9fr" style={{ alignItems: "center" }}>
                   <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.shortDescription}</span>
-                  <Badge variant={PRIORITY_BADGE[r.priority] ?? "neutral"}>{r.priority}</Badge>
+                  <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge>
                   <Badge variant="neutral">{STAGES[r.currentStage].label}</Badge>
                   <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{formatUpdatedAt(r.updatedAt)}</span>
                 </TableRow>
