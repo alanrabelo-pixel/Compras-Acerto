@@ -127,12 +127,12 @@ export default async function HomePage() {
         {/* Sem link: "abertos" soma todas as categorias de chamados, e hoje não existe uma lista
             unificada de chamados (só um board por categoria em /chamados/[category]) — linkar para
             uma única categoria representaria errado o número agregado mostrado aqui. */}
-        <div className="exec-kpi">
+        <div className="exec-kpi exec-kpi-warning">
           <span className="exec-kpi-icon" aria-hidden><LifeBuoy size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.openTickets}</span>
           <span className="exec-kpi-label">Chamados abertos</span>
         </div>
-        <a className="exec-kpi exec-kpi-warning exec-kpi-link" href="/contratos">
+        <a className="exec-kpi exec-kpi-neutral exec-kpi-link" href="/contratos">
           <span className="exec-kpi-icon" aria-hidden><FileClock size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.expiringContracts}</span>
           <span className="exec-kpi-label">Contratos vencendo em 30 dias</span>

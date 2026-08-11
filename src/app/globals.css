@@ -1643,6 +1643,10 @@ a.table-row:hover {
   background: var(--warning-bg);
   color: var(--warning);
 }
+.exec-kpi-neutral .exec-kpi-icon {
+  background: var(--info-bg);
+  color: var(--info);
+}
 .exec-kpi-value {
   grid-column: 2;
   grid-row: 1;
