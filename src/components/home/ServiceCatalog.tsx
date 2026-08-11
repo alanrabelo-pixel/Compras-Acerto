@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 export type ServiceOption = {
@@ -8,7 +8,11 @@ export type ServiceOption = {
   eyebrow: string;
   title: string;
   description: string;
-  illustration: string;
+  // Elemento já renderizado (ex: `<ShoppingCart size={18}/>`), não a
+  // referência do componente — só assim atravessa a fronteira Server →
+  // Client (este catálogo é Client Component, page.tsx que monta as opções
+  // é Server Component).
+  icon: ReactNode;
 };
 
 /**
@@ -78,9 +82,8 @@ export function ServiceCatalog({ services, popularHref }: { services: ServiceOpt
         <div className="exec-tile-grid">
           {filtered.map((opt) => (
             <a key={opt.href} href={opt.href} className="exec-tile">
-              <div className="exec-tile-icon-wrap">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={opt.illustration} alt="" className="exec-tile-icon" />
+              <div className="exec-tile-top">
+                <span className="exec-tile-icon-wrap" aria-hidden>{opt.icon}</span>
                 {opt.href === popularHref && (
                   <span className="exec-tile-badge" title="Mais solicitado nos últimos 30 dias">Mais usado</span>
                 )}

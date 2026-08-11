@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { ShoppingCart, Plane, Wrench, Scale, ClipboardList, LifeBuoy, FileClock } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
@@ -8,34 +9,38 @@ import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { ServiceCatalog, type ServiceOption } from "@/components/home/ServiceCatalog";
 
+// Pictogramas simples e neutros no lugar das ilustrações antigas (pessoas
+// desenhadas em estilo cartoon) — o padrão que plataformas de Procurement
+// corporativas (Coupa, Ariba, Ramp) usam em catálogo de serviço é um ícone
+// discreto, não uma ilustração decorativa competindo com o conteúdo.
 const OPTIONS: ServiceOption[] = [
   {
     href: "/solicitacoes",
     eyebrow: "Compras",
     title: "Solicitação de Compras",
     description: "Abra e acompanhe processos de compra, da solicitação ao pagamento.",
-    illustration: "/illustrations/cartao-dinheiro.png",
+    icon: <ShoppingCart size={18} strokeWidth={1.75} />,
   },
   {
     href: "/chamados/viagens",
     eyebrow: "Viagens",
     title: "Viagens Acerto",
     description: "Dúvidas ou imprevistos de viagem a trabalho (passagens: use o Onfly).",
-    illustration: "/illustrations/homem-escada.png",
+    icon: <Plane size={18} strokeWidth={1.75} />,
   },
   {
     href: "/chamados/facilities",
     eyebrow: "Facilities",
     title: "Gestão de Facilities",
     description: "Manutenção, infraestrutura do escritório e materiais.",
-    illustration: "/illustrations/dupla-parceria.png",
+    icon: <Wrench size={18} strokeWidth={1.75} />,
   },
   {
     href: "/chamados/nda",
     eyebrow: "Jurídico",
     title: "Envio de NDA (Termo de Confidencialidade)",
     description: "Solicite o envio de um termo de confidencialidade a um fornecedor.",
-    illustration: "/illustrations/computador-digital.png",
+    icon: <Scale size={18} strokeWidth={1.75} />,
   },
 ];
 
@@ -62,6 +67,10 @@ export default async function HomePage() {
   ]);
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   const pendingCount = homeData.personalized ? homeData.pendingCount : 0;
+  // Saudação só quando há uma pessoa real logada (SSO) — no bypass de dev
+  // (sem sessão real), "Modo local (sem SSO)" não é um nome de pessoa, então
+  // cai para um título operacional neutro em vez de uma saudação quebrada.
+  const firstName = !bypass && session?.user?.name ? session.user.name.trim().split(/\s+/)[0] : null;
 
   return (
     <>
@@ -98,10 +107,10 @@ export default async function HomePage() {
 
       <div className="exec-welcome-banner">
         <div className="exec-welcome-banner-heading">
-          <p className="exec-welcome-banner-title">Como podemos ajudar hoje?</p>
+          <p className="exec-welcome-banner-eyebrow">Visão geral</p>
+          <p className="exec-welcome-banner-title">{firstName ? `Bem-vindo(a), ${firstName}` : "Painel de Compras"}</p>
           <p className="exec-welcome-banner-subtitle">
-            Solicite serviços, acompanhe o andamento das suas demandas e encontre tudo o que você precisa em um único
-            lugar.
+            Acompanhe solicitações, contratos e chamados da Acerto em um único lugar.
           </p>
         </div>
         <p className="exec-welcome-banner-date">{today}</p>
@@ -109,14 +118,17 @@ export default async function HomePage() {
 
       <div className="exec-kpi-row" role="group" aria-label="Resumo geral">
         <div className="exec-kpi">
+          <span className="exec-kpi-icon" aria-hidden><ClipboardList size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.openRequests}</span>
           <span className="exec-kpi-label">Solicitações em aberto</span>
         </div>
         <div className="exec-kpi">
+          <span className="exec-kpi-icon" aria-hidden><LifeBuoy size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.openTickets}</span>
           <span className="exec-kpi-label">Chamados abertos</span>
         </div>
         <div className="exec-kpi exec-kpi-warning">
+          <span className="exec-kpi-icon" aria-hidden><FileClock size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.expiringContracts}</span>
           <span className="exec-kpi-label">Contratos vencendo em 30 dias</span>
         </div>
