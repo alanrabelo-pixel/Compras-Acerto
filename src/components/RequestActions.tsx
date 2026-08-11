@@ -77,7 +77,7 @@ type RequestData = {
   longDescription: string;
   needsContract?: boolean | null;
   needsMapping?: boolean | null;
-  conflictDeclarations: { id: string; hasConflict: boolean }[];
+  conflictDeclarations: { id: string; hasConflict: boolean; declaredBy: string; details: string | null; createdAt: Date }[];
   approvals: { id: string; level: number; decision: string; approver: { name: string } }[];
   quotes: Quote[];
   purchaseOrder: { id: string; needsMeasurement: boolean; pdfUrl?: string | null; paymentCondition?: string } | null;
@@ -87,7 +87,9 @@ type RequestData = {
 
 type Submit = (url: string, method: string, body: unknown) => void;
 
-export function RequestActions({ request, sessionActor = null }: { request: RequestData; sessionActor?: SessionActor }) {
+export function RequestActions({
+  request, sessionActor = null, declaredByNames = {},
+}: { request: RequestData; sessionActor?: SessionActor; declaredByNames?: Record<string, string> }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +121,7 @@ export function RequestActions({ request, sessionActor = null }: { request: Requ
     case "MAPA_COTACAO":
       return <MapaCotacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "APROVACAO":
-      return <AprovacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
+      return <AprovacaoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} declaredByNames={declaredByNames} />;
     case "JURIDICO":
       return <JuridicoForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "PEDIDO_COMPRA":
@@ -567,8 +569,8 @@ function MapaCotacaoForm({
 }
 
 function AprovacaoForm({
-  request, onSubmit, loading, error, sessionActor,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  request, onSubmit, loading, error, sessionActor, declaredByNames,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor; declaredByNames: Record<string, string> }) {
   // approverId: NÃO é o ator — é uma atribuição (o comprador roteia a
   // solicitação para um aprovador específico da alçada), ver requireSelf:
   // false em POST /api/requests/[id]/aprovacao. Continua manual mesmo com
@@ -589,11 +591,37 @@ function AprovacaoForm({
   const [conflictDetails, setConflictDetails] = useState("");
 
   const hasDeclaration = request.conflictDeclarations.length > 0;
-  const latestHasConflict = hasDeclaration && request.conflictDeclarations[0].hasConflict;
+  const latestDeclaration = hasDeclaration ? request.conflictDeclarations[0] : null;
+  const latestHasConflict = Boolean(latestDeclaration?.hasConflict);
+
+  // Cada declaração nova (inclusive uma que confirma conflito) some da tela
+  // e vira uma caixa de aviso idêntica à anterior — sem isto, o checkbox
+  // "tenho conflito" continuava marcado e cada novo clique em "Registrar"
+  // só recriava o mesmo bloqueio, parecendo que o botão não fazia nada.
+  useEffect(() => {
+    setHasConflict(false);
+    setConflictDetails("");
+  }, [latestDeclaration?.id]);
 
   return (
     <Panel title="Aprovação">
       <div style={{ display: "grid", gap: 10 }}>
+        {latestHasConflict && (
+          <div className="hint-box hint-box-danger">
+            <p style={{ fontSize: 11, fontWeight: 700 }}>
+              Conflito de interesse já registrado — a aprovação não pode ser criada enquanto isso não mudar.
+            </p>
+            <p style={{ fontSize: 11, marginTop: 4 }}>
+              Declarado por {declaredByNames[latestDeclaration!.declaredBy] ?? "alguém"} em{" "}
+              {new Date(latestDeclaration!.createdAt).toLocaleString("pt-BR")}
+              {latestDeclaration!.details ? `: "${latestDeclaration!.details}"` : ""}.
+            </p>
+            <p style={{ fontSize: 11, marginTop: 4 }}>
+              Se foi um engano, registre uma nova declaração abaixo com a caixa desmarcada. Se o conflito é real,
+              reatribua comprador/aprovador antes de prosseguir.
+            </p>
+          </div>
+        )}
         {!hasDeclaration || latestHasConflict ? (
           <div className="hint-box hint-box-warning">
             <p style={{ fontSize: 11, fontWeight: 700, marginBottom: 8 }}>

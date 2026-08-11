@@ -617,6 +617,7 @@ button:focus-visible,
 .hint-box-warning { background: var(--warning-bg); color: var(--warning); }
 .hint-box-info { background: var(--info-bg); color: var(--info); }
 .hint-box-neutral { background: var(--surface-muted); color: var(--ink-soft); }
+.hint-box-danger { background: var(--danger-bg); color: var(--danger); }
 
 /* Painel do Assistente de IA (Claude + Gemini) — ver AiInsightPanel.tsx */
 .ai-panel {

@@ -155,7 +155,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           )}
         </section>
 
-        <RequestActions request={serializableRequest} sessionActor={sessionActor} />
+        <RequestActions request={serializableRequest} sessionActor={sessionActor} declaredByNames={declaredByNames} />
 
         <AttachmentsPanel
           requestId={request.id}
