@@ -1921,10 +1921,12 @@ a.table-row:hover {
 }
 .exec-brand-footer-links {
   width: 100%;
-  text-align: center;
+  text-align: left;
 }
+/* Pedido do usuário: "Links Úteis" alinhado à esquerda, no mesmo ponto de
+   partida do primeiro link abaixo — não mais centralizado sobre a fileira. */
 .exec-brand-footer-links-title {
-  text-align: center;
+  text-align: left;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1933,14 +1935,17 @@ a.table-row:hover {
   margin: 0 0 14px;
 }
 /* Pedido do usuário: os 5 links em uma linha só, não mais quebrados em
-   duas (3+2). Sem largura máxima limitando o container; nowrap mantém tudo
-   na mesma linha, e overflow-x: auto vira um scroll horizontal só deste
-   bloco (não da página) se a janela ficar estreita demais para caber tudo. */
+   duas (3+2), e alinhados à esquerda (mesmo início do título acima) em vez
+   de centralizados como grupo. Sem largura máxima limitando o container;
+   nowrap mantém tudo na mesma linha, e overflow-x: auto vira um scroll
+   horizontal só deste bloco (não da página) se a janela ficar estreita
+   demais para caber tudo. */
 .exec-brand-footer-links .exec-footer {
+  justify-content: flex-start;
   flex-wrap: nowrap;
   overflow-x: auto;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 0;
   padding-bottom: 2px;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
@@ -1960,14 +1965,15 @@ a.table-row:hover {
 }
 .exec-brand-footer-company {
   display: flex;
-  /* flex-start (não center): o texto quebra em 2 linhas neste tamanho de
-     coluna, e centralizar a logo em relação às 2 linhas a deixava flutuando
-     no meio delas, sem alinhar com nenhuma — flex-start alinha com o topo
-     da primeira linha. */
-  align-items: flex-start;
+  /* Pedido do usuário: texto em uma linha só, logo centralizada com ele —
+     antes o texto quebrava em 2 linhas (por causa do max-width no <p>), o
+     que forçava a logo a ficar no topo (flex-start) para não boiar entre
+     as duas linhas; sem quebra, center alinha logo e texto perfeitamente. */
+  align-items: center;
   justify-content: center;
   gap: 14px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   width: 100%;
   margin-top: 24px;
   padding-top: 20px;
@@ -1976,13 +1982,12 @@ a.table-row:hover {
 }
 .exec-brand-footer-logo {
   height: 20px;
-  margin-top: 1px;
   filter: brightness(0) invert(1);
   flex-shrink: 0;
 }
 .exec-brand-footer-company p {
   margin: 0;
-  max-width: 640px;
+  white-space: nowrap;
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.88);
   line-height: 1.5;
