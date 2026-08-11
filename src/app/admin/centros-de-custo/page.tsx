@@ -19,12 +19,16 @@ const LEVEL_LABEL: Record<number, string> = {
 export default async function CentrosDeCustoPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string };
+  searchParams: { q?: string; status?: string; gestor?: string; solicitacoes?: string };
 }) {
   const where: Prisma.CostCenterWhereInput = {};
   if (searchParams.status === "inativo") where.active = false;
   else if (searchParams.status === "ativo") where.active = true;
   if (searchParams.q) where.name = { contains: searchParams.q, mode: "insensitive" };
+  if (searchParams.gestor === "sem") where.managers = { none: {} };
+  else if (searchParams.gestor) where.managers = { some: { id: searchParams.gestor } };
+  if (searchParams.solicitacoes === "com") where.requests = { some: {} };
+  else if (searchParams.solicitacoes === "sem") where.requests = { none: {} };
 
   const costCenters = await prisma.costCenter.findMany({
     where,
@@ -52,18 +56,28 @@ export default async function CentrosDeCustoPage({
           centro de custo a renomeá-lo ou excluí-lo — preserva o histórico das solicitações já vinculadas a ele.
         </p>
 
-        <CreateCostCenterForm />
-
         <div className="section-gap">
           <SearchFilterBar
             searchPlaceholder="Nome do centro de custo..."
             filters={[
               { key: "status", label: "Status", options: [{ value: "ativo", label: "Ativo" }, { value: "inativo", label: "Inativo" }] },
+              {
+                key: "gestor", label: "Gestor",
+                options: [
+                  { value: "sem", label: "Sem gestor definido" },
+                  ...approvers.map((u) => ({ value: u.id, label: u.name })),
+                ],
+              },
+              { key: "solicitacoes", label: "Solicitações", options: [{ value: "com", label: "Com solicitações" }, { value: "sem", label: "Sem solicitações" }] },
             ]}
           />
         </div>
 
-        <div className="table-wrap section-gap">
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "var(--space-4)" }}>
+          <CreateCostCenterForm />
+        </div>
+
+        <div className="table-wrap" style={{ marginTop: 10 }}>
           <div className="table-head-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 1.1fr" }}>
             <span>Centro de Custo</span>
             <span>Gestor(es) aprovador(es)</span>
