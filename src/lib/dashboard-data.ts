@@ -297,17 +297,21 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   const avgLeadTimeDays = allLeadTimes.length > 0 ? allLeadTimes.reduce((a, b) => a + b, 0) / allLeadTimes.length : null;
 
   // ---- Top Fornecedores ----
-  type SupplierAgg = { name: string; value: number; count: number; savingSum: number; savingCount: number; leadTimeSum: number; leadTimeCount: number; riskTier?: string; approvedVendor?: boolean };
+  // avgSaving é ponderado pelo valor de cada compra (soma do R$ economizado
+  // dividida pela soma do valor inicial), não uma média simples do % de cada
+  // PO — senão uma PO pequena com desconto alto pesaria igual a uma PO grande,
+  // distorcendo o número (pedido do usuário).
+  type SupplierAgg = { name: string; value: number; count: number; savingAmountSum: number; initialValueSum: number; leadTimeSum: number; leadTimeCount: number; riskTier?: string; approvedVendor?: boolean };
   const bySupplier = new Map<string, SupplierAgg>();
   for (const po of purchaseOrders) {
     const key = po.supplierId ?? po.supplierLegalName;
-    const agg = bySupplier.get(key) ?? { name: po.supplierLegalName, value: 0, count: 0, savingSum: 0, savingCount: 0, leadTimeSum: 0, leadTimeCount: 0 };
+    const agg = bySupplier.get(key) ?? { name: po.supplierLegalName, value: 0, count: 0, savingAmountSum: 0, initialValueSum: 0, leadTimeSum: 0, leadTimeCount: 0 };
     agg.value += Number(po.negotiatedValue);
     agg.count += 1;
     const initial = Number(po.initialValue);
     if (initial > 0) {
-      agg.savingSum += ((initial - Number(po.negotiatedValue)) / initial) * 100;
-      agg.savingCount += 1;
+      agg.savingAmountSum += initial - Number(po.negotiatedValue);
+      agg.initialValueSum += initial;
     }
     const lt = leadTimeDaysByRequestId.get(po.requestId);
     if (lt !== undefined) {
@@ -323,7 +327,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   const RISK_SCORE: Record<string, number> = { BAIXO: 100, MEDIO: 60, ALTO: 20 };
   const topSuppliers = Array.from(bySupplier.values())
     .map((s) => {
-      const avgSaving = s.savingCount > 0 ? s.savingSum / s.savingCount : 0;
+      const avgSaving = s.initialValueSum > 0 ? (s.savingAmountSum / s.initialValueSum) * 100 : 0;
       const avgLeadTime = s.leadTimeCount > 0 ? s.leadTimeSum / s.leadTimeCount : null;
       // Score de confiabilidade — fórmula transparente a partir de dados reais:
       // 40% risco cadastral (Supplier.riskTier), 20% homologação (approvedVendor),
@@ -341,11 +345,13 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   const topSupplierConcentrationPct = current.totalSpend > 0 ? (maxSupplierSpend / current.totalSpend) * 100 : 0;
 
   // ---- Top Compradores ----
-  type BuyerAgg = { name: string; count: number; value: number; savingSum: number; savingCount: number; concludedOnTime: number; concludedTotal: number };
+  // Mesmo critério de ponderação do saving por fornecedor acima: soma do R$
+  // economizado dividida pela soma do valor inicial, não média simples de %.
+  type BuyerAgg = { name: string; count: number; value: number; savingAmountSum: number; initialValueSum: number; concludedOnTime: number; concludedTotal: number };
   const byBuyer = new Map<string, BuyerAgg>();
   for (const r of currentRequests) {
     if (!r.buyer) continue;
-    const agg = byBuyer.get(r.buyer.id) ?? { name: r.buyer.name, count: 0, value: 0, savingSum: 0, savingCount: 0, concludedOnTime: 0, concludedTotal: 0 };
+    const agg = byBuyer.get(r.buyer.id) ?? { name: r.buyer.name, count: 0, value: 0, savingAmountSum: 0, initialValueSum: 0, concludedOnTime: 0, concludedTotal: 0 };
     agg.count += 1;
     agg.value += Number(r.estimatedValue ?? 0);
     byBuyer.set(r.buyer.id, agg);
@@ -357,8 +363,8 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     if (!agg) continue;
     const initial = Number(po.initialValue);
     if (initial > 0) {
-      agg.savingSum += ((initial - Number(po.negotiatedValue)) / initial) * 100;
-      agg.savingCount += 1;
+      agg.savingAmountSum += initial - Number(po.negotiatedValue);
+      agg.initialValueSum += initial;
     }
   }
   for (const e of allStageEvents) {
@@ -375,7 +381,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
       name: b.name,
       count: b.count,
       value: b.value,
-      avgSaving: b.savingCount > 0 ? b.savingSum / b.savingCount : null,
+      avgSaving: b.initialValueSum > 0 ? (b.savingAmountSum / b.initialValueSum) * 100 : null,
       slaPct: b.concludedTotal > 0 ? (b.concludedOnTime / b.concludedTotal) * 100 : null,
     }))
     .sort((a, b) => b.value - a.value)
