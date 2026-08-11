@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RoleName } from "@prisma/client";
 import type { UserOption } from "@/components/UserPicker";
+import { SelectAllRow } from "@/components/SelectAllRow";
 
 /**
  * Seletor de MÚLTIPLOS usuários (checkboxes num dropdown) — usado para
@@ -59,6 +60,9 @@ export function MultiUserPicker({
             boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
           }}
         >
+          {users.length > 0 && (
+            <SelectAllRow onSelectAll={() => onChange(users.map((u) => u.id))} onDeselectAll={() => onChange([])} />
+          )}
           {users.map((u) => (
             <label key={u.id} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, padding: "4px 2px" }}>
               <input type="checkbox" checked={selectedIds.includes(u.id)} onChange={() => toggle(u.id)} />

@@ -31,12 +31,19 @@ export async function loadPendingRequestsForUser(userId: string, myRoles: RoleNa
 
   const requests = await prisma.purchaseRequest.findMany({
     where: { currentStage: { notIn: ["SOLICITACAO", "CONCLUIDO", "CANCELADO"] } },
-    include: { requester: true, costCenter: true, approvals: true, budgetException: true },
+    include: { requester: true, costCenter: { include: { managers: true } }, approvals: true, budgetException: true },
     orderBy: { updatedAt: "asc" },
   });
 
   return requests.filter((r) => {
     if (isAdmin) return true; // ADMIN pode agir em qualquer etapa (ver requireRole em rbac.ts)
+
+    // Aprovação do Gestor do Centro de Custo — só aparece pra quem está no
+    // pool de gestores DAQUELE centro de custo específico (CostCenter.managers,
+    // ver /admin/centros-de-custo), não pra qualquer APROVADOR da empresa.
+    if (r.currentStage === "APROVACAO_GESTOR") {
+      return r.costCenter.managers.some((m) => m.id === userId);
+    }
 
     if (r.currentStage === "APROVACAO") {
       return r.approvals.some((a) => a.approverId === userId && a.decision === "PENDENTE");

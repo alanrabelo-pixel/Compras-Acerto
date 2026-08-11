@@ -5,6 +5,7 @@ import { CostCenterManagerPicker } from "@/components/CostCenterManagerPicker";
 import { CostCenterActiveToggle } from "@/components/CostCenterActiveToggle";
 import { CreateCostCenterForm } from "@/components/CreateCostCenterForm";
 import { ApprovalLevelPicker } from "@/components/ApprovalLevelPicker";
+import { ApproverCostCentersPicker } from "@/components/ApproverCostCentersPicker";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,12 @@ export default async function CentrosDeCustoPage({
   });
 
   const levelRows = await prisma.approvalLevelApprover.findMany({ include: { user: true } });
+
+  const approvers = await prisma.user.findMany({
+    where: { roles: { some: { role: "APROVADOR" } } },
+    include: { costCentersManaged: true },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <AppShell active="/admin/centros-de-custo">
@@ -94,6 +101,30 @@ export default async function CentrosDeCustoPage({
               </span>
             </div>
           ))}
+        </div>
+
+        <h2 className="page-title" style={{ fontSize: 18, marginTop: 32 }}>Por Aprovador</h2>
+        <p className="page-subtitle">
+          Visão inversa da tabela de Centros de Custo acima: escolha, por pessoa, quais centros de custo ela pode
+          aprovar. Quem não estiver marcado para um centro de custo não vê a solicitação em "Minhas Pendências"
+          quando ela chega na etapa "Aprovação do Gestor".
+        </p>
+        <div className="table-wrap section-gap">
+          <div className="table-head-row" style={{ gridTemplateColumns: "1.6fr 2.4fr" }}>
+            <span>Aprovador</span>
+            <span>Centros de custo que pode aprovar</span>
+          </div>
+          {approvers.map((u) => (
+            <div key={u.id} className="table-row" style={{ gridTemplateColumns: "1.6fr 2.4fr", alignItems: "center" }}>
+              <span style={{ fontWeight: 600 }}>{u.name} <span className="text-soft" style={{ fontWeight: 400 }}>({u.email})</span></span>
+              <span>
+                <ApproverCostCentersPicker userId={u.id} initialCostCenterIds={u.costCentersManaged.map((cc) => cc.id)} />
+              </span>
+            </div>
+          ))}
+          {approvers.length === 0 && (
+            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Ninguém com o papel Aprovador ainda.</p>
+          )}
         </div>
       </main>
     </AppShell>
