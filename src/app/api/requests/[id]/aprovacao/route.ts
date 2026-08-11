@@ -4,7 +4,6 @@ import {
   approvalLevel,
   canPersonifyApprover,
   nextAfterAprovacao,
-  violatesSegregationOfDuties,
   APPROVAL_ESCALATION_BUSINESS_DAYS,
 } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
@@ -86,9 +85,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   if (personifiedBy) {
-    const sodViolation = violatesSegregationOfDuties({ requesterId: request.requesterId, buyerId: personifiedBy });
-    if (sodViolation) return NextResponse.json({ error: sodViolation }, { status: 422 });
-
     const roleError = await requireRole(personifiedBy, ["COMPRADOR"]);
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 

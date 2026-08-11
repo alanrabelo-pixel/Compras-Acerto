@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
-  violatesSegregationOfDuties,
   determineLane,
   checkFragmentationRisk,
   approvalLevel,
@@ -19,7 +18,6 @@ import { requireRole } from "@/lib/rbac";
  * solicitante para completar informações.
  *
  * Revisão v1.1 aplicada aqui:
- * - SoD: buyerId não pode ser igual a requesterId.
  * - Lane: calculada a partir de valor, fornecedor e tipo de demanda.
  * - Anti-fracionamento: soma solicitações do mesmo fornecedor nos últimos 12 meses.
  */
@@ -47,9 +45,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (request.currentStage !== "TRIAGEM") {
     return NextResponse.json({ error: "Solicitação não está na etapa de Triagem" }, { status: 409 });
   }
-
-  const sodViolation = violatesSegregationOfDuties({ requesterId: request.requesterId, buyerId });
-  if (sodViolation) return NextResponse.json({ error: sodViolation }, { status: 422 });
 
   const roleError = await requireRole(buyerId, ["COMPRADOR"]);
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });

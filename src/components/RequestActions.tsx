@@ -205,7 +205,7 @@ function TriagemForm({
           </p>
           <div className="form-section">
             <ActorField
-              label="Comprador responsável (não pode ser o solicitante)"
+              label="Comprador responsável"
               sessionActor={sessionActor} value={buyerId} onChange={setBuyerId}
               role="COMPRADOR" placeholder="Selecione o comprador"
             />

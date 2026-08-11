@@ -237,28 +237,6 @@ export function isValidTransition(from: Stage, to: Stage): boolean {
 // ============================================================================
 
 /**
- * SEGREGAÇÃO DE FUNÇÃO (SoD)
- *
- * Regra básica: quem solicita não pode processar a própria solicitação como
- * comprador, nem se auto-aprovar. O documento original não previa essa checagem
- * explicitamente — ela existe aqui como uma trava estrutural, não apenas uma
- * orientação de processo.
- */
-export function violatesSegregationOfDuties(params: {
-  requesterId: string;
-  buyerId?: string;
-  approverId?: string;
-}): string | null {
-  if (params.buyerId && params.buyerId === params.requesterId) {
-    return "O comprador responsável não pode ser o mesmo usuário que abriu a solicitação.";
-  }
-  if (params.approverId && params.approverId === params.requesterId) {
-    return "O aprovador não pode ser o mesmo usuário que abriu a solicitação.";
-  }
-  return null;
-}
-
-/**
  * PERSONIFICAÇÃO DE APROVADOR — controlada, não irrestrita.
  *
  * O documento original permite ao comprador personificar qualquer aprovador em

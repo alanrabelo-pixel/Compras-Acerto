@@ -95,27 +95,6 @@ describe("POST/PATCH /api/requests/[id]/aprovacao", () => {
     expect(data.currentStage).toBe("PEDIDO_COMPRA");
   });
 
-  it("bloqueia personificação que viola segregação de função (comprador = solicitante)", async () => {
-    const requester = await createTestUser([]);
-    const approverManager = await createTestUser(["APROVADOR"]);
-    const approver = await createTestUser(["APROVADOR"]);
-    const costCenter = await createTestCostCenter();
-    const request = await createTestRequest({
-      requesterId: requester.id, approverManagerId: approverManager.id, costCenterId: costCenter.id,
-      currentStage: "APROVACAO", estimatedValue: 20000,
-    });
-    await declareNoConflict(request.id, requester.id);
-    const created = await POST(jsonRequest({ approverId: approver.id }), { params: { id: request.id } });
-    const approval = await created.json();
-
-    const res = await PATCH(
-      jsonRequest({ approvalId: approval.id, decision: "APROVADO", justification: "urgente", personifiedBy: requester.id }, "PATCH"),
-      { params: { id: request.id } }
-    );
-
-    expect(res.status).toBe(422);
-  });
-
   it("bloqueia personificação acima do Nível 1 (R$ 50 mil)", async () => {
     const requester = await createTestUser([]);
     const approverManager = await createTestUser(["APROVADOR"]);

@@ -9,7 +9,6 @@ import {
   nextAfterTesouraria,
   slaDaysForDiretoria,
   isValidTransition,
-  violatesSegregationOfDuties,
   canPersonifyApprover,
   checkFragmentationRisk,
   minimumQuotesRequired,
@@ -163,28 +162,6 @@ describe("isValidTransition", () => {
   it("rejects a transition that skips stages", () => {
     expect(isValidTransition("TRIAGEM", "PEDIDO_COMPRA")).toBe(false);
     expect(isValidTransition("SOLICITACAO", "APROVACAO")).toBe(false);
-  });
-});
-
-describe("violatesSegregationOfDuties", () => {
-  const requesterId = "user-1";
-
-  it("blocks the requester from being their own buyer", () => {
-    expect(
-      violatesSegregationOfDuties({ requesterId, buyerId: requesterId })
-    ).toMatch(/comprador/i);
-  });
-
-  it("blocks the requester from being their own approver", () => {
-    expect(
-      violatesSegregationOfDuties({ requesterId, approverId: requesterId })
-    ).toMatch(/aprovador/i);
-  });
-
-  it("allows distinct requester/buyer/approver", () => {
-    expect(
-      violatesSegregationOfDuties({ requesterId, buyerId: "user-2", approverId: "user-3" })
-    ).toBeNull();
   });
 });
 

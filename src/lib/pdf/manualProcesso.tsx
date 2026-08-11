@@ -355,9 +355,6 @@ export function ManualProcessoDocument() {
           </View>
         </View>
 
-        <H2 icon={ASSETS.cadeado}>Segregação de função</H2>
-        <P>Quem abre a solicitação nunca pode ser o comprador responsável, nem o aprovador da própria solicitação.</P>
-
         <H2 icon={ASSETS.historico}>Anti-fracionamento</H2>
         <P>
           O sistema soma o valor de todas as solicitações do mesmo fornecedor nos últimos 12 meses. Se a
