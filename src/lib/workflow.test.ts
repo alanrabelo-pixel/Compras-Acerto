@@ -5,6 +5,7 @@ import {
   budgetExceptionApproverRole,
   approvalLevel,
   nextAfterAprovacao,
+  nextAfterAprovacaoGestor,
   nextAfterAguardandoEntrega,
   nextAfterTesouraria,
   slaDaysForDiretoria,
@@ -97,6 +98,16 @@ describe("nextAfterAprovacao", () => {
 
   it("routes to PEDIDO_COMPRA when approved and no contract is needed", () => {
     expect(nextAfterAprovacao({ approved: true, needsContract: false })).toBe("PEDIDO_COMPRA");
+  });
+});
+
+describe("nextAfterAprovacaoGestor", () => {
+  it("routes to TRIAGEM when the cost center manager approves", () => {
+    expect(nextAfterAprovacaoGestor({ approved: true })).toBe("TRIAGEM");
+  });
+
+  it("cancels the request when the cost center manager reproves", () => {
+    expect(nextAfterAprovacaoGestor({ approved: false })).toBe("CANCELADO");
   });
 });
 

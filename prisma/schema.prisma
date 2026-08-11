@@ -76,6 +76,7 @@ model User {
   requestsMade      PurchaseRequest[] @relation("Requester")
   requestsBuying    PurchaseRequest[] @relation("Buyer")
   requestsApproving PurchaseRequest[] @relation("ApproverManager")
+  costCentersManaged CostCenter[]     @relation("CostCenterManager")
   contractsManaged  Contract[]        @relation("ContractManager")
   comments          Comment[]
   approvalDecisions Approval[]
@@ -96,6 +97,12 @@ model CostCenter {
   id     String  @id @default(cuid())
   name   String  @unique // Comitê IA, Gestão, Data Intelligence, Design, etc.
   active Boolean @default(true)
+
+  // Gestor que aprova solicitações deste centro de custo logo após o envio
+  // (etapa APROVACAO_GESTOR) — nullable porque nem todo centro de custo tem
+  // um líder definido ainda; configurável em /admin/centros-de-custo.
+  managerId String?
+  manager   User?   @relation("CostCenterManager", fields: [managerId], references: [id])
 
   requests PurchaseRequest[]
 }
@@ -229,6 +236,7 @@ enum Lane {
 // Estágios do fluxo — ordem reflete o fluxograma vertical do documento de referência.
 enum Stage {
   SOLICITACAO
+  APROVACAO_GESTOR
   TRIAGEM
   VALIDACAO_ORCAMENTARIA
   DUE_DILIGENCE
@@ -257,8 +265,6 @@ model PurchaseRequest {
   requesterId String
   requester   User     @relation("Requester", fields: [requesterId], references: [id])
 
-  // Revisão (SoD): comprador responsável é explícito e nunca pode ser igual a
-  // requesterId (checado em src/lib/workflow.ts -> violatesSegregationOfDuties).
   buyerId     String?
   buyer       User?    @relation("Buyer", fields: [buyerId], references: [id])
 
@@ -266,8 +272,21 @@ model PurchaseRequest {
   costCenterId    String
   costCenter      CostCenter @relation(fields: [costCenterId], references: [id])
 
-  approverManagerId String
-  approverManager   User   @relation("ApproverManager", fields: [approverManagerId], references: [id])
+  // Preenchido automaticamente a partir de CostCenter.managerId na criação da
+  // solicitação (ver POST /api/requests) — nullable porque nem todo centro de
+  // custo tem gestor definido ainda. Decisão dele é registrada nos campos
+  // managerApproval* abaixo, na etapa APROVACAO_GESTOR.
+  approverManagerId String?
+  approverManager   User?   @relation("ApproverManager", fields: [approverManagerId], references: [id])
+
+  // Decisão do gestor do centro de custo na etapa APROVACAO_GESTOR (logo após
+  // o envio do formulário) — separada da Approval por alçada de valor, que
+  // acontece bem mais à frente (depois de Cotação/Mapa de Cotação) e não
+  // existe ainda neste ponto do fluxo.
+  managerApprovalDecision      String?   // APROVADO | REPROVADO
+  managerApprovalActorId       String?
+  managerApprovalJustification String?
+  managerApprovalDecidedAt     DateTime?
 
   budgetLineId String?
   budgetLine   BudgetLine? @relation(fields: [budgetLineId], references: [id])

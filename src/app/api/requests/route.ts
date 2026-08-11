@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
     diretoria,
     costCenterId,
     leadershipPreApproved,
-    approverManagerId,
     budgetLineId,
     extraBudget,
     priority,
@@ -50,8 +49,12 @@ export async function POST(req: NextRequest) {
   // budgetLineId é dispensado quando extraBudget=true ("Orçamento Extra"
   // selecionado no lugar de uma linha real) — nesse caso o formulário exige o
   // anexo de Aprovação Extra-orçamentária em vez de uma linha específica.
+  //
+  // approverManagerId NÃO vem mais do formulário (pedido do usuário: o gestor
+  // aprovador é o dono do centro de custo escolhido, resolvido abaixo via
+  // CostCenter.managerId, não uma escolha manual do solicitante).
   const required = {
-    requesterId, diretoria, costCenterId, leadershipPreApproved, approverManagerId,
+    requesterId, diretoria, costCenterId, leadershipPreApproved,
     priority, demandType, shortDescription, longDescription,
     suggestedDeadline, quantity,
   };
@@ -63,6 +66,10 @@ export async function POST(req: NextRequest) {
   if (!budgetLineId && !extraBudget) {
     return NextResponse.json({ error: "Campo obrigatório ausente: budgetLineId (ou selecione Orçamento Extra)" }, { status: 400 });
   }
+
+  const costCenter = await prisma.costCenter.findUnique({ where: { id: costCenterId } });
+  if (!costCenter) return NextResponse.json({ error: "Centro de custo não encontrado" }, { status: 404 });
+  const approverManagerId = costCenter.managerId;
 
   const count = await prisma.purchaseRequest.count();
   const code = `PC-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
@@ -107,22 +114,26 @@ export async function POST(req: NextRequest) {
   const { subject, html } = templates.confirmacaoRecebimento(request.requester.name, shortDescription);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  // Cópia ao gestor aprovador mencionado no formulário
-  await sendSlackDM({
-    slackUserEmail: request.approverManager.email,
-    text: `Nova solicitação de compra aberta: *${shortDescription}* (${code}), por ${request.requester.name}.`,
-    requestId: request.id,
-  }).catch(() => {
-    // Falha de Slack não deve bloquear a criação da solicitação — já registrada em Notification.
-  });
+  // Notifica o gestor do centro de custo — é ele quem precisa agir agora, na
+  // etapa APROVACAO_GESTOR (não é mais só uma cópia informativa).
+  if (request.approverManager) {
+    await sendSlackDM({
+      slackUserEmail: request.approverManager.email,
+      text: `Nova solicitação de compra aguardando sua aprovação: *${shortDescription}* (${code}), por ${request.requester.name}.`,
+      requestId: request.id,
+    }).catch(() => {
+      // Falha de Slack não deve bloquear a criação da solicitação — já registrada em Notification.
+    });
+  }
 
-  // Move automaticamente para Triagem, que é onde o comprador atua de fato.
+  // Move automaticamente para Aprovação do Gestor — só depois da decisão dele
+  // é que segue para Triagem (ver PATCH /api/requests/[id]/aprovacao-gestor).
   const updated = await prisma.purchaseRequest.update({
     where: { id: request.id },
-    data: { currentStage: "TRIAGEM" },
+    data: { currentStage: "APROVACAO_GESTOR" },
   });
   await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "SOLICITACAO", toStage: "TRIAGEM" },
+    data: { requestId: request.id, fromStage: "SOLICITACAO", toStage: "APROVACAO_GESTOR" },
   });
 
   return NextResponse.json(updated, { status: 201 });

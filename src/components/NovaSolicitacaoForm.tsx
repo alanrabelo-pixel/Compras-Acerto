@@ -7,7 +7,7 @@ import { Button, Field, AiTag } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
 import { Sparkles } from "lucide-react";
 
-type CostCenter = { id: string; name: string };
+type CostCenter = { id: string; name: string; manager: { name: string } | null };
 type BudgetLine = { id: string; description: string; externalCode: string };
 
 // Sentinela pro "Orçamento Extra" no <select> de Linha do Orçamento — não é
@@ -64,7 +64,6 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [costCenterId, setCostCenterId] = useState("");
   const [diretoria, setDiretoria] = useState("TECNOLOGIA");
   const [leadershipPreApproved, setLeadershipPreApproved] = useState<"SIM" | "NAO" | "">("");
-  const [approverManagerId, setApproverManagerId] = useState("");
   const [budgetLineId, setBudgetLineId] = useState("");
   const [demandType, setDemandType] = useState("COMPRA_SERVICO");
   const [category, setCategory] = useState("TI");
@@ -146,7 +145,6 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         body: JSON.stringify({
           requesterId, costCenterId, diretoria,
           leadershipPreApproved: leadershipPreApproved === "SIM",
-          approverManagerId,
           budgetLineId: isExtraBudget ? undefined : budgetLineId || undefined,
           extraBudget: isExtraBudget,
           demandType, category, shortDescription, longDescription,
@@ -188,7 +186,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   }
 
   const canSubmit =
-    requesterId && costCenterId && leadershipPreApproved && approverManagerId && budgetLineId &&
+    requesterId && costCenterId && leadershipPreApproved && budgetLineId &&
     shortDescription && longDescription && suggestedDeadline && quantity > 0 &&
     (!isExtraBudget || extraBudgetFileSelected);
 
@@ -226,6 +224,17 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             </select>
           </Field>
 
+          {costCenterId && (() => {
+            const selected = costCenters.find((cc) => cc.id === costCenterId);
+            return (
+              <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: -4 }}>
+                {selected?.manager
+                  ? <>Gestor aprovador deste centro de custo: <strong>{selected.manager.name}</strong> — será notificado automaticamente ao enviar.</>
+                  : "Este centro de custo ainda não tem um gestor aprovador definido — a solicitação ficará parada na etapa de Aprovação do Gestor até um administrador configurar um em Administração → Centros de Custo."}
+              </p>
+            );
+          })()}
+
           <Field label="Diretoria" required>
             <select className="input" value={diretoria} onChange={(e) => setDiretoria(e.target.value)}>
               <option value="CORPORATIVO">Corporativo</option>
@@ -234,16 +243,13 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             </select>
           </Field>
 
-          <Field label="Solicitação de Compras aprovado pela liderança?" required>
+          <Field label="Solicitação de Compras alinhado com a liderança?" required>
             <div style={{ display: "flex", gap: 20 }}>
               <label className="checkbox-row"><input type="radio" name="leadership" checked={leadershipPreApproved === "SIM"} onChange={() => setLeadershipPreApproved("SIM")} /> Sim</label>
               <label className="checkbox-row"><input type="radio" name="leadership" checked={leadershipPreApproved === "NAO"} onChange={() => setLeadershipPreApproved("NAO")} /> Não</label>
             </div>
           </Field>
 
-          <Field label="Gestor Aprovador do Centro de Custo" required help="Indicar o gestor imediato responsável pela aprovação da despesa.">
-            <UserPicker value={approverManagerId} onChange={setApproverManagerId} role="APROVADOR" placeholder="Selecione o gestor aprovador" />
-          </Field>
         </div>
 
         <div className="form-section">

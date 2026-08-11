@@ -72,6 +72,7 @@ type RequestData = {
   estimatedValue: number | null;
   requesterId: string;
   buyerId?: string | null;
+  approverManager: { name: string; email: string } | null;
   demandType: string;
   shortDescription: string;
   longDescription: string;
@@ -110,6 +111,8 @@ export function RequestActions({
   }
 
   switch (request.currentStage) {
+    case "APROVACAO_GESTOR":
+      return <AprovacaoGestorForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "TRIAGEM":
       return <TriagemForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "VALIDACAO_ORCAMENTARIA":
@@ -563,6 +566,53 @@ function MapaCotacaoForm({
         <Button variant="primary" disabled={loading || !actorId || !selectedQuoteId} onClick={() => onSubmit(`/api/requests/${request.id}/mapa-cotacao`, "PATCH", { actorId, selectedQuoteId })}>
           Selecionar vencedor e avançar para Aprovação
         </Button>
+      </div>
+    </Panel>
+  );
+}
+
+function AprovacaoGestorForm({
+  request, onSubmit, loading, error, sessionActor,
+}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
+  const [actorId, setActorId] = useActorId(sessionActor);
+  const [justification, setJustification] = useState("");
+
+  return (
+    <Panel title="Aprovação do Gestor">
+      <div style={{ display: "grid", gap: 10 }}>
+        {request.approverManager ? (
+          <p className="hint-box hint-box-info">
+            Esta solicitação aguarda a decisão de <strong>{request.approverManager.name}</strong> ({request.approverManager.email}),
+            gestor responsável pelo centro de custo escolhido.
+          </p>
+        ) : (
+          <p className="hint-box hint-box-warning">
+            Este centro de custo ainda não tem um gestor aprovador definido. Peça a um administrador para configurar
+            um em Administração → Centros de Custo, ou selecione manualmente abaixo quem está decidindo agora.
+          </p>
+        )}
+        <div className="form-section">
+          <ActorField label="Quem está decidindo" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="APROVADOR" placeholder="Selecione o gestor aprovador" />
+          <label className="label" htmlFor="aprovacao-gestor-justification" style={{ marginTop: 8 }}>Justificativa (obrigatória para reprovar)</label>
+          <input id="aprovacao-gestor-justification" className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
+        </div>
+        <ErrorBox error={error} />
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button
+            variant="primary"
+            disabled={loading || !actorId}
+            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "APROVADO", justification: justification || undefined })}
+          >
+            Aprovar
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={loading || !actorId || !justification}
+            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "REPROVADO", justification })}
+          >
+            Reprovar
+          </Button>
+        </div>
       </div>
     </Panel>
   );

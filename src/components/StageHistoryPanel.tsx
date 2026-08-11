@@ -40,8 +40,12 @@ export type StageHistoryRequest = {
   quantity: number;
   lane: string | null;
   requester: { name: string; email: string };
-  approverManager: { name: string; email: string };
+  approverManager: { name: string; email: string } | null;
   buyer: { name: string } | null;
+  managerApprovalDecision: string | null;
+  managerApprovalActorId: string | null;
+  managerApprovalJustification: string | null;
+  managerApprovalDecidedAt: Date | null;
   budgetLine: { externalCode: string; description: string; monthRef: string } | null;
   leadershipPreApproved: boolean;
   suggestedDeadline: Date;
@@ -113,7 +117,7 @@ export function stageDataFields(
           <Field label="Tipo de demanda">{request.demandType}</Field>
           <Field label="Quantidade">{request.quantity}</Field>
           <Field label="Valor estimado">{request.estimatedValue !== null ? money(request.estimatedValue) : "ainda não informado"}</Field>
-          <Field label="Gestor aprovador">{request.approverManager.name} · {request.approverManager.email}</Field>
+          <Field label="Gestor aprovador">{request.approverManager ? `${request.approverManager.name} · ${request.approverManager.email}` : "sem gestor definido para este centro de custo"}</Field>
           <Field label="Linha do Orçamento">{request.budgetLine ? `${request.budgetLine.description} (${request.budgetLine.externalCode}) · ${request.budgetLine.monthRef}` : "não informada"}</Field>
           <Field label="Aprovado pela liderança na abertura">{request.leadershipPreApproved ? "Sim" : "Não"}</Field>
           <Field label="Data limite sugerida">{formatDateOnly(request.suggestedDeadline)}</Field>
@@ -130,6 +134,17 @@ export function stageDataFields(
             </Full>
           )}
           {request.affectedUsers && <Full><Field label="Usuários afetados">{request.affectedUsers}</Field></Full>}
+        </>
+      );
+
+    case "APROVACAO_GESTOR":
+      if (!request.managerApprovalDecision) return null;
+      return grid(
+        <>
+          <Field label="Decisão">{APPROVAL_DECISION_LABEL[request.managerApprovalDecision] ?? request.managerApprovalDecision}</Field>
+          <Field label="Decidido por">{request.managerApprovalActorId ? (declaredByNames[request.managerApprovalActorId] ?? request.managerApprovalActorId) : "—"}</Field>
+          <Field label="Decidido em">{dateTime(request.managerApprovalDecidedAt) ?? "—"}</Field>
+          <Full><Field label="Justificativa">{request.managerApprovalJustification ?? "—"}</Field></Full>
         </>
       );
 

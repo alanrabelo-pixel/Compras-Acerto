@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+/**
+ * PATCH /api/cost-centers/[id] — painel /admin/centros-de-custo: troca o
+ * gestor aprovador (managerId) e/ou ativa/desativa o centro de custo.
+ * Autenticação por sessão real (mesmo padrão de /api/users/[id]/route.ts) —
+ * não está sob o matcher /admin/:path* do middleware (que só cobre páginas),
+ * então a checagem de ADMIN precisa ser feita aqui.
+ *
+ * Ao trocar o gestor, solicitações já paradas na etapa APROVACAO_GESTOR deste
+ * centro de custo (e ainda não decididas) são migradas para o novo gestor —
+ * pedido do usuário: a atualização precisa refletir em todo o fluxo em
+ * andamento, não só nas solicitações futuras. Solicitações já decididas não
+ * são tocadas (preserva o histórico).
+ */
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  if (process.env.LOCAL_BYPASS_AUTH !== "true") {
+    const session = await getServerSession(authOptions);
+    const roles = (session?.user as { roles?: string[] } | undefined)?.roles ?? [];
+    if (!session || !roles.includes("ADMIN")) {
+      return NextResponse.json({ error: "Apenas administradores podem alterar centros de custo." }, { status: 403 });
+    }
+  }
+
+  const body = await req.json();
+  const data: { managerId?: string | null; active?: boolean } = {};
+
+  if ("managerId" in body) {
+    if (body.managerId !== null && typeof body.managerId !== "string") {
+      return NextResponse.json({ error: "managerId deve ser string ou null" }, { status: 400 });
+    }
+    data.managerId = body.managerId;
+  }
+  if (typeof body.active === "boolean") {
+    data.active = body.active;
+  }
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Nada para atualizar (esperado managerId e/ou active)" }, { status: 400 });
+  }
+
+  const costCenter = await prisma.costCenter.update({
+    where: { id: params.id },
+    data,
+    include: { manager: true },
+  });
+
+  if ("managerId" in data) {
+    await prisma.purchaseRequest.updateMany({
+      where: { costCenterId: params.id, currentStage: "APROVACAO_GESTOR", managerApprovalDecision: null },
+      data: { approverManagerId: data.managerId },
+    });
+  }
+
+  return NextResponse.json(costCenter);
+}

@@ -2,12 +2,33 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Centros de custo listados no documento de referência (formulário de compras).
+// Centros de custo — lista final (2026-08-11) confirmada pelo usuário: os 11
+// centros com líder definido em COST_CENTER_MANAGERS abaixo, um por um. Os 7
+// centros sem líder (Atendimento, Engenharia de Dados, Engenharia de
+// Software, Outros, Performance, Plataforma Cloud, SI e Privacidade) foram
+// excluídos a pedido do usuário — nenhum tinha solicitação vinculada.
 const COST_CENTERS = [
-  "Comitê IA", "Gestão", "Data Intelligence", "Design", "Engenharia de Software",
-  "F&NC", "Marketing da Marca", "Pessoas e Cultura", "SI e Privacidade", "CRM",
-  "Atendimento", "Plataforma Cloud", "Engenharia de Dados", "Performance",
-  "Produto", "Tecnologia", "Vendas", "Sucesso do Cliente", "Outros",
+  "Comitê de IA", "Gestão", "Data Intelligence", "F&NC",
+  "Atração e Fidelização de Consumidores", "Pessoas e Cultura",
+  "CRM, Design, Conteúdo e EO", "Produto", "Tecnologia",
+  "Vendas e Sucesso do Cliente", "Foundation",
+];
+
+// Gestor que aprova solicitações de cada centro de custo logo após o envio
+// (etapa APROVACAO_GESTOR) — pedido do usuário (2026-08-11). Todo centro de
+// custo hoje tem um líder definido (ver comentário acima).
+const COST_CENTER_MANAGERS = [
+  { costCenter: "Comitê de IA", name: "Afonso Borsoi", email: "afonso.borsoi@acerto.com.br" },
+  { costCenter: "Gestão", name: "Bárbara Juliana", email: "barbara.juliana@acerto.com.br" },
+  { costCenter: "F&NC", name: "Carolina Bacha", email: "carolina.bacha@acerto.com.br" },
+  { costCenter: "Atração e Fidelização de Consumidores", name: "Guilherme Prates", email: "guilherme.prates@acerto.com.br" },
+  { costCenter: "Produto", name: "Gustavo Santos", email: "gustavo.santos@acerto.com.br" },
+  { costCenter: "CRM, Design, Conteúdo e EO", name: "Taciana Esselin", email: "taciana.esselin@acerto.com.br" },
+  { costCenter: "Pessoas e Cultura", name: "Natália Alves", email: "natalia.alves@acerto.com.br" },
+  { costCenter: "Foundation", name: "Rafael Vicentini", email: "rafael.vicentini@acerto.com.br" },
+  { costCenter: "Tecnologia", name: "Rafael Lima", email: "rafael.lima@acerto.com.br" },
+  { costCenter: "Data Intelligence", name: "Thomaz Campos", email: "thomaz.campos@acerto.com.br" },
+  { costCenter: "Vendas e Sucesso do Cliente", name: "Pedro", email: "pedro@acerto.com.br" },
 ];
 
 // Linhas de orçamento — dados de exemplo para desenvolvimento local. O
@@ -26,6 +47,20 @@ async function main() {
 
   for (const bl of BUDGET_LINES) {
     await prisma.budgetLine.upsert({ where: { externalCode: bl.externalCode }, update: {}, create: bl });
+  }
+
+  for (const m of COST_CENTER_MANAGERS) {
+    const manager = await prisma.user.upsert({
+      where: { email: m.email },
+      update: { name: m.name },
+      create: { email: m.email, name: m.name },
+    });
+    await prisma.userRole.upsert({
+      where: { userId_role: { userId: manager.id, role: "APROVADOR" } },
+      update: {},
+      create: { userId: manager.id, role: "APROVADOR" },
+    });
+    await prisma.costCenter.update({ where: { name: m.costCenter }, data: { managerId: manager.id } });
   }
 
   // Usuários-chave citados no documento (memória de contexto Acerto) — ajustar

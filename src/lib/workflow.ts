@@ -26,7 +26,16 @@ export const STAGES: Record<Stage, StageDefinition> = {
   SOLICITACAO: {
     stage: "SOLICITACAO",
     label: "Solicitação de Compra",
-    nextStages: ["TRIAGEM"],
+    nextStages: ["APROVACAO_GESTOR"],
+  },
+  APROVACAO_GESTOR: {
+    stage: "APROVACAO_GESTOR",
+    label: "Aprovação do Gestor",
+    // Gestor do centro de custo (CostCenter.managerId, ver /admin/centros-de-custo)
+    // decide logo após o envio do formulário, antes de qualquer ação do comprador.
+    nextStages: ["TRIAGEM", "CANCELADO"],
+    slaDaysCorporativo: 1,
+    slaDaysTecnologiaRevenue: 2,
   },
   TRIAGEM: {
     stage: "TRIAGEM",
@@ -192,6 +201,10 @@ export function nextAfterAprovacao(params: {
 }): Stage {
   if (!params.approved) return "CANCELADO";
   return params.needsContract ? "JURIDICO" : "PEDIDO_COMPRA";
+}
+
+export function nextAfterAprovacaoGestor(params: { approved: boolean }): Stage {
+  return params.approved ? "TRIAGEM" : "CANCELADO";
 }
 
 export function nextAfterAguardandoEntrega(params: {

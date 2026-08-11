@@ -8,7 +8,7 @@ import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { canViewBoard } from "@/lib/roles";
-import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, type LucideIcon } from "lucide-react";
+import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, Building2, type LucideIcon } from "lucide-react";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -92,6 +92,13 @@ export async function AppShell({ active, children }: { active?: string; children
               >
                 <span className="sidebar-link-icon" aria-hidden><Settings size={16} strokeWidth={1.75} /></span>
                 Acessos
+              </Link>
+              <Link
+                href="/admin/centros-de-custo"
+                className={`sidebar-link${active === "/admin/centros-de-custo" ? " active" : ""}`}
+              >
+                <span className="sidebar-link-icon" aria-hidden><Building2 size={16} strokeWidth={1.75} /></span>
+                Centros de Custo
               </Link>
             </>
           )}
