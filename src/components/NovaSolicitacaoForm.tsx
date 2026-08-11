@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
-import { Button, Field } from "@/components/ui";
+import { Button, Field, AiTag } from "@/components/ui";
+import { Sparkles } from "lucide-react";
 
 type CostCenter = { id: string; name: string };
 type BudgetLine = { id: string; description: string; externalCode: string };
@@ -80,6 +81,39 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
   const [extraBudgetFileSelected, setExtraBudgetFileSelected] = useState(false);
   const isExtraBudget = budgetLineId === EXTRA_BUDGET;
+
+  // Assistente de preenchimento (Fase 1 de IA) — lê a Descrição Detalhada já
+  // digitada e sugere demandType/category/priority + um alerta antecipado de
+  // Due Diligence. Nunca preenche sozinho sem clique, e cada campo alterado
+  // continua editável normalmente — só marcamos quais vieram de sugestão.
+  const [assisting, setAssisting] = useState(false);
+  const [assistError, setAssistError] = useState<string | null>(null);
+  const [assistNote, setAssistNote] = useState<{ note: string; missingInfo: string[]; likelyDueDiligence: boolean } | null>(null);
+  const [aiSuggestedFields, setAiSuggestedFields] = useState<Set<string>>(new Set());
+
+  async function requestAssist() {
+    setAssisting(true);
+    setAssistError(null);
+    try {
+      const res = await fetch("/api/requests/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterId, description: longDescription }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Não foi possível gerar sugestões.");
+      const applied = new Set<string>();
+      if (data.demandType) { setDemandType(data.demandType); applied.add("demandType"); }
+      if (data.category) { setCategory(data.category); applied.add("category"); }
+      if (data.priority) { setPriority(data.priority); applied.add("priority"); }
+      setAiSuggestedFields(applied);
+      setAssistNote({ note: data.note, missingInfo: data.missingInfo ?? [], likelyDueDiligence: Boolean(data.likelyDueDiligence) });
+    } catch (e) {
+      setAssistError(e instanceof Error ? e.message : "Erro inesperado.");
+    } finally {
+      setAssisting(false);
+    }
+  }
 
   const extraBudgetFileRef = useRef<HTMLInputElement>(null);
   const supplierProposalFileRef = useRef<HTMLInputElement>(null);
@@ -248,19 +282,21 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
           <p className="form-section-label">Detalhes da demanda</p>
 
           <Field label="Tipo de Demanda" required help="Indicar qual o tipo de demanda que melhor relata a solicitação gerada.">
-            <select className="input" value={demandType} onChange={(e) => setDemandType(e.target.value)}>
+            <select className="input" value={demandType} onChange={(e) => { setDemandType(e.target.value); setAiSuggestedFields((prev) => { const next = new Set(prev); next.delete("demandType"); return next; }); }}>
               {DEMAND_TYPES.map((d) => (
                 <option key={d.value} value={d.value}>{d.label}</option>
               ))}
             </select>
+            {aiSuggestedFields.has("demandType") && <div style={{ marginTop: 4 }}><AiTag /></div>}
           </Field>
 
           <Field label="Categoria de Gasto" required help="Área/natureza da despesa — usada na análise de gastos por categoria no Dashboard.">
-            <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <select className="input" value={category} onChange={(e) => { setCategory(e.target.value); setAiSuggestedFields((prev) => { const next = new Set(prev); next.delete("category"); return next; }); }}>
               {SPEND_CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
             </select>
+            {aiSuggestedFields.has("category") && <div style={{ marginTop: 4 }}><AiTag /></div>}
           </Field>
 
           <Field
@@ -278,6 +314,37 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
               value={longDescription}
               onChange={(e) => setLongDescription(e.target.value)}
             />
+            <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              <Button
+                variant="secondary"
+                style={{ fontSize: 11.5, padding: "5px 10px", display: "inline-flex", alignItems: "center", gap: 5 }}
+                disabled={assisting || !requesterId || longDescription.trim().length < 10}
+                onClick={requestAssist}
+              >
+                <Sparkles size={12} strokeWidth={1.75} aria-hidden />
+                {assisting ? "Analisando..." : "Sugerir com IA"}
+              </Button>
+              {!requesterId && <span className="help" style={{ margin: 0 }}>Selecione o solicitante acima para usar o assistente.</span>}
+            </div>
+            {assistError && <p style={{ fontSize: 11.5, color: "var(--danger)", marginTop: 4 }}>{assistError}</p>}
+            {assistNote && (
+              <div className="hint-box hint-box-neutral" style={{ marginTop: 8, display: "grid", gap: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <AiTag />
+                </div>
+                <p style={{ margin: 0 }}>{assistNote.note}</p>
+                {assistNote.missingInfo.length > 0 && (
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {assistNote.missingInfo.map((m, i) => <li key={i}>{m}</li>)}
+                  </ul>
+                )}
+                {assistNote.likelyDueDiligence && (
+                  <p style={{ margin: 0, fontWeight: 600, color: "var(--warning)" }}>
+                    Provavelmente vai passar por Due Diligence de Privacidade — parece uma ferramenta nova que trata dado pessoal.
+                  </p>
+                )}
+              </div>
+            )}
           </Field>
 
           <Field
@@ -285,11 +352,12 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             required
             help="Classificação de Urgência — Crítica (Urgência Máxima) · Alta (Urgente, mas não crítica) · Média (Importante, mas não urgente) · Baixa (Rotineira ou Não Urgente)"
           >
-            <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}>
+            <select className="input" value={priority} onChange={(e) => { setPriority(e.target.value); setAiSuggestedFields((prev) => { const next = new Set(prev); next.delete("priority"); return next; }); }}>
               {PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>{p.label}</option>
               ))}
             </select>
+            {aiSuggestedFields.has("priority") && <div style={{ marginTop: 4 }}><AiTag /></div>}
           </Field>
 
           <Field

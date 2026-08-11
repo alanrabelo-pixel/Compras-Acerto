@@ -169,9 +169,29 @@ function TriagemForm({
   const [supplierRiskTier, setSupplierRiskTier] = useState("MEDIO");
   const [handlesPersonalData, setHandlesPersonalData] = useState(request.demandType === "FERRAMENTA_NOVA");
   const [priorValue, setPriorValue] = useState(0);
+  const [priorValueSource, setPriorValueSource] = useState<{ matchType: string; matchedSupplierName: string | null } | null>(null);
   const [estimatedValue, setEstimatedValue] = useState(0);
   const needsEstimatedValue = request.estimatedValue === null;
   const isCancelamento = request.demandType === "CANCELAMENTO";
+
+  // Antes, este número era digitado de memória pelo comprador — agora vem
+  // pré-calculado a partir do histórico real de Pedidos de Compra (ver
+  // /api/requests/[id]/supplier-history), continuando editável porque a
+  // correspondência por nome de fornecedor pode não ser exata.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/requests/${request.id}/supplier-history`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setPriorValue(data.sum ?? 0);
+        setPriorValueSource({ matchType: data.matchType, matchedSupplierName: data.matchedSupplierName });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [request.id]);
 
   if (isCancelamento) {
     return (
@@ -260,6 +280,15 @@ function TriagemForm({
           <div>
             <label className="label" htmlFor="triagem-prior-value">Soma de compras deste fornecedor nos últimos 12 meses (R$)</label>
             <input id="triagem-prior-value" className="input" type="number" value={priorValue} onChange={(e) => setPriorValue(Number(e.target.value))} />
+            {priorValueSource && priorValueSource.matchType !== "none" && (
+              <p className="help" style={{ marginTop: 4 }}>
+                Calculado automaticamente a partir de Pedidos de Compra de {priorValueSource.matchedSupplierName}
+                {priorValueSource.matchType === "approximate" ? " (correspondência aproximada pelo nome — confira antes de avançar)" : ""}.
+              </p>
+            )}
+            {priorValueSource && priorValueSource.matchType === "none" && (
+              <p className="help" style={{ marginTop: 4 }}>Nenhum histórico encontrado para este fornecedor — ajuste se souber de compras anteriores.</p>
+            )}
           </div>
         </div>
 
@@ -598,6 +627,7 @@ function AprovacaoForm({
                 </Button>
               </div>
             </div>
+            <AiInsightPanel requestId={request.id} stage="APROVACAO" actorId={approverId} />
             <div className="form-section">
               <p className="form-section-label">2. Decidir</p>
               <label className="label" htmlFor="aprovacao-select">Aprovação</label>

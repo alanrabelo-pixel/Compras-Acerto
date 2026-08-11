@@ -3,6 +3,7 @@ import { RoleName } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { decryptSecret } from "@/lib/crypto";
+import { approvalLevel } from "@/lib/workflow";
 import {
   generateInsight,
   buildTriagemPrompt,
@@ -10,6 +11,7 @@ import {
   buildNegotiationPrompt,
   buildLegalReviewPrompt,
   buildContractReviewPrompt,
+  buildApprovalSummaryPrompt,
 } from "@/lib/integrations/ai";
 
 /**
@@ -31,6 +33,7 @@ const STAGE_ROLE: Partial<Record<string, RoleName[]>> = {
   DUE_DILIGENCE: ["PRIVACIDADE"],
   JURIDICO: ["JURIDICO"],
   MAPEAMENTO_CONTRATO: ["COMPRADOR"],
+  APROVACAO: ["APROVADOR"],
 };
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -45,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { quotes: true },
+    include: { quotes: true, costCenter: true, requester: true, conflictDeclarations: true, approvals: true },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
 
@@ -147,6 +150,36 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         estimatedValue,
       });
       break;
+    case "APROVACAO": {
+      const winning = request.quotes.find((q) => q.selected) ?? null;
+      const latestConflict = request.conflictDeclarations[0];
+      const pendingApproval = request.approvals.find((a) => a.decision === "PENDENTE");
+      prompt = buildApprovalSummaryPrompt({
+        demandType: request.demandType,
+        category: request.category,
+        shortDescription: request.shortDescription,
+        longDescription: request.longDescription,
+        estimatedValue,
+        diretoria: request.diretoria,
+        costCenterName: request.costCenter.name,
+        requesterName: request.requester.name,
+        lane: request.lane,
+        needsContract: request.needsContract,
+        winningQuote: winning
+          ? {
+              supplierName: winning.supplierName,
+              initialValue: Number(winning.initialValue),
+              negotiatedValue: Number(winning.negotiatedValue),
+              paymentCondition: winning.paymentCondition,
+            }
+          : null,
+        fragmentationFlag: request.fragmentationFlag,
+        hasConflictDeclared: Boolean(latestConflict?.hasConflict),
+        isPersonified: Boolean(pendingApproval?.personifiedBy),
+        approvalLevel: estimatedValue !== null ? approvalLevel(estimatedValue) : 0,
+      });
+      break;
+    }
     default:
       return NextResponse.json({ error: "Etapa não suportada pelo assistente de IA." }, { status: 409 });
   }

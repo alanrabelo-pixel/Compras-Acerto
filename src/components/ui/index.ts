@@ -12,6 +12,7 @@ export type { BadgeVariant } from "./Badge";
 export { Input, Select, Textarea } from "./Input";
 export { Field } from "./Field";
 export { Card } from "./Card";
+export { AiTag } from "./AiTag";
 export { TableWrap, TableHeadRow, TableRow, TableEmpty } from "./Table";
 export { Breadcrumb } from "./Breadcrumb";
 export type { BreadcrumbItem } from "./Breadcrumb";
