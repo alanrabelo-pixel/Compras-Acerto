@@ -7,7 +7,7 @@ import { Button, Field, AiTag } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
 import { Sparkles } from "lucide-react";
 
-type CostCenter = { id: string; name: string; manager: { name: string } | null };
+type CostCenter = { id: string; name: string; managers: { name: string }[] };
 type BudgetLine = { id: string; description: string; externalCode: string };
 
 // Sentinela pro "Orçamento Extra" no <select> de Linha do Orçamento — não é
@@ -226,10 +226,11 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
           {costCenterId && (() => {
             const selected = costCenters.find((cc) => cc.id === costCenterId);
+            const names = selected?.managers.map((m) => m.name) ?? [];
             return (
               <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: -4 }}>
-                {selected?.manager
-                  ? <>Gestor aprovador deste centro de custo: <strong>{selected.manager.name}</strong> — será notificado automaticamente ao enviar.</>
+                {names.length > 0
+                  ? <>Gestor{names.length > 1 ? "es" : ""} aprovador{names.length > 1 ? "es" : ""} deste centro de custo: <strong>{names.join(", ")}</strong> — será{names.length > 1 ? "ão" : ""} notificado{names.length > 1 ? "s" : ""} automaticamente ao enviar.</>
                   : "Este centro de custo ainda não tem um gestor aprovador definido — a solicitação ficará parada na etapa de Aprovação do Gestor até um administrador configurar um em Administração → Centros de Custo."}
               </p>
             );

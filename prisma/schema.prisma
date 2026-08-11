@@ -76,7 +76,8 @@ model User {
   requestsMade      PurchaseRequest[] @relation("Requester")
   requestsBuying    PurchaseRequest[] @relation("Buyer")
   requestsApproving PurchaseRequest[] @relation("ApproverManager")
-  costCentersManaged CostCenter[]     @relation("CostCenterManager")
+  costCentersManaged CostCenter[]     @relation("CostCenterManagers")
+  approvalLevelsManaged ApprovalLevelApprover[] @relation("ApprovalLevelApprover")
   contractsManaged  Contract[]        @relation("ContractManager")
   comments          Comment[]
   approvalDecisions Approval[]
@@ -98,13 +99,28 @@ model CostCenter {
   name   String  @unique // Comitê IA, Gestão, Data Intelligence, Design, etc.
   active Boolean @default(true)
 
-  // Gestor que aprova solicitações deste centro de custo logo após o envio
-  // (etapa APROVACAO_GESTOR) — nullable porque nem todo centro de custo tem
-  // um líder definido ainda; configurável em /admin/centros-de-custo.
-  managerId String?
-  manager   User?   @relation("CostCenterManager", fields: [managerId], references: [id])
+  // Gestor(es) que aprovam solicitações deste centro de custo logo após o
+  // envio (etapa APROVACAO_GESTOR) — mais de um permitido (pedido do
+  // usuário: reduz a necessidade de ajuste manual quando o titular está
+  // ausente — qualquer um do grupo pode decidir). Configurável em
+  // /admin/centros-de-custo. Pode ficar vazio enquanto não configurado.
+  managers User[] @relation("CostCenterManagers")
 
   requests PurchaseRequest[]
+}
+
+// Aprovador(es) padrão de cada alçada de valor (Nível 1/2/3, ver
+// approvalLevel() em src/lib/workflow.ts) — configurável em
+// /admin/centros-de-custo, mesma tela dos gestores de centro de custo. Usado
+// em POST /api/requests/[id]/aprovacao para atribuir automaticamente o
+// aprovador ao criar a Aprovação. Mais de um userId por level é permitido,
+// mesmo raciocínio do CostCenter.managers acima.
+model ApprovalLevelApprover {
+  level  Int
+  userId String
+  user   User @relation("ApprovalLevelApprover", fields: [userId], references: [id])
+
+  @@id([level, userId])
 }
 
 // Linha de orçamento — importada mensalmente da base de remodelagem FP&A.
@@ -287,6 +303,11 @@ model PurchaseRequest {
   managerApprovalActorId       String?
   managerApprovalJustification String?
   managerApprovalDecidedAt     DateTime?
+  // Preenchido quando um ADMIN personifica o gestor pré-definido (pedido do
+  // usuário: sem teto de alçada, diferente da personificação do comprador em
+  // Approval.personifiedBy) — managerApprovalActorId continua sendo a quem a
+  // decisão é atribuída; aqui fica registrado quem de fato clicou.
+  managerApprovalPersonifiedBy String?
 
   budgetLineId String?
   budgetLine   BudgetLine? @relation(fields: [budgetLineId], references: [id])

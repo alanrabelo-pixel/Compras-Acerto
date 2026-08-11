@@ -100,4 +100,51 @@ describe("PATCH /api/requests/[id]/aprovacao-gestor", () => {
     expect(data.status).toBe("CANCELADO");
     expect(data.cancelReason).toBe("Fora do orçamento do centro de custo.");
   });
+
+  it("permite que qualquer gestor do pool decida (mais de um aprovador por centro de custo)", async () => {
+    const requester = await createTestUser([]);
+    const managerA = await createTestUser(["APROVADOR"]);
+    const managerB = await createTestUser(["APROVADOR"]);
+    const outsider = await createTestUser(["APROVADOR"]);
+    const costCenter = await createTestCostCenter();
+    await prisma.costCenter.update({ where: { id: costCenter.id }, data: { managers: { connect: [{ id: managerA.id }, { id: managerB.id }] } } });
+    const request = await createTestRequest({
+      requesterId: requester.id, approverManagerId: managerA.id, costCenterId: costCenter.id,
+      currentStage: "APROVACAO_GESTOR",
+    });
+
+    const rejected = await PATCH(
+      jsonRequest({ actorId: outsider.id, decision: "APROVADO" }),
+      { params: { id: request.id } }
+    );
+    expect(rejected.status).toBe(403);
+
+    const res = await PATCH(
+      jsonRequest({ actorId: managerB.id, decision: "APROVADO" }),
+      { params: { id: request.id } }
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("permite que um ADMIN personifique o gestor pré-definido, sem restrição", async () => {
+    const requester = await createTestUser([]);
+    const manager = await createTestUser(["APROVADOR"]);
+    const admin = await createTestUser(["ADMIN"]);
+    const costCenter = await createTestCostCenter();
+    await prisma.costCenter.update({ where: { id: costCenter.id }, data: { managers: { connect: { id: manager.id } } } });
+    const request = await createTestRequest({
+      requesterId: requester.id, approverManagerId: manager.id, costCenterId: costCenter.id,
+      currentStage: "APROVACAO_GESTOR",
+    });
+
+    const res = await PATCH(
+      jsonRequest({ actorId: manager.id, decision: "APROVADO", personifiedBy: admin.id }),
+      { params: { id: request.id } }
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.managerApprovalActorId).toBe(manager.id);
+    expect(data.managerApprovalPersonifiedBy).toBe(admin.id);
+  });
 });

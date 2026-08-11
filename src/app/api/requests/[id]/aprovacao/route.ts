@@ -25,11 +25,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const body = await req.json();
 
+  const level = approvalLevel(Number(request.estimatedValue));
+
+  // Aprovador padrão da alçada (ApprovalLevelApprover, ver
+  // /admin/centros-de-custo) — quando configurado, é usado automaticamente
+  // (mais de um é permitido; o primeiro em ordem alfabética vira o
+  // atribuído desta Aprovação específica). Sem nenhum configurado, cai no
+  // fallback antigo (escolha manual pelo comprador via body.approverId).
+  const levelPool = await prisma.approvalLevelApprover.findMany({ where: { level }, include: { user: true } });
+  levelPool.sort((a, b) => a.user.name.localeCompare(b.user.name));
+  const approverId: string | undefined = levelPool[0]?.userId ?? body.approverId;
+  if (!approverId) {
+    return NextResponse.json(
+      { error: `Nenhum aprovador configurado para o Nível ${level} — configure em Administração → Centros de Custo, ou informe um aprovador manualmente.` },
+      { status: 422 }
+    );
+  }
+
   // requireSelf: false — approverId aqui é uma ATRIBUIÇÃO (o comprador está
   // roteando a solicitação para um aprovador específico da alçada), não
   // necessariamente quem está logado clicando "Criar". Só o papel do alvo
   // (APROVADOR) é validado, sem exigir que a sessão seja essa mesma pessoa.
-  const roleError = await requireRole(body.approverId, ["APROVADOR"], { requireSelf: false });
+  const roleError = await requireRole(approverId, ["APROVADOR"], { requireSelf: false });
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
   // Revisão v1.1: declaração de conflito de interesse é obrigatória antes da
@@ -52,12 +69,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     );
   }
 
-  const level = approvalLevel(Number(request.estimatedValue));
   const dueAt = new Date();
   dueAt.setDate(dueAt.getDate() + APPROVAL_ESCALATION_BUSINESS_DAYS);
 
   const approval = await prisma.approval.create({
-    data: { requestId: request.id, level, approverId: body.approverId, dueAt },
+    data: { requestId: request.id, level, approverId, dueAt },
   });
 
   return NextResponse.json(approval, { status: 201 });
@@ -88,7 +104,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const roleError = await requireRole(personifiedBy, ["COMPRADOR"]);
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
-    if (!canPersonifyApprover(Number(request.estimatedValue))) {
+    // Pedido do usuário: o Administrador do sistema pode personificar o
+    // aprovador "a qualquer momento, sempre que julgar necessário" — sem o
+    // teto de alçada que existe para a personificação normal do comprador
+    // (só até o Nível 1).
+    const personifierRoles = await prisma.userRole.findMany({ where: { userId: personifiedBy } });
+    const personifierIsAdmin = personifierRoles.some((r) => r.role === "ADMIN");
+
+    if (!personifierIsAdmin && !canPersonifyApprover(Number(request.estimatedValue))) {
       return NextResponse.json(
         { error: "Personificação de aprovador só é permitida até o Nível 1 (R$ 50 mil). Este valor exige decisão do aprovador real." },
         { status: 422 }

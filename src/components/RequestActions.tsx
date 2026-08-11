@@ -6,7 +6,7 @@ import type { RoleName } from "@prisma/client";
 import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { AiInsightPanel } from "@/components/AiInsightPanel";
-import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL } from "@/lib/workflow";
+import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel } from "@/lib/workflow";
 import { Button, Card } from "@/components/ui";
 
 // Identidade de quem está logado (server session — ver src/lib/auth.ts),
@@ -18,7 +18,7 @@ import { Button, Card } from "@/components/ui";
 // outra pessoa que o servidor vai rejeitar). Sem sessão real
 // (LOCAL_BYPASS_AUTH, ver .env), sessionActor é null e o seletor manual
 // volta a aparecer, como antes.
-type SessionActor = { id: string; name: string; email: string } | null;
+type SessionActor = { id: string; name: string; email: string; isAdmin: boolean } | null;
 
 // Estado do "ator" de uma ação: quando há sessão real, é sempre o próprio
 // usuário logado (ignora qualquer seleção manual); sem sessão, é um estado
@@ -56,6 +56,60 @@ function ActorField({
   );
 }
 
+// Estado do campo de "aprovador pré-definido" (gestor do centro de custo,
+// aprovador da alçada) — pedido do usuário: o Administrador do sistema pode
+// personificar essa figura sempre que julgar necessário, mesmo com sessão
+// real ligada. Diferente de ActorField/useActorId (que trava no próprio
+// usuário logado sem exceção): quando um ADMIN personifica, `actorId` passa
+// a ser o aprovador-alvo escolhido (a quem a decisão é atribuída) e
+// `personifiedBy` guarda o id do próprio admin que de fato clicou — mesmo
+// padrão já usado pelo comprador em .../aprovacao (ver PATCH ali), só que sem
+// o teto de alçada (Nível 1) que existe para o comprador.
+function usePredefinedApproverId(sessionActor: SessionActor) {
+  const [manual, setManual] = useState("");
+  const [personifying, setPersonifying] = useState(false);
+  const overriding = Boolean(sessionActor?.isAdmin) && personifying;
+  const actorId = overriding ? manual : (sessionActor?.id ?? manual);
+  const personifiedBy = overriding ? sessionActor!.id : undefined;
+  return { actorId, personifiedBy, manual, setManual, personifying, setPersonifying };
+}
+
+function PredefinedApproverField({
+  label, sessionActor, state, placeholder,
+}: {
+  label: string;
+  sessionActor: SessionActor;
+  state: ReturnType<typeof usePredefinedApproverId>;
+  placeholder?: string;
+}) {
+  const id = useId();
+  return (
+    <div>
+      <label className="label" htmlFor={id}>{label}</label>
+      {sessionActor ? (
+        <>
+          <p id={id} style={{ fontSize: 12.5, margin: "4px 0 0" }}>
+            {sessionActor.name} <span style={{ color: "var(--ink-muted)" }}>({sessionActor.email})</span>
+          </p>
+          {sessionActor.isAdmin && (
+            <label style={{ fontSize: 11.5, display: "block", marginTop: 4 }}>
+              <input type="checkbox" checked={state.personifying} onChange={(e) => state.setPersonifying(e.target.checked)} />
+              {" "}Personificar o aprovador pré-definido (admin)
+            </label>
+          )}
+          {state.personifying && (
+            <div style={{ marginTop: 6 }}>
+              <UserPicker value={state.manual} onChange={state.setManual} role="APROVADOR" placeholder={placeholder} />
+            </div>
+          )}
+        </>
+      ) : (
+        <UserPicker id={id} value={state.manual} onChange={state.setManual} role="APROVADOR" placeholder={placeholder} />
+      )}
+    </div>
+  );
+}
+
 type Quote = {
   id: string;
   supplierName: string;
@@ -73,6 +127,7 @@ type RequestData = {
   requesterId: string;
   buyerId?: string | null;
   approverManager: { name: string; email: string } | null;
+  costCenter: { managers: { id: string; name: string; email: string }[] };
   demandType: string;
   shortDescription: string;
   longDescription: string;
@@ -574,16 +629,18 @@ function MapaCotacaoForm({
 function AprovacaoGestorForm({
   request, onSubmit, loading, error, sessionActor,
 }: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
-  const [actorId, setActorId] = useActorId(sessionActor);
+  const approverState = usePredefinedApproverId(sessionActor);
+  const { actorId, personifiedBy } = approverState;
   const [justification, setJustification] = useState("");
 
   return (
     <Panel title="Aprovação do Gestor">
       <div style={{ display: "grid", gap: 10 }}>
-        {request.approverManager ? (
+        {request.costCenter.managers.length > 0 ? (
           <p className="hint-box hint-box-info">
-            Esta solicitação aguarda a decisão de <strong>{request.approverManager.name}</strong> ({request.approverManager.email}),
-            gestor responsável pelo centro de custo escolhido.
+            Esta solicitação aguarda a decisão de{" "}
+            <strong>{request.costCenter.managers.map((m) => m.name).join(", ")}</strong> — qualquer um dos gestores
+            responsáveis pelo centro de custo escolhido pode decidir.
           </p>
         ) : (
           <p className="hint-box hint-box-warning">
@@ -592,7 +649,7 @@ function AprovacaoGestorForm({
           </p>
         )}
         <div className="form-section">
-          <ActorField label="Quem está decidindo" sessionActor={sessionActor} value={actorId} onChange={setActorId} role="APROVADOR" placeholder="Selecione o gestor aprovador" />
+          <PredefinedApproverField label="Quem está decidindo" sessionActor={sessionActor} state={approverState} placeholder="Selecione o gestor aprovador" />
           <label className="label" htmlFor="aprovacao-gestor-justification" style={{ marginTop: 8 }}>Justificativa (obrigatória para reprovar)</label>
           <input id="aprovacao-gestor-justification" className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
         </div>
@@ -601,14 +658,14 @@ function AprovacaoGestorForm({
           <Button
             variant="primary"
             disabled={loading || !actorId}
-            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "APROVADO", justification: justification || undefined })}
+            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "APROVADO", justification: justification || undefined, personifiedBy })}
           >
             Aprovar
           </Button>
           <Button
             variant="secondary"
             disabled={loading || !actorId || !justification}
-            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "REPROVADO", justification })}
+            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "REPROVADO", justification, personifiedBy })}
           >
             Reprovar
           </Button>
@@ -626,6 +683,18 @@ function AprovacaoForm({
   // false em POST /api/requests/[id]/aprovacao. Continua manual mesmo com
   // sessão real.
   const [approverId, setApproverId] = useState("");
+  // Aprovador(es) padrão desta alçada de valor (ApprovalLevelApprover, ver
+  // /admin/centros-de-custo) — quando configurado(s), a criação da Aprovação
+  // não exige mais escolha manual (pedido do usuário: "obrigatório como o
+  // gate do centro de custo"). Mais de um é permitido; qualquer um serve
+  // como atribuído inicial (o servidor decide o mesmo jeito).
+  const [levelApprovers, setLevelApprovers] = useState<{ level: number; approvers: { id: string; name: string; email: string }[] } | null>(null);
+  useEffect(() => {
+    fetch("/api/approval-levels").then((res) => res.json()).then((levels) => {
+      const level = request.estimatedValue !== null ? approvalLevel(request.estimatedValue) : null;
+      setLevelApprovers(level !== null ? (levels.find((l: { level: number }) => l.level === level) ?? { level, approvers: [] }) : null);
+    }).catch(() => setLevelApprovers(null));
+  }, [request.estimatedValue]);
   const [approvalId, setApprovalId] = useState("");
   const [justification, setJustification] = useState("");
   // personifiedBy é opcional (normalmente vazio — o aprovador real decide);
@@ -697,13 +766,33 @@ function AprovacaoForm({
           <>
             <div className="form-section">
               <p className="form-section-label">1. Criar aprovação</p>
-              <label className="label" htmlFor="aprovacao-approver">Aprovador</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <UserPicker id="aprovacao-approver" value={approverId} onChange={setApproverId} role="APROVADOR" />
-                <Button variant="secondary" disabled={loading || !approverId} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", { approverId })}>
-                  Criar
-                </Button>
-              </div>
+              {levelApprovers && levelApprovers.approvers.length > 0 ? (
+                <>
+                  <p className="hint-box hint-box-info">
+                    Aprovador{levelApprovers.approvers.length > 1 ? "es" : ""} padrão do Nível {levelApprovers.level}:{" "}
+                    <strong>{levelApprovers.approvers.map((a) => a.name).join(", ")}</strong> — atribuído automaticamente ao criar.
+                  </p>
+                  <Button variant="secondary" style={{ marginTop: 8 }} disabled={loading} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", {})}>
+                    Criar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {levelApprovers && (
+                    <p className="hint-box hint-box-warning">
+                      Nenhum aprovador configurado para o Nível {levelApprovers.level} — configure em Administração → Centros
+                      de Custo, ou selecione manualmente abaixo.
+                    </p>
+                  )}
+                  <label className="label" htmlFor="aprovacao-approver">Aprovador</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <UserPicker id="aprovacao-approver" value={approverId} onChange={setApproverId} role="APROVADOR" />
+                    <Button variant="secondary" disabled={loading || !approverId} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", { approverId })}>
+                      Criar
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
             <AiInsightPanel requestId={request.id} stage="APROVACAO" actorId={approverId} />
             <div className="form-section">

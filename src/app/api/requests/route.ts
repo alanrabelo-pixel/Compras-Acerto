@@ -67,9 +67,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Campo obrigatório ausente: budgetLineId (ou selecione Orçamento Extra)" }, { status: 400 });
   }
 
-  const costCenter = await prisma.costCenter.findUnique({ where: { id: costCenterId } });
+  const costCenter = await prisma.costCenter.findUnique({
+    where: { id: costCenterId },
+    include: { managers: { orderBy: { name: "asc" } } },
+  });
   if (!costCenter) return NextResponse.json({ error: "Centro de custo não encontrado" }, { status: 404 });
-  const approverManagerId = costCenter.managerId;
+  // Mais de um gestor pode estar configurado (pedido do usuário) — o primeiro
+  // (ordem alfabética) fica como approverManagerId "principal" (FK única em
+  // PurchaseRequest), mas TODOS são notificados e qualquer um pode decidir
+  // (ver PATCH /api/requests/[id]/aprovacao-gestor).
+  const approverManagerId = costCenter.managers[0]?.id ?? null;
 
   const count = await prisma.purchaseRequest.count();
   const code = `PC-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
@@ -114,17 +121,20 @@ export async function POST(req: NextRequest) {
   const { subject, html } = templates.confirmacaoRecebimento(request.requester.name, shortDescription);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  // Notifica o gestor do centro de custo — é ele quem precisa agir agora, na
-  // etapa APROVACAO_GESTOR (não é mais só uma cópia informativa).
-  if (request.approverManager) {
-    await sendSlackDM({
-      slackUserEmail: request.approverManager.email,
-      text: `Nova solicitação de compra aguardando sua aprovação: *${shortDescription}* (${code}), por ${request.requester.name}.`,
-      requestId: request.id,
-    }).catch(() => {
-      // Falha de Slack não deve bloquear a criação da solicitação — já registrada em Notification.
-    });
-  }
+  // Notifica TODOS os gestores do centro de custo (não só o principal) — é
+  // qualquer um deles que pode agir agora, na etapa APROVACAO_GESTOR (não é
+  // mais só uma cópia informativa).
+  await Promise.all(
+    costCenter.managers.map((manager) =>
+      sendSlackDM({
+        slackUserEmail: manager.email,
+        text: `Nova solicitação de compra aguardando sua aprovação: *${shortDescription}* (${code}), por ${request.requester.name}.`,
+        requestId: request.id,
+      }).catch(() => {
+        // Falha de Slack não deve bloquear a criação da solicitação — já registrada em Notification.
+      })
+    )
+  );
 
   // Move automaticamente para Aprovação do Gestor — só depois da decisão dele
   // é que segue para Triagem (ver PATCH /api/requests/[id]/aprovacao-gestor).

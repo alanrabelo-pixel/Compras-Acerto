@@ -143,4 +143,55 @@ describe("POST/PATCH /api/requests/[id]/aprovacao", () => {
     const stored = await prisma.approval.findUnique({ where: { id: approval.id } });
     expect(stored?.personifiedBy).toBe(buyer.id);
   });
+
+  it("atribui automaticamente o aprovador configurado para a alçada, sem precisar de escolha manual", async () => {
+    const requester = await createTestUser([]);
+    const approverManager = await createTestUser(["APROVADOR"]);
+    const levelDefault = await createTestUser(["APROVADOR"]);
+    const costCenter = await createTestCostCenter();
+    // R$ 30.000 -> nível 1.
+    const request = await createTestRequest({
+      requesterId: requester.id, approverManagerId: approverManager.id, costCenterId: costCenter.id,
+      currentStage: "APROVACAO", estimatedValue: 30000,
+    });
+    await declareNoConflict(request.id, requester.id);
+    await prisma.approvalLevelApprover.create({ data: { level: 1, userId: levelDefault.id } });
+
+    try {
+      const res = await POST(jsonRequest({}), { params: { id: request.id } });
+      const data = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(data.approverId).toBe(levelDefault.id);
+    } finally {
+      // Config global de alçada (não escopada por TEST_PREFIX) — remove para
+      // não vazar entre este e outros arquivos de teste rodando em paralelo.
+      await prisma.approvalLevelApprover.deleteMany({ where: { level: 1, userId: levelDefault.id } });
+    }
+  });
+
+  it("permite que um ADMIN personifique acima do Nível 1, sem o teto do comprador", async () => {
+    const requester = await createTestUser([]);
+    const approverManager = await createTestUser(["APROVADOR"]);
+    const approver = await createTestUser(["APROVADOR"]);
+    const admin = await createTestUser(["ADMIN"]);
+    const costCenter = await createTestCostCenter();
+    // R$ 100.000 -> nível 2, teto normal bloquearia um comprador comum.
+    const request = await createTestRequest({
+      requesterId: requester.id, approverManagerId: approverManager.id, costCenterId: costCenter.id,
+      currentStage: "APROVACAO", estimatedValue: 100000,
+    });
+    await declareNoConflict(request.id, requester.id);
+    const created = await POST(jsonRequest({ approverId: approver.id }), { params: { id: request.id } });
+    const approval = await created.json();
+
+    const res = await PATCH(
+      jsonRequest({ approvalId: approval.id, decision: "APROVADO", justification: "personificação administrativa", personifiedBy: admin.id }, "PATCH"),
+      { params: { id: request.id } }
+    );
+
+    expect(res.status).toBe(200);
+    const stored = await prisma.approval.findUnique({ where: { id: approval.id } });
+    expect(stored?.personifiedBy).toBe(admin.id);
+  });
 });

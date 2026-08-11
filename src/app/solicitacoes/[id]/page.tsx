@@ -23,7 +23,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       requester: true,
       approverManager: true,
       buyer: true,
-      costCenter: true,
+      costCenter: { include: { managers: true } },
       budgetLine: true,
       budgetException: { include: { attachment: true } },
       dueDiligence: true,
@@ -51,11 +51,18 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   // real (LOCAL_BYPASS_AUTH, ver .env), fica null e os seletores manuais
   // continuam aparecendo, como antes.
   const session = await getServerSession(authOptions);
-  const sessionActor = session?.user?.email
+  const sessionActorRaw = session?.user?.email
     ? await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, roles: { select: { role: true } } },
       })
+    : null;
+  // isAdmin: pedido do usuário — o Administrador do sistema pode personificar
+  // um aprovador pré-definido (gestor de centro de custo, aprovador de
+  // alçada) sempre que julgar necessário, mesmo com SSO real ligado (ver
+  // ActorField/allowAdminOverride em RequestActions.tsx).
+  const sessionActor = sessionActorRaw
+    ? { id: sessionActorRaw.id, name: sessionActorRaw.name, email: sessionActorRaw.email, isAdmin: sessionActorRaw.roles.some((r) => r.role === "ADMIN") }
     : null;
 
   // ConflictOfInterestDeclaration.declaredBy guarda o id do usuário (via

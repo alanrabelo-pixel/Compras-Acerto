@@ -60,7 +60,7 @@ async function main() {
       update: {},
       create: { userId: manager.id, role: "APROVADOR" },
     });
-    await prisma.costCenter.update({ where: { name: m.costCenter }, data: { managerId: manager.id } });
+    await prisma.costCenter.update({ where: { name: m.costCenter }, data: { managers: { connect: { id: manager.id } } } });
   }
 
   // Usuários-chave citados no documento (memória de contexto Acerto) — ajustar

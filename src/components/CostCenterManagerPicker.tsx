@@ -2,28 +2,29 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserPicker } from "@/components/UserPicker";
+import { MultiUserPicker } from "@/components/MultiUserPicker";
 
 /**
- * Troca o gestor aprovador de um centro de custo (ver /admin/centros-de-custo
- * e PATCH /api/cost-centers/[id]). Ao salvar, solicitações já paradas na
- * etapa Aprovação do Gestor deste centro de custo (e ainda não decididas)
- * migram automaticamente para o novo gestor — a troca reflete no fluxo em
- * andamento, não só nas próximas solicitações.
+ * Troca o(s) gestor(es) aprovador(es) de um centro de custo (ver
+ * /admin/centros-de-custo e PATCH /api/cost-centers/[id]). Mais de um
+ * aprovador é permitido (pedido do usuário) — qualquer um do grupo pode
+ * decidir na etapa Aprovação do Gestor. Ao salvar, solicitações já paradas
+ * nessa etapa (e ainda não decididas) migram automaticamente para o novo
+ * conjunto de gestores.
  */
-export function CostCenterManagerPicker({ costCenterId, initialManagerId }: { costCenterId: string; initialManagerId: string }) {
+export function CostCenterManagerPicker({ costCenterId, initialManagerIds }: { costCenterId: string; initialManagerIds: string[] }) {
   const router = useRouter();
-  const [managerId, setManagerId] = useState(initialManagerId);
+  const [managerIds, setManagerIds] = useState(initialManagerIds);
   const [loading, setLoading] = useState(false);
 
-  async function save(nextManagerId: string) {
-    setManagerId(nextManagerId);
+  async function save(nextManagerIds: string[]) {
+    setManagerIds(nextManagerIds);
     setLoading(true);
     try {
       const res = await fetch(`/api/cost-centers/${costCenterId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ managerId: nextManagerId || null }),
+        body: JSON.stringify({ managerIds: nextManagerIds }),
       });
       if (res.ok) router.refresh();
     } finally {
@@ -33,7 +34,7 @@ export function CostCenterManagerPicker({ costCenterId, initialManagerId }: { co
 
   return (
     <div style={{ opacity: loading ? 0.6 : 1 }}>
-      <UserPicker value={managerId} onChange={save} role="APROVADOR" placeholder="Sem gestor definido" />
+      <MultiUserPicker selectedIds={managerIds} onChange={save} role="APROVADOR" emptyLabel="Sem gestor definido" />
     </div>
   );
 }

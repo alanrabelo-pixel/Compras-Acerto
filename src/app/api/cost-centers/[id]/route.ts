@@ -4,17 +4,18 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 /**
- * PATCH /api/cost-centers/[id] — painel /admin/centros-de-custo: troca o
- * gestor aprovador (managerId) e/ou ativa/desativa o centro de custo.
- * Autenticação por sessão real (mesmo padrão de /api/users/[id]/route.ts) —
- * não está sob o matcher /admin/:path* do middleware (que só cobre páginas),
- * então a checagem de ADMIN precisa ser feita aqui.
+ * PATCH /api/cost-centers/[id] — painel /admin/centros-de-custo: troca o(s)
+ * gestor(es) aprovador(es) (managerIds — mais de um permitido, pedido do
+ * usuário) e/ou ativa/desativa o centro de custo. Autenticação por sessão
+ * real (mesmo padrão de /api/users/[id]/route.ts) — não está sob o matcher
+ * /admin/:path* do middleware (que só cobre páginas), então a checagem de
+ * ADMIN precisa ser feita aqui.
  *
- * Ao trocar o gestor, solicitações já paradas na etapa APROVACAO_GESTOR deste
- * centro de custo (e ainda não decididas) são migradas para o novo gestor —
- * pedido do usuário: a atualização precisa refletir em todo o fluxo em
- * andamento, não só nas solicitações futuras. Solicitações já decididas não
- * são tocadas (preserva o histórico).
+ * Ao trocar os gestores, solicitações já paradas na etapa APROVACAO_GESTOR
+ * deste centro de custo (e ainda não decididas) são migradas para o
+ * primeiro do novo conjunto — pedido do usuário: a atualização precisa
+ * refletir em todo o fluxo em andamento, não só nas solicitações futuras.
+ * Solicitações já decididas não são tocadas (preserva o histórico).
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (process.env.LOCAL_BYPASS_AUTH !== "true") {
@@ -26,31 +27,32 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const body = await req.json();
-  const data: { managerId?: string | null; active?: boolean } = {};
+  const data: { managers?: { set: { id: string }[] }; active?: boolean } = {};
 
-  if ("managerId" in body) {
-    if (body.managerId !== null && typeof body.managerId !== "string") {
-      return NextResponse.json({ error: "managerId deve ser string ou null" }, { status: 400 });
+  if ("managerIds" in body) {
+    if (!Array.isArray(body.managerIds) || !body.managerIds.every((id: unknown) => typeof id === "string")) {
+      return NextResponse.json({ error: "managerIds deve ser um array de strings" }, { status: 400 });
     }
-    data.managerId = body.managerId;
+    data.managers = { set: body.managerIds.map((id: string) => ({ id })) };
   }
   if (typeof body.active === "boolean") {
     data.active = body.active;
   }
   if (Object.keys(data).length === 0) {
-    return NextResponse.json({ error: "Nada para atualizar (esperado managerId e/ou active)" }, { status: 400 });
+    return NextResponse.json({ error: "Nada para atualizar (esperado managerIds e/ou active)" }, { status: 400 });
   }
 
   const costCenter = await prisma.costCenter.update({
     where: { id: params.id },
     data,
-    include: { manager: true },
+    include: { managers: true },
   });
 
-  if ("managerId" in data) {
+  if ("managerIds" in body) {
+    const newPrimary = costCenter.managers[0]?.id ?? null;
     await prisma.purchaseRequest.updateMany({
       where: { costCenterId: params.id, currentStage: "APROVACAO_GESTOR", managerApprovalDecision: null },
-      data: { approverManagerId: data.managerId },
+      data: { approverManagerId: newPrimary },
     });
   }
 
