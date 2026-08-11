@@ -1884,6 +1884,8 @@ a.table-row:hover {
 .exec-footer-link {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   gap: 7px;
   font-size: 12px;
   font-weight: 600;
@@ -1930,11 +1932,16 @@ a.table-row:hover {
   color: rgba(255, 255, 255, 0.75);
   margin: 0 0 14px;
 }
-/* Largura máxima centralizada faz os 5 links quebrarem em duas linhas
-   equilibradas (3+2) em vez de deixar o 5º link sozinho e descentralizado. */
+/* Pedido do usuário: os 5 links em uma linha só, não mais quebrados em
+   duas (3+2). Sem largura máxima limitando o container; nowrap mantém tudo
+   na mesma linha, e overflow-x: auto vira um scroll horizontal só deste
+   bloco (não da página) se a janela ficar estreita demais para caber tudo. */
 .exec-brand-footer-links .exec-footer {
-  max-width: 640px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
   margin: 0 auto;
+  padding-bottom: 2px;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
    verde — mesma marcação/links, só a aparência muda aqui dentro. */
