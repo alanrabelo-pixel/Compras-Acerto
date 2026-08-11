@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { ShoppingCart, Plane, Wrench, Scale, ClipboardList, LifeBuoy, FileClock } from "lucide-react";
+import { ShoppingCart, Plane, Wrench, Scale, ClipboardList, LifeBuoy, FileClock, Settings } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
@@ -80,10 +80,7 @@ export default async function HomePage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="exec-topbar-logo" />
           <span className="exec-topbar-divider" aria-hidden />
-          <div>
-            <p className="exec-topbar-subtitle">Portal de Serviços Corporativos</p>
-            <h1 className="exec-topbar-title">Compras | F&amp;NC</h1>
-          </div>
+          <h1 className="exec-topbar-title">Compras | F&amp;NC</h1>
         </div>
 
         <div className="exec-topbar-search">
@@ -91,6 +88,11 @@ export default async function HomePage() {
         </div>
 
         <div className="exec-topbar-actions">
+          {isAdmin && (
+            <a href="/admin/acessos" className="exec-topbar-icon-link exec-topbar-admin-link" title="Administração">
+              <Settings size={16} strokeWidth={1.75} />
+            </a>
+          )}
           {user && (
             <UserMenu
               userId={currentUser?.id ?? null}
@@ -117,21 +119,24 @@ export default async function HomePage() {
       </div>
 
       <div className="exec-kpi-row" role="group" aria-label="Resumo geral">
-        <div className="exec-kpi">
+        <a className="exec-kpi exec-kpi-link" href="/solicitacoes?view=lista">
           <span className="exec-kpi-icon" aria-hidden><ClipboardList size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.openRequests}</span>
           <span className="exec-kpi-label">Solicitações em aberto</span>
-        </div>
+        </a>
+        {/* Sem link: "abertos" soma todas as categorias de chamados, e hoje não existe uma lista
+            unificada de chamados (só um board por categoria em /chamados/[category]) — linkar para
+            uma única categoria representaria errado o número agregado mostrado aqui. */}
         <div className="exec-kpi">
           <span className="exec-kpi-icon" aria-hidden><LifeBuoy size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.openTickets}</span>
           <span className="exec-kpi-label">Chamados abertos</span>
         </div>
-        <div className="exec-kpi exec-kpi-warning">
+        <a className="exec-kpi exec-kpi-warning exec-kpi-link" href="/contratos">
           <span className="exec-kpi-icon" aria-hidden><FileClock size={16} strokeWidth={1.75} /></span>
           <span className="exec-kpi-value">{homeData.stats.expiringContracts}</span>
           <span className="exec-kpi-label">Contratos vencendo em 30 dias</span>
-        </div>
+        </a>
       </div>
 
       {homeData.personalized && (

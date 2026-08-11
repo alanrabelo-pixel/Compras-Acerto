@@ -5,15 +5,16 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AnnouncementsBody } from "@/components/AnnouncementsBody";
 import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
-import { Bell, Rocket, SunMoon, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bell, Rocket, SunMoon, LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 type View = "menu" | "comunicados";
 
 /**
  * Menu único do usuário no topbar da Home — reúne Minhas Pendências,
- * Comunicados, Tema, Acessos (Administração) e Sair num só lugar, disparado
- * a partir do avatar/nome ("Modo local (sem SSO)" em bypass), em vez de
- * espalhar cada um como um ícone separado no topbar.
+ * Comunicados, Tema e Sair num só lugar, disparado a partir do avatar/nome
+ * ("Modo local (sem SSO)" em bypass). "Acessos (Administração)" fica fora
+ * deste menu pessoal — é um ícone próprio no topbar (ver page.tsx) para não
+ * misturar configuração de conta com administração do sistema.
  */
 export function UserMenu({
   userId, avatarUrl, name, isAdmin, pendingCount, recentAnnouncementsCount, authorName,
@@ -97,13 +98,6 @@ export function UserMenu({
                   <span><span aria-hidden><SunMoon size={16} strokeWidth={1.75} /></span> Tema</span>
                   <ThemeToggle />
                 </div>
-
-                {isAdmin && (
-                  <a href="/admin/acessos" className="user-menu-item" role="menuitem">
-                    <span aria-hidden><Settings size={16} strokeWidth={1.75} /></span>
-                    <span>Acessos (Administração)</span>
-                  </a>
-                )}
 
                 <div className="user-menu-divider" />
 

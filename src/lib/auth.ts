@@ -29,6 +29,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ profile }) {
       const email = (profile as { email?: string })?.email ?? "";
       if (!email.endsWith("@acerto.com.br")) return false;
+      const googleId = (profile as { sub?: string })?.sub;
       // Reflete criação/remoção de conta do Google Workspace: primeiro login
       // de um e-mail novo cria o User automaticamente (upsert abaixo). Uma
       // pessoa desativada em /admin/acessos (ex.: conta de e-mail excluída)
@@ -39,8 +40,18 @@ export const authOptions: NextAuthOptions = {
       if (existing && !existing.active) return false;
       await prisma.user.upsert({
         where: { email },
-        update: {},
-        create: { email, name: (profile as { name?: string })?.name ?? email },
+        // googleId é preenchido/atualizado a cada login (nunca apagado) — é o
+        // sinal usado em /admin/acessos para distinguir Origem SSO x Manual.
+        update: googleId ? { googleId } : {},
+        // Todo usuário criado via SSO entra só como SOLICITANTE — perfis
+        // elevados (Comprador/Aprovador/Administrador) nunca são concedidos
+        // pelo login, só por ação manual de um ADMIN em /admin/acessos.
+        create: {
+          email,
+          name: (profile as { name?: string })?.name ?? email,
+          googleId,
+          roles: { create: [{ role: "SOLICITANTE" }] },
+        },
       });
       return true;
     },
