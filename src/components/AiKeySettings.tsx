@@ -79,6 +79,35 @@ export function AiKeySettings({ actorId }: { actorId: string }) {
             Cada pessoa usa sua própria chave (todo mundo na Acerto já tem acesso a Claude e Gemini) — deixe em
             branco o que não quiser alterar.
           </p>
+          <details>
+            <summary style={{ cursor: "pointer", color: "var(--acerto-green-dark)", fontWeight: 600 }}>
+              Não sei onde pegar minha chave — como faço?
+            </summary>
+            <div style={{ display: "grid", gap: 10, marginTop: 8 }}>
+              <div>
+                <p style={{ fontWeight: 700, margin: "0 0 3px" }}>Claude (Anthropic)</p>
+                <ol style={{ margin: 0, paddingLeft: 16, color: "var(--ink-muted)" }}>
+                  <li>Acesse <strong>console.anthropic.com</strong> e entre com sua conta @acerto.com.br.</li>
+                  <li>No menu à esquerda, clique em <strong>API Keys</strong>.</li>
+                  <li>Clique em <strong>Create Key</strong>, dê um nome (ex: &quot;Acerto Compras&quot;) e confirme.</li>
+                  <li>Copie a chave gerada (começa com <strong>sk-ant-...</strong>) — ela só aparece uma vez.</li>
+                  <li>Cole no campo &quot;Sua chave da Anthropic (Claude)&quot; abaixo e clique em Salvar.</li>
+                </ol>
+              </div>
+              <div>
+                <p style={{ fontWeight: 700, margin: "0 0 3px" }}>Gemini (Google AI Studio)</p>
+                <ol style={{ margin: 0, paddingLeft: 16, color: "var(--ink-muted)" }}>
+                  <li>Acesse <strong>aistudio.google.com</strong> e entre com sua conta @acerto.com.br.</li>
+                  <li>Clique em <strong>Get API key</strong> (canto superior) e depois em <strong>Create API key</strong>.</li>
+                  <li>Copie a chave gerada.</li>
+                  <li>Cole no campo &quot;Sua chave do Gemini&quot; abaixo e clique em Salvar.</li>
+                </ol>
+              </div>
+              <p style={{ margin: 0, fontStyle: "italic" }}>
+                Só precisa de uma das duas para usar o assistente — configure Claude, Gemini, ou os dois.
+              </p>
+            </div>
+          </details>
           <input
             className="input" type="password" placeholder="Sua chave da Anthropic (Claude)"
             value={anthropicKeyInput} onChange={(e) => setAnthropicKeyInput(e.target.value)}

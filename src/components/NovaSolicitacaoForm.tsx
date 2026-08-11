@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
 import { Button, Field, AiTag } from "@/components/ui";
+import { AiKeySettings } from "@/components/AiKeySettings";
 import { Sparkles } from "lucide-react";
 
 type CostCenter = { id: string; name: string };
@@ -326,6 +327,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
               </Button>
               {!requesterId && <span className="help" style={{ margin: 0 }}>Selecione o solicitante acima para usar o assistente.</span>}
             </div>
+            {requesterId && <div style={{ marginTop: 6 }}><AiKeySettings actorId={requesterId} /></div>}
             {assistError && <p style={{ fontSize: 11.5, color: "var(--danger)", marginTop: 4 }}>{assistError}</p>}
             {assistNote && (
               <div className="hint-box hint-box-neutral" style={{ marginTop: 8, display: "grid", gap: 4 }}>
