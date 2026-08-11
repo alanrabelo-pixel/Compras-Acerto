@@ -195,6 +195,14 @@ export function approvalLevel(estimatedValue: number): 1 | 2 | 3 {
   return 3; // Gerente F&NC + CEO
 }
 
+// Pedido do usuário: Nível 1 exige 1 aprovador; Níveis 2 e 3 exigem 2
+// aprovadores DISTINTOS decidindo em conjunto (a mesma pessoa não pode
+// contar como as duas assinaturas) — controle de dupla checagem para
+// valores mais altos. Ver POST/PATCH /api/requests/[id]/aprovacao.
+export function approvalsRequiredForLevel(level: 1 | 2 | 3): number {
+  return level === 1 ? 1 : 2;
+}
+
 export function nextAfterAprovacao(params: {
   approved: boolean;
   needsContract: boolean;

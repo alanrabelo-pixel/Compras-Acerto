@@ -57,14 +57,14 @@ export default async function CentrosDeCustoPage({
         </div>
 
         <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 0.7fr" }}>
+          <div className="table-head-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 1.1fr" }}>
             <span>Centro de Custo</span>
             <span>Gestor(es) aprovador(es)</span>
             <span>Solicitações</span>
             <span>Status</span>
           </div>
           {costCenters.map((cc) => (
-            <div key={cc.id} className="table-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 0.7fr", alignItems: "center" }}>
+            <div key={cc.id} className="table-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 1.1fr", alignItems: "center" }}>
               <span style={{ fontWeight: 600 }}>{cc.name}</span>
               <span><CostCenterManagerPicker costCenterId={cc.id} initialManagerIds={cc.managers.map((m) => m.id)} /></span>
               <span className="text-soft">{cc._count.requests}</span>

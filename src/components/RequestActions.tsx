@@ -6,7 +6,7 @@ import type { RoleName } from "@prisma/client";
 import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { AiInsightPanel } from "@/components/AiInsightPanel";
-import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel } from "@/lib/workflow";
+import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel, approvalsRequiredForLevel } from "@/lib/workflow";
 import { Button, Card } from "@/components/ui";
 
 // Identidade de quem está logado (server session — ver src/lib/auth.ts),
@@ -683,11 +683,13 @@ function AprovacaoForm({
   // false em POST /api/requests/[id]/aprovacao. Continua manual mesmo com
   // sessão real.
   const [approverId, setApproverId] = useState("");
+  const [approverId2, setApproverId2] = useState("");
   // Aprovador(es) padrão desta alçada de valor (ApprovalLevelApprover, ver
-  // /admin/centros-de-custo) — quando configurado(s), a criação da Aprovação
-  // não exige mais escolha manual (pedido do usuário: "obrigatório como o
-  // gate do centro de custo"). Mais de um é permitido; qualquer um serve
-  // como atribuído inicial (o servidor decide o mesmo jeito).
+  // /admin/centros-de-custo) — quando o pool tem gente suficiente, a criação
+  // da Aprovação não exige mais escolha manual (pedido do usuário:
+  // "obrigatório como o gate do centro de custo"). Nível 1 exige 1
+  // aprovador; Níveis 2/3 exigem 2 distintos decidindo em conjunto (ver
+  // approvalsRequiredForLevel).
   const [levelApprovers, setLevelApprovers] = useState<{ level: number; approvers: { id: string; name: string; email: string }[] } | null>(null);
   useEffect(() => {
     fetch("/api/approval-levels").then((res) => res.json()).then((levels) => {
@@ -695,6 +697,8 @@ function AprovacaoForm({
       setLevelApprovers(level !== null ? (levels.find((l: { level: number }) => l.level === level) ?? { level, approvers: [] }) : null);
     }).catch(() => setLevelApprovers(null));
   }, [request.estimatedValue]);
+  const requiredApprovers = levelApprovers ? approvalsRequiredForLevel(levelApprovers.level as 1 | 2 | 3) : 1;
+  const poolHasEnough = Boolean(levelApprovers && levelApprovers.approvers.length >= requiredApprovers);
   const [approvalId, setApprovalId] = useState("");
   const [justification, setJustification] = useState("");
   // personifiedBy é opcional (normalmente vazio — o aprovador real decide);
@@ -766,15 +770,42 @@ function AprovacaoForm({
           <>
             <div className="form-section">
               <p className="form-section-label">1. Criar aprovação</p>
-              {levelApprovers && levelApprovers.approvers.length > 0 ? (
+              {poolHasEnough ? (
                 <>
                   <p className="hint-box hint-box-info">
-                    Aprovador{levelApprovers.approvers.length > 1 ? "es" : ""} padrão do Nível {levelApprovers.level}:{" "}
-                    <strong>{levelApprovers.approvers.map((a) => a.name).join(", ")}</strong> — atribuído automaticamente ao criar.
+                    Aprovador{requiredApprovers > 1 ? "es" : ""} padrão do Nível {levelApprovers!.level}:{" "}
+                    <strong>{levelApprovers!.approvers.slice(0, requiredApprovers).map((a) => a.name).join(", ")}</strong>
+                    {requiredApprovers > 1 ? " — os dois precisam aprovar." : " — atribuído automaticamente ao criar."}
                   </p>
                   <Button variant="secondary" style={{ marginTop: 8 }} disabled={loading} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", {})}>
                     Criar
                   </Button>
+                </>
+              ) : requiredApprovers > 1 ? (
+                <>
+                  {levelApprovers && (
+                    <p className="hint-box hint-box-warning">
+                      O Nível {levelApprovers.level} exige 2 aprovadores distintos decidindo em conjunto, e não há gente
+                      suficiente configurada — configure em Administração → Centros de Custo, ou selecione manualmente
+                      abaixo (não pode ser a mesma pessoa duas vezes).
+                    </p>
+                  )}
+                  <label className="label" htmlFor="aprovacao-approver">1º Aprovador</label>
+                  <UserPicker id="aprovacao-approver" value={approverId} onChange={setApproverId} role="APROVADOR" />
+                  <label className="label" htmlFor="aprovacao-approver-2" style={{ marginTop: 8 }}>2º Aprovador</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <UserPicker id="aprovacao-approver-2" value={approverId2} onChange={setApproverId2} role="APROVADOR" />
+                    <Button
+                      variant="secondary"
+                      disabled={loading || !approverId || !approverId2 || approverId === approverId2}
+                      onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", { approverIds: [approverId, approverId2] })}
+                    >
+                      Criar
+                    </Button>
+                  </div>
+                  {approverId && approverId2 && approverId === approverId2 && (
+                    <p style={{ fontSize: 11, color: "var(--danger)", marginTop: 4 }}>Os dois aprovadores precisam ser pessoas diferentes.</p>
+                  )}
                 </>
               ) : (
                 <>

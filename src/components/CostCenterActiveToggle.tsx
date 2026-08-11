@@ -32,13 +32,21 @@ export function CostCenterActiveToggle({ costCenterId, active }: { costCenterId:
   }
 
   return (
-    <button
-      className={`btn ${active ? "btn-secondary" : "btn-danger"}`}
-      style={{ padding: "4px 9px", fontSize: 11 }}
-      disabled={loading}
-      onClick={toggle}
-    >
-      {active ? "Ativo" : "Reativar"}
-    </button>
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span
+        className={active ? "badge badge-green" : "badge badge-danger"}
+        style={{ fontSize: 11 }}
+      >
+        {active ? "Ativo" : "Inativo"}
+      </span>
+      <button
+        className={`btn ${active ? "btn-danger" : "btn-secondary"}`}
+        style={{ padding: "4px 9px", fontSize: 11 }}
+        disabled={loading}
+        onClick={toggle}
+      >
+        {active ? "Desativar" : "Reativar"}
+      </button>
+    </div>
   );
 }

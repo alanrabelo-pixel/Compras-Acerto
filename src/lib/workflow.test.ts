@@ -4,6 +4,7 @@ import {
   budgetExceptionLevel,
   budgetExceptionApproverRole,
   approvalLevel,
+  approvalsRequiredForLevel,
   nextAfterAprovacao,
   nextAfterAprovacaoGestor,
   nextAfterAguardandoEntrega,
@@ -83,6 +84,17 @@ describe("approvalLevel", () => {
 
   it("is level 3 above R$500.000", () => {
     expect(approvalLevel(500000.01)).toBe(3);
+  });
+});
+
+describe("approvalsRequiredForLevel", () => {
+  it("exige 1 aprovador no Nível 1", () => {
+    expect(approvalsRequiredForLevel(1)).toBe(1);
+  });
+
+  it("exige 2 aprovadores nos Níveis 2 e 3", () => {
+    expect(approvalsRequiredForLevel(2)).toBe(2);
+    expect(approvalsRequiredForLevel(3)).toBe(2);
   });
 });
 
