@@ -20,6 +20,7 @@ const OPTIONS: ServiceOption[] = [
     title: "Solicitação de Compras",
     description: "Solicite e acompanhe o status do processo de compras.",
     icon: <ShoppingCart size={18} strokeWidth={1.75} />,
+    quickAction: { href: "/solicitacoes/nova", label: "+ Nova solicitação" },
   },
   {
     href: "/chamados/viagens",
@@ -172,7 +173,10 @@ export default async function HomePage() {
 
       <section className="exec-section">
         <div className="exec-section-header">
-          <p className="exec-section-title">Serviços</p>
+          <div>
+            <p className="exec-section-title">Serviços</p>
+            <p className="exec-section-subtitle">Escolha um serviço para abrir uma nova solicitação ou acompanhar o que já está em andamento.</p>
+          </div>
         </div>
         <ServiceCatalog services={OPTIONS} popularHref={homeData.popularHref} />
       </section>

@@ -13,6 +13,11 @@ export type ServiceOption = {
   // Client (este catálogo é Client Component, page.tsx que monta as opções
   // é Server Component).
   icon: ReactNode;
+  // Atalho opcional pro destino mais frequente dentro do serviço (ex: pular
+  // direto pra "Nova Solicitação" em vez de passar pelo quadro geral) — só
+  // faz sentido pro serviço com fluxo completo (Compras); os demais são só
+  // um canal de chamado, sem uma ação "principal" separada de "Acessar".
+  quickAction?: { href: string; label: string };
 };
 
 /**
@@ -80,20 +85,42 @@ export function ServiceCatalog({ services, popularHref }: { services: ServiceOpt
 
       {filtered.length > 0 ? (
         <div className="exec-tile-grid">
-          {filtered.map((opt) => (
-            <a key={opt.href} href={opt.href} className="exec-tile">
-              <div className="exec-tile-top">
-                <span className="exec-tile-icon-wrap" aria-hidden>{opt.icon}</span>
-                {opt.href === popularHref && (
-                  <span className="exec-tile-badge" title="Mais solicitado nos últimos 30 dias">Mais usado</span>
-                )}
+          {filtered.map((opt) =>
+            opt.quickAction ? (
+              // Serviço com atalho: o card vira um agrupador (não um único
+              // link gigante) porque tem DOIS destinos reais — "Acessar" (o
+              // quadro geral) e o atalho (ex: Nova Solicitação direto) — um
+              // <a> dentro de outro <a> seria HTML inválido.
+              <div key={opt.href} className="exec-tile">
+                <div className="exec-tile-top">
+                  <span className="exec-tile-icon-wrap" aria-hidden>{opt.icon}</span>
+                  {opt.href === popularHref && (
+                    <span className="exec-tile-badge" title="Mais solicitado nos últimos 30 dias">Mais usado</span>
+                  )}
+                </div>
+                <span className="exec-tile-eyebrow">{opt.eyebrow}</span>
+                <span className="exec-tile-title">{opt.title}</span>
+                <p className="exec-tile-desc">{opt.description}</p>
+                <div className="exec-tile-actions">
+                  <a href={opt.href} className="exec-tile-cta">Acessar →</a>
+                  <a href={opt.quickAction.href} className="exec-tile-quick-action">{opt.quickAction.label}</a>
+                </div>
               </div>
-              <span className="exec-tile-eyebrow">{opt.eyebrow}</span>
-              <span className="exec-tile-title">{opt.title}</span>
-              <p className="exec-tile-desc">{opt.description}</p>
-              <span className="exec-tile-cta">Acessar →</span>
-            </a>
-          ))}
+            ) : (
+              <a key={opt.href} href={opt.href} className="exec-tile">
+                <div className="exec-tile-top">
+                  <span className="exec-tile-icon-wrap" aria-hidden>{opt.icon}</span>
+                  {opt.href === popularHref && (
+                    <span className="exec-tile-badge" title="Mais solicitado nos últimos 30 dias">Mais usado</span>
+                  )}
+                </div>
+                <span className="exec-tile-eyebrow">{opt.eyebrow}</span>
+                <span className="exec-tile-title">{opt.title}</span>
+                <p className="exec-tile-desc">{opt.description}</p>
+                <span className="exec-tile-cta">Acessar →</span>
+              </a>
+            ),
+          )}
         </div>
       ) : (
         <div className="exec-catalog-empty">
