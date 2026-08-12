@@ -5,16 +5,16 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AnnouncementsBody } from "@/components/AnnouncementsBody";
 import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
-import { Bell, Rocket, SunMoon, LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bell, Rocket, SunMoon, Settings, Users, Building2, LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
-type View = "menu" | "comunicados";
+type View = "menu" | "comunicados" | "acessos";
 
 /**
  * Menu único do usuário no topbar da Home — reúne Minhas Pendências,
- * Comunicados, Tema e Sair num só lugar, disparado a partir do avatar/nome
- * ("Modo local (sem SSO)" em bypass). "Acessos (Administração)" fica fora
- * deste menu pessoal — é um ícone próprio no topbar (ver page.tsx) para não
- * misturar configuração de conta com administração do sistema.
+ * Comunicados, Tema, Configuração (Administração — com os subitens Usuários
+ * e Centro de custos) e Sair num só lugar, disparado a partir do avatar/nome
+ * ("Modo local (sem SSO)" em bypass), em vez de espalhar cada um como um
+ * ícone separado no topbar.
  */
 export function UserMenu({
   userId, avatarUrl, name, isAdmin, pendingCount, recentAnnouncementsCount, authorName,
@@ -99,12 +99,41 @@ export function UserMenu({
                   <ThemeToggle />
                 </div>
 
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="user-menu-item"
+                    role="menuitem"
+                    onClick={() => setView("acessos")}
+                  >
+                    <span aria-hidden><Settings size={16} strokeWidth={1.75} /></span>
+                    <span>Configuração (Administração)</span>
+                    <span className="user-menu-item-arrow" aria-hidden><ChevronRight size={14} strokeWidth={1.75} /></span>
+                  </button>
+                )}
+
                 <div className="user-menu-divider" />
 
                 <a href="/api/auth/signout" className="user-menu-item user-menu-item-danger" role="menuitem">
                   <span aria-hidden><LogOut size={16} strokeWidth={1.75} /></span>
                   <span>Sair</span>
                 </a>
+              </div>
+            ) : view === "acessos" ? (
+              <div className="user-menu-sub">
+                <button type="button" className="user-menu-back" onClick={() => setView("menu")}>
+                  <span aria-hidden><ChevronLeft size={14} strokeWidth={1.75} /></span> Voltar
+                </button>
+                <div className="user-menu-list">
+                  <a href="/admin/acessos" className="user-menu-item" role="menuitem">
+                    <span aria-hidden><Users size={16} strokeWidth={1.75} /></span>
+                    <span>Usuários</span>
+                  </a>
+                  <a href="/admin/centros-de-custo" className="user-menu-item" role="menuitem">
+                    <span aria-hidden><Building2 size={16} strokeWidth={1.75} /></span>
+                    <span>Centro de custos</span>
+                  </a>
+                </div>
               </div>
             ) : (
               <div className="user-menu-sub">

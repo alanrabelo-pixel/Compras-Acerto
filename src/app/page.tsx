@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { ShoppingCart, Plane, Wrench, Scale, ClipboardList, LifeBuoy, FileClock, Settings } from "lucide-react";
+import { ShoppingCart, Plane, Wrench, Scale, ClipboardList, LifeBuoy, FileClock } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
@@ -88,11 +88,6 @@ export default async function HomePage() {
         </div>
 
         <div className="exec-topbar-actions">
-          {isAdmin && (
-            <a href="/admin/acessos" className="exec-topbar-icon-link exec-topbar-admin-link" title="Administração">
-              <Settings size={16} strokeWidth={1.75} />
-            </a>
-          )}
           {user && (
             <UserMenu
               userId={currentUser?.id ?? null}

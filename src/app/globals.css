@@ -1231,13 +1231,6 @@ a.table-row:hover {
   color: var(--ink);
   margin: 0;
 }
-/* Ícone de Administração no topbar — visualmente distinto (borda tracejada)
-   do menu pessoal do avatar de propósito: configuração de conta (Tema,
-   Comunicados, Sair) e administração do sistema (gestão de usuários) são
-   públicos diferentes, então não ficam escondidos atrás do mesmo gatilho. */
-.exec-topbar-admin-link {
-  border-style: dashed;
-}
 .exec-topbar-meta {
   font-size: 12px;
   color: var(--ink-muted);
