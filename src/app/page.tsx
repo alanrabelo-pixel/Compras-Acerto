@@ -105,9 +105,10 @@ export default async function HomePage() {
       <div className="exec-welcome-banner">
         <div className="exec-welcome-banner-heading">
           <p className="exec-welcome-banner-eyebrow">Visão geral</p>
-          <p className="exec-welcome-banner-title">{firstName ? `Bem-vindo(a), ${firstName}` : "Painel de Compras"}</p>
+          <p className="exec-welcome-banner-title">Painel de Compras</p>
+          {firstName && <p className="exec-welcome-banner-greeting">Olá, {firstName}!</p>}
           <p className="exec-welcome-banner-subtitle">
-            Acompanhe solicitações, contratos e chamados da Acerto em um único lugar.
+            Acompanhe suas solicitações, contratos e chamados para o time de Compras em um único lugar.
           </p>
         </div>
         <p className="exec-welcome-banner-date">{today}</p>

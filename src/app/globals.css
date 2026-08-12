@@ -1658,8 +1658,14 @@ a.table-row:hover {
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
+.exec-welcome-banner-greeting {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
 .exec-welcome-banner-subtitle {
-  margin: 0;
+  margin: 2px 0 0;
   max-width: 560px;
   font-size: 13.5px;
   font-weight: 400;
