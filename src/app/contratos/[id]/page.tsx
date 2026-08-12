@@ -5,9 +5,7 @@ import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge } from "@/components/ui";
-import type { BadgeVariant } from "@/components/ui";
 import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
-import { Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -50,24 +48,39 @@ export default async function ContractDetailPage({ params }: { params: { id: str
 
   const vigenciaMeses = monthsBetween(contract.startDate, contract.endDate);
   const diasFaltantes = daysUntil(contract.renewalDate);
-  const alertaVencimento: { label: string; variant: BadgeVariant } =
-    diasFaltantes < 0
-      ? { label: `Vencido há ${Math.abs(diasFaltantes)} dia(s)`, variant: "danger" }
-      : diasFaltantes <= 30
-      ? { label: `Vence em ${diasFaltantes} dia(s)`, variant: "warning" }
-      : { label: `Normal (${diasFaltantes} dias)`, variant: "green" };
 
   return (
     <AppShell active="/contratos">
       <main className="page-narrow" style={{ paddingTop: 28 }}>
         <Breadcrumb items={[{ label: "Contratos", href: "/contratos" }, { label: contract.supplierName }]} />
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 14 }}>
+        <div className="contract-hero">
           <div>
-            <h1 className="page-title">{contract.supplierName}</h1>
-            <p className="page-subtitle">{contract.supplierTradeName ?? "Nome fantasia não informado"} · {contract.area} · {contract.costCenter}</p>
+            <p className="contract-hero-eyebrow">{contract.area} · {contract.costCenter}</p>
+            <h1 className="contract-hero-title">{contract.supplierName}</h1>
+            <p className="contract-hero-subtitle">{contract.supplierTradeName ?? "Nome fantasia não informado"}</p>
           </div>
           <Badge variant={CONTRACT_STATUS_BADGE_VARIANT[contract.status] ?? "neutral"}>{contract.status}</Badge>
+        </div>
+
+        {/* O que mais importa num contrato ativo — quanto tempo falta e desde
+            quando — merece destaque logo abaixo do cabeçalho, não enterrado
+            como só mais um campo entre 6 cards de identidade/financeiro. */}
+        <div className="contract-renewal-strip">
+          <div className="contract-renewal-cell">
+            <span className={`contract-renewal-value${diasFaltantes < 0 ? " contract-renewal-value-danger" : diasFaltantes <= 30 ? " contract-renewal-value-warning" : ""}`}>
+              {diasFaltantes < 0 ? `Vencido há ${Math.abs(diasFaltantes)}d` : `${diasFaltantes} dias`}
+            </span>
+            <span className="contract-renewal-label">{diasFaltantes < 0 ? "Vencido" : "Até o vencimento"}</span>
+          </div>
+          <div className="contract-renewal-cell">
+            <span className="contract-renewal-value">{formatDateOnly(contract.renewalDate)}</span>
+            <span className="contract-renewal-label">Renovação prevista</span>
+          </div>
+          <div className="contract-renewal-cell">
+            <span className="contract-renewal-value">{vigenciaMeses} meses</span>
+            <span className="contract-renewal-label">Vigência total</span>
+          </div>
         </div>
 
         {contract.requestId ? (
@@ -108,14 +121,6 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             <Field label="Fim da Vigência">{formatDateOnly(contract.endDate)}</Field>
             <Field label="Prazo">{contract.prazo ?? EMPTY}</Field>
             <Field label="Vigência (meses)">{vigenciaMeses} meses</Field>
-            <Field label="Renovação prevista">{formatDateOnly(contract.renewalDate)}</Field>
-            <Field label="Dias Faltantes">{diasFaltantes < 0 ? `${Math.abs(diasFaltantes)} dias (vencido)` : `${diasFaltantes} dias`}</Field>
-          </div>
-          <div style={{ marginTop: 10 }}>
-            <Badge variant={alertaVencimento.variant}>
-              <Clock size={12} strokeWidth={2} style={{ marginRight: 4, verticalAlign: -1 }} />
-              {alertaVencimento.label}
-            </Badge>
           </div>
         </section>
 

@@ -29,7 +29,7 @@ export function KpiCard({
   const arrow = direction === "up" ? "▲" : direction === "down" ? "▼" : "▬";
 
   return (
-    <div className="kpi-card">
+    <div className="kpi-cell">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ color: "var(--ink-soft)", display: "flex" }} aria-hidden>{icon}</span>
         {deltaPct !== null && (
