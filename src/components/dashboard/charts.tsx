@@ -9,7 +9,7 @@
 
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar, PolarAngleAxis,
+  Legend, RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
 
 // Tokens (não hex cru) — para os gráficos reagirem ao dark mode como o resto
@@ -26,8 +26,6 @@ export const CHART_COLORS = {
   red: "var(--danger)",
   gray: "var(--ink-muted)",
 };
-
-export const CATEGORY_PALETTE = ["#25d366", "#1a9c4a", "#b54708", "#7c3aed", "#d92d20", "#65a30d", "#667085", "#c026d3"];
 
 function money(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -78,29 +76,6 @@ export function TrendChart({ data }: { data: { label: string; value: number; sav
         <Bar yAxisId="value" dataKey="value" fill={CHART_COLORS.graphite} radius={[4, 4, 0, 0]} maxBarSize={28} />
         <Bar yAxisId="saving" dataKey="saving" fill={CHART_COLORS.green} radius={[4, 4, 0, 0]} maxBarSize={16} />
       </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Compras por Categoria — donut
-// ---------------------------------------------------------------------------
-export function CategoryDonut({ data }: { data: { label: string; value: number }[] }) {
-  const filtered = data.filter((d) => d.value > 0);
-  if (filtered.length === 0) {
-    return <p style={{ fontSize: 12.5, color: "var(--ink-muted)", padding: "24px 0", textAlign: "center" }}>Sem valor estimado neste recorte.</p>;
-  }
-  return (
-    <ResponsiveContainer width="100%" height={260}>
-      <PieChart>
-        <Pie data={filtered} dataKey="value" nameKey="label" innerRadius={58} outerRadius={92} paddingAngle={2} isAnimationActive={false}>
-          {filtered.map((_, i) => (
-            <Cell key={i} fill={CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value) => money(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid var(--border)" }} />
-        <Legend wrapperStyle={{ fontSize: 11 }} layout="vertical" align="right" verticalAlign="middle" />
-      </PieChart>
     </ResponsiveContainer>
   );
 }

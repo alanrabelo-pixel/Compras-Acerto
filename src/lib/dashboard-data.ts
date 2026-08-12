@@ -33,17 +33,6 @@ export const DEMAND_TYPE_LABEL: Record<string, string> = {
   CANCELAMENTO: "Cancelamento de Contrato/Serviço/Ferramenta",
 };
 
-export const CATEGORY_LABEL: Record<string, string> = {
-  TI: "TI",
-  MARKETING: "Marketing",
-  RH: "RH",
-  FACILITIES: "Facilities",
-  LOGISTICA: "Logística",
-  INDUSTRIAL: "Industrial",
-  SERVICOS_GERAIS: "Serviços Gerais",
-  OUTROS: "Outros",
-};
-
 export const STATUS_LABEL: Record<string, string> = { ABERTO: "Aberto", CONCLUIDO: "Concluído", CANCELADO: "Cancelado" };
 
 // ----------------------------------------------------------------------------
@@ -54,7 +43,6 @@ export type DashboardRawFilters = {
   diretoria?: string;
   costCenterId?: string;
   demandType?: string;
-  category?: string;
   stage?: string;
   status?: string;
   buyerId?: string;
@@ -68,7 +56,6 @@ export function buildDashboardWhere(f: DashboardRawFilters): Prisma.PurchaseRequ
   if (f.diretoria) where.diretoria = f.diretoria as never;
   if (f.costCenterId) where.costCenterId = f.costCenterId;
   if (f.demandType) where.demandType = f.demandType as never;
-  if (f.category) where.category = f.category as never;
   if (f.stage) where.currentStage = f.stage as never;
   if (f.status) where.status = f.status;
   if (f.buyerId) where.buyerId = f.buyerId;
@@ -187,7 +174,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   const requestSelect = {
     id: true, code: true, shortDescription: true, estimatedValue: true, status: true, priority: true, currentStage: true,
     createdAt: true, slaDeadline: true, needsContract: true, fragmentationFlag: true,
-    demandType: true, category: true, diretoria: true, buyerId: true,
+    demandType: true, diretoria: true, buyerId: true,
     costCenter: { select: { name: true } },
     requester: { select: { name: true } },
     buyer: { select: { id: true, name: true } },
@@ -254,21 +241,6 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     b.value += Number(po.negotiatedValue);
     b.saving += Number(po.initialValue) - Number(po.negotiatedValue);
   }
-
-  // ---- Compras por Categoria (valor estimado — cobre o pipeline inteiro,
-  // não só o que já virou Pedido de Compra) ----
-  const byCategory = new Map<string, { count: number; value: number }>();
-  for (const r of currentRequests) {
-    const key = r.category ?? "OUTROS";
-    const cur = byCategory.get(key) ?? { count: 0, value: 0 };
-    cur.count += 1;
-    cur.value += Number(r.estimatedValue ?? 0);
-    byCategory.set(key, cur);
-  }
-  const categoryBreakdown = Array.from(byCategory.entries())
-    .map(([key, v]) => ({ key, label: CATEGORY_LABEL[key] ?? key, ...v }))
-    .sort((a, b) => b.value - a.value);
-  const totalCategoryValue = categoryBreakdown.reduce((s, c) => s + c.value, 0);
 
   // ---- Compras por Centro de Custo ----
   const byCostCenter = new Map<string, { count: number; value: number }>();
@@ -463,8 +435,6 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   const riskMap = {
     singleSupplierConcentrationPct: topSupplierConcentrationPct,
     topSupplierName: topSuppliers[0]?.name ?? null,
-    topCategoryConcentrationPct: totalCategoryValue > 0 && categoryBreakdown[0] ? (categoryBreakdown[0].value / totalCategoryValue) * 100 : 0,
-    topCategoryLabel: categoryBreakdown[0]?.label ?? null,
     emergencyCount: currentRequests.filter((r) => r.priority === "CRITICA").length,
     noContractCount,
     overdueCount: overdue.length,
@@ -580,7 +550,6 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     previous,
     avgLeadTimeDays,
     monthBuckets,
-    categoryBreakdown,
     costCenterBreakdown,
     topSuppliers,
     buyerRanking,

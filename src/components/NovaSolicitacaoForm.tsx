@@ -26,20 +26,6 @@ const DEMAND_TYPES = [
   { value: "CANCELAMENTO", label: "Cancelamento de Contrato, Serviços e Ferramentas" },
 ];
 
-// Categoria de gasto (ver SpendCategory no schema) — alimenta a análise de
-// "quais categorias mais gastam" no Dashboard; distinta do Tipo de Demanda
-// acima (que descreve o tipo de processo, não a natureza do gasto).
-const SPEND_CATEGORIES = [
-  { value: "TI", label: "TI" },
-  { value: "MARKETING", label: "Marketing" },
-  { value: "RH", label: "RH" },
-  { value: "FACILITIES", label: "Facilities" },
-  { value: "LOGISTICA", label: "Logística" },
-  { value: "INDUSTRIAL", label: "Industrial" },
-  { value: "SERVICOS_GERAIS", label: "Serviços Gerais" },
-  { value: "OUTROS", label: "Outros" },
-];
-
 const PRIORITIES = [
   { value: "BAIXA", label: "Baixa" },
   { value: "MEDIA", label: "Média" },
@@ -66,7 +52,6 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [leadershipPreApproved, setLeadershipPreApproved] = useState<"SIM" | "NAO" | "">("");
   const [budgetLineId, setBudgetLineId] = useState("");
   const [demandType, setDemandType] = useState("COMPRA_SERVICO");
-  const [category, setCategory] = useState("TI");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
   const [priority, setPriority] = useState("MEDIA");
@@ -83,7 +68,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const isExtraBudget = budgetLineId === EXTRA_BUDGET;
 
   // Assistente de preenchimento (Fase 1 de IA) — lê a Descrição Detalhada já
-  // digitada e sugere demandType/category/priority + um alerta antecipado de
+  // digitada e sugere demandType/priority + um alerta antecipado de
   // Due Diligence. Nunca preenche sozinho sem clique, e cada campo alterado
   // continua editável normalmente — só marcamos quais vieram de sugestão.
   const [assisting, setAssisting] = useState(false);
@@ -104,7 +89,6 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
       if (!res.ok) throw new Error(data.error ?? "Não foi possível gerar sugestões.");
       const applied = new Set<string>();
       if (data.demandType) { setDemandType(data.demandType); applied.add("demandType"); }
-      if (data.category) { setCategory(data.category); applied.add("category"); }
       if (data.priority) { setPriority(data.priority); applied.add("priority"); }
       setAiSuggestedFields(applied);
       setAssistNote({ note: data.note, missingInfo: data.missingInfo ?? [], likelyDueDiligence: Boolean(data.likelyDueDiligence) });
@@ -147,7 +131,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
           leadershipPreApproved: leadershipPreApproved === "SIM",
           budgetLineId: isExtraBudget ? undefined : budgetLineId || undefined,
           extraBudget: isExtraBudget,
-          demandType, category, shortDescription, longDescription,
+          demandType, shortDescription, longDescription,
           priority, suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
           quantity, estimatedValue: estimatedValue === "" ? undefined : estimatedValue,
           indicatedSupplierWebsite, affectedUsers: demandType === "FERRAMENTA_USUARIOS" ? affectedUsers : undefined,
@@ -296,15 +280,6 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
               ))}
             </select>
             {aiSuggestedFields.has("demandType") && <div style={{ marginTop: 4 }}><AiTag /></div>}
-          </Field>
-
-          <Field label="Categoria de Gasto" required help="Área/natureza da despesa — usada na análise de gastos por categoria no Dashboard.">
-            <select className="input" value={category} onChange={(e) => { setCategory(e.target.value); setAiSuggestedFields((prev) => { const next = new Set(prev); next.delete("category"); return next; }); }}>
-              {SPEND_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
-            {aiSuggestedFields.has("category") && <div style={{ marginTop: 4 }}><AiTag /></div>}
           </Field>
 
           <Field

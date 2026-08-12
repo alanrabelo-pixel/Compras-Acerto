@@ -156,7 +156,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const pendingApproval = request.approvals.find((a) => a.decision === "PENDENTE");
       prompt = buildApprovalSummaryPrompt({
         demandType: request.demandType,
-        category: request.category,
         shortDescription: request.shortDescription,
         longDescription: request.longDescription,
         estimatedValue,

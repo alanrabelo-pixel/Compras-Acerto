@@ -50,7 +50,6 @@ export type DashboardSummaryProps = {
   avgCycleDays: string;
   savingPct: string;
   slaCompliancePct: string;
-  categoryBreakdown: { label: string; value: string }[];
   topSuppliers: { name: string; value: string; count: number; avgSaving: string }[];
   buyerRanking: { name: string; count: number; value: string; slaPct: string }[];
   expiringContracts: { supplierName: string; area: string; daysToRenewal: number }[];
@@ -72,18 +71,6 @@ export function DashboardSummaryDocument(props: DashboardSummaryProps) {
           <Kpi label="Saving %" value={props.savingPct} />
           <Kpi label="SLA Cumprido" value={props.slaCompliancePct} />
         </View>
-
-        <Text style={styles.sectionTitle}>Gasto por Categoria</Text>
-        <View style={styles.rowHead}>
-          <Text style={[{ flex: 2 }, styles.cellBold]}>Categoria</Text>
-          <Text style={[{ flex: 1 }, styles.cellBold]}>Valor</Text>
-        </View>
-        {props.categoryBreakdown.map((c, i) => (
-          <View key={i} style={styles.row}>
-            <Text style={{ flex: 2 }}>{c.label}</Text>
-            <Text style={{ flex: 1 }}>{c.value}</Text>
-          </View>
-        ))}
 
         <Text style={styles.sectionTitle}>Top Fornecedores</Text>
         <View style={styles.rowHead}>

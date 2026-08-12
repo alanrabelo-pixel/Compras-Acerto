@@ -1,8 +1,6 @@
 export type RiskMapData = {
   singleSupplierConcentrationPct: number;
   topSupplierName: string | null;
-  topCategoryConcentrationPct: number;
-  topCategoryLabel: string | null;
   emergencyCount: number;
   noContractCount: number;
   overdueCount: number;
@@ -34,12 +32,6 @@ export function RiskMap({ data }: { data: RiskMapData }) {
         label="Concentração no maior fornecedor"
         detail={data.topSupplierName ?? undefined}
         severity={data.singleSupplierConcentrationPct > 40 ? "danger" : data.singleSupplierConcentrationPct > 25 ? "warning" : "neutral"}
-      />
-      <RiskCard
-        value={`${data.topCategoryConcentrationPct.toFixed(0)}%`}
-        label="Concentração na maior categoria"
-        detail={data.topCategoryLabel ?? undefined}
-        severity={data.topCategoryConcentrationPct > 60 ? "warning" : "neutral"}
       />
       <RiskCard value={data.emergencyCount} label="Compras com prioridade Crítica" severity={data.emergencyCount > 0 ? "warning" : "neutral"} />
       <RiskCard value={data.noContractCount} label="Precisam de contrato, ainda sem mapeamento" severity={data.noContractCount > 0 ? "warning" : "neutral"} />

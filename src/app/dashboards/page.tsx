@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/AppShell";
 import { DashboardFilters } from "@/components/DashboardFilters";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { TrendChart, CategoryDonut, CostCenterBarHorizontal, SlaGauge, CycleHistogram } from "@/components/dashboard/charts";
+import { TrendChart, CostCenterBarHorizontal, SlaGauge, CycleHistogram } from "@/components/dashboard/charts";
 import { TopSuppliersTable } from "@/components/dashboard/TopSuppliersTable";
 import { BuyerRanking } from "@/components/dashboard/BuyerRanking";
 import { PipelineFunnel } from "@/components/dashboard/PipelineFunnel";
@@ -10,12 +10,12 @@ import { SeasonalityHeatmap } from "@/components/dashboard/SeasonalityHeatmap";
 import { RiskMap } from "@/components/dashboard/RiskMap";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { loadDashboardData, money, CATEGORY_LABEL } from "@/lib/dashboard-data";
+import { loadDashboardData, money } from "@/lib/dashboard-data";
 import { STAGES } from "@/lib/workflow";
 import { TableWrap, TableHeadRow, TableRow, Card } from "@/components/ui";
 import {
   Wallet, FileText, Package, Hourglass, Truck, Banknote, TrendingUp, CheckCircle2, Users,
-  Tags, Building2, Factory, Briefcase, Compass, FileSignature, Target, Timer, Ticket, Inbox,
+  Building2, Factory, Briefcase, Compass, FileSignature, Target, Timer, Ticket, Inbox,
   Calendar, Shield, Bell,
 } from "lucide-react";
 
@@ -81,15 +81,10 @@ export default async function DashboardsPage({
           <TrendChart data={data.monthBuckets} />
         </Card>
 
-        {/* ---- Categoria / Centro de Custo ---- */}
-        <div className="dash-grid-2">
-          <Card titleSize="lg" title="Compras por Categoria" icon={<Tags size={16} strokeWidth={1.75} />} subtitle="Valor estimado do recorte atual (pipeline completo, não só o já emitido)">
-            <CategoryDonut data={data.categoryBreakdown.map((c) => ({ label: CATEGORY_LABEL[c.key] ?? c.label, value: c.value }))} />
-          </Card>
-          <Card titleSize="lg" title="Compras por Centro de Custo" icon={<Building2 size={16} strokeWidth={1.75} />}>
-            <CostCenterBarHorizontal data={data.costCenterBreakdown} />
-          </Card>
-        </div>
+        {/* ---- Centro de Custo ---- */}
+        <Card titleSize="lg" title="Compras por Centro de Custo" icon={<Building2 size={16} strokeWidth={1.75} />} subtitle="Valor estimado do recorte atual (pipeline completo, não só o já emitido)">
+          <CostCenterBarHorizontal data={data.costCenterBreakdown} />
+        </Card>
 
         {/* ---- Fornecedores / Compradores / Pipeline ---- */}
         <div className="dash-grid-3">

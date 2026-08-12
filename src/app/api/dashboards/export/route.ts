@@ -21,7 +21,6 @@ export async function GET(req: NextRequest) {
     diretoria: sp.get("diretoria") ?? undefined,
     costCenterId: sp.get("costCenterId") ?? undefined,
     demandType: sp.get("demandType") ?? undefined,
-    category: sp.get("category") ?? undefined,
     stage: sp.get("stage") ?? undefined,
     status: sp.get("status") ?? undefined,
     buyerId: sp.get("buyerId") ?? undefined,

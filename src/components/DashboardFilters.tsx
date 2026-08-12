@@ -12,17 +12,6 @@ const DEMAND_TYPES = [
   { value: "CANCELAMENTO", label: "Cancelamento de Contrato/Serviço/Ferramenta" },
 ];
 
-const CATEGORIES = [
-  { value: "TI", label: "TI" },
-  { value: "MARKETING", label: "Marketing" },
-  { value: "RH", label: "RH" },
-  { value: "FACILITIES", label: "Facilities" },
-  { value: "LOGISTICA", label: "Logística" },
-  { value: "INDUSTRIAL", label: "Industrial" },
-  { value: "SERVICOS_GERAIS", label: "Serviços Gerais" },
-  { value: "OUTROS", label: "Outros" },
-];
-
 const STATUSES = [
   { value: "ABERTO", label: "Aberto" },
   { value: "CONCLUIDO", label: "Concluído" },
@@ -64,7 +53,7 @@ export function DashboardFilters({
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  const hasFilters = ["de", "ate", "diretoria", "costCenterId", "demandType", "category", "stage", "status", "buyerId", "supplierId"].some((k) => searchParams.get(k));
+  const hasFilters = ["de", "ate", "diretoria", "costCenterId", "demandType", "stage", "status", "buyerId", "supplierId"].some((k) => searchParams.get(k));
 
   return (
     <div className="dashboard-filters">
@@ -132,16 +121,6 @@ export function DashboardFilters({
             <option value="">Todas</option>
             {stages.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field" style={{ marginBottom: 0 }}>
-          <label className="label">Categoria</label>
-          <select className="input" value={searchParams.get("category") ?? ""} onChange={(e) => setParam("category", e.target.value)}>
-            <option value="">Todas</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
         </div>

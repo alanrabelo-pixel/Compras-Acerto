@@ -313,7 +313,6 @@ ${RESPONSE_FORMAT_INSTRUCTION}`;
 
 export type ApprovalSummaryContext = {
   demandType: string;
-  category: string | null;
   shortDescription: string;
   longDescription: string;
   estimatedValue: number | null;
@@ -344,7 +343,6 @@ export function buildApprovalSummaryPrompt(ctx: ApprovalSummaryContext): string 
 
 Dados da solicitação:
 - Tipo de demanda: ${ctx.demandType}
-- Categoria de gasto: ${ctx.category ?? "não informada"}
 - Descrição: ${ctx.shortDescription}
 - Detalhes: ${ctx.longDescription}
 - Valor estimado: ${ctx.estimatedValue !== null ? `R$ ${ctx.estimatedValue.toLocaleString("pt-BR")}` : "não informado"}
@@ -417,7 +415,6 @@ ${RESPONSE_FORMAT_INSTRUCTION}`;
 
 export type RequisitionAssistPayload = {
   demandType: string | null;
-  category: string | null;
   priority: string | null;
   likelyDueDiligence: boolean;
   missingInfo: string[];
@@ -433,18 +430,12 @@ const REQUISITION_ASSIST_JSON_SCHEMA = {
         { type: "null" },
       ],
     },
-    category: {
-      anyOf: [
-        { type: "string", enum: ["TI", "MARKETING", "RH", "FACILITIES", "LOGISTICA", "INDUSTRIAL", "SERVICOS_GERAIS", "OUTROS"] },
-        { type: "null" },
-      ],
-    },
     priority: { anyOf: [{ type: "string", enum: ["BAIXA", "MEDIA", "ALTA", "CRITICA"] }, { type: "null" }] },
     likelyDueDiligence: { type: "boolean" },
     missingInfo: { type: "array", items: { type: "string" } },
     note: { type: "string" },
   },
-  required: ["demandType", "category", "priority", "likelyDueDiligence", "missingInfo", "note"],
+  required: ["demandType", "priority", "likelyDueDiligence", "missingInfo", "note"],
   additionalProperties: false,
 } as const;
 
@@ -454,7 +445,6 @@ function parseRequisitionAssistPayload(text: string): RequisitionAssistPayload {
   const parsed = JSON.parse(jsonMatch[0]);
   return {
     demandType: parsed.demandType ? String(parsed.demandType) : null,
-    category: parsed.category ? String(parsed.category) : null,
     priority: parsed.priority ? String(parsed.priority) : null,
     likelyDueDiligence: Boolean(parsed.likelyDueDiligence),
     missingInfo: Array.isArray(parsed.missingInfo) ? parsed.missingInfo.map(String) : [],
@@ -470,7 +460,6 @@ Descrição da necessidade, como a pessoa escreveu:
 
 Classifique nos valores EXATOS abaixo (não invente outros):
 - Tipo de demanda (demandType): um de COMPRA_PRODUTO, COMPRA_SERVICO, FERRAMENTA_NOVA, FERRAMENTA_USUARIOS, FERRAMENTA_UPGRADE_DOWNGRADE, RENOVACAO_CONTRATO, CANCELAMENTO — ou null se não conseguir inferir com confiança.
-- Categoria de gasto (category): um de TI, MARKETING, RH, FACILITIES, LOGISTICA, INDUSTRIAL, SERVICOS_GERAIS, OUTROS — ou null.
 - Prioridade (priority): um de BAIXA, MEDIA, ALTA, CRITICA — ou null se a descrição não sugerir urgência nem rotina claramente.
 - likelyDueDiligence: true se parecer uma ferramenta/serviço NOVO que provavelmente vai tratar dados pessoais (login de usuários, CRM, dados de clientes/colaboradores) — isso adianta um alerta que hoje só apareceria depois, na etapa de Triagem.
 - missingInfo: lista curta do que falta ou está vago na descrição para abrir a solicitação com qualidade (ex: "não ficou claro o centro de custo", "não há indicação de fornecedor").
@@ -478,7 +467,7 @@ Classifique nos valores EXATOS abaixo (não invente outros):
 
 Responda APENAS com um JSON válido (sem markdown, sem texto antes ou depois), no formato exato:
 {
-  "demandType": "...", "category": "...", "priority": "...",
+  "demandType": "...", "priority": "...",
   "likelyDueDiligence": true, "missingInfo": ["..."], "note": "..."
 }`;
 }
