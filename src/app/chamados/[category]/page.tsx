@@ -79,7 +79,7 @@ export default async function ChamadosBoardPage({
                         {t.description.length > 100 ? `${t.description.slice(0, 100)}…` : t.description}
                       </p>
                       <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                        {t.requesterName}{t.supplierName ? ` · ${t.supplierName}` : ""}
+                        {t.requesterName}{(t.supplierName || t.contractSupplierName) ? ` · ${t.supplierName || t.contractSupplierName}` : ""}
                       </div>
                     </a>
                   ))}

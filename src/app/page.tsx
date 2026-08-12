@@ -20,7 +20,6 @@ const OPTIONS: ServiceOption[] = [
     title: "Solicitação de Compras",
     description: "Solicite e acompanhe o status do processo de compras.",
     icon: <ShoppingCart size={18} strokeWidth={1.75} />,
-    quickAction: { href: "/solicitacoes/nova", label: "+ Nova solicitação" },
   },
   {
     href: "/chamados/viagens",
@@ -39,7 +38,7 @@ const OPTIONS: ServiceOption[] = [
   {
     href: "/chamados/nda",
     eyebrow: "Jurídico",
-    title: "Envio de NDA (Termo de Confidencialidade)",
+    title: "NDA e Contratos de Fornecedores",
     description: "NDA, contratos de fornecedores ativos e consultas gerais sobre fornecedores.",
     icon: <Scale size={18} strokeWidth={1.75} />,
   },

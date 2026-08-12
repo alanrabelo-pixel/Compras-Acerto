@@ -39,7 +39,7 @@ export default async function NovoChamadoPage({ params }: { params: { category: 
         <h1 className="page-title">Nova solicitação — {config.label}</h1>
         <p className="page-subtitle">
           {categorySlug === "nda"
-            ? "Preencha as informações abaixo para solicitar o envio de um termo de confidencialidade."
+            ? "Preencha as informações abaixo para solicitar o envio de um NDA ou tirar uma dúvida sobre um contrato ativo com fornecedor."
             : "Preencha seus dados e descreva o que você precisa."}
         </p>
 

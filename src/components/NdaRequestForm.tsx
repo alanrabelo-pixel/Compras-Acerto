@@ -3,23 +3,26 @@
 import { useState } from "react";
 import { UserPicker, type UserOption } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
+import { ContractPicker } from "@/components/ContractPicker";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
 import { AlertTriangle } from "lucide-react";
 
 type SessionRequester = { id: string; name: string; email: string } | null;
+type RequestKind = "NDA" | "CONTRATO";
 
 /**
- * Tela de Solicitação de Envio de NDA — deliberadamente enxuta (só o que o
- * jurídico/comprador realmente precisa para redigir e enviar o termo): quem
- * pede, o contexto da negociação, e opcionalmente os dados de contato do
- * fornecedor. Sem alçada, sem etapas — usa o mesmo trilho simples de
- * Viagens/Facilities (SimpleTicket), só com um formulário de entrada próprio.
+ * Tela de Jurídico — cobre dois pedidos distintos dentro do mesmo trilho
+ * simples (SimpleTicket, sem alçada/etapas): Solicitação de Envio de NDA (só
+ * o que o jurídico/comprador precisa pra redigir e enviar o termo) e Dúvida
+ * sobre contrato ativo com fornecedor (referencia um Contract real, sem
+ * inventar dado). O seletor abaixo troca qual seção de dados extras aparece.
  */
 export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?: SessionRequester }) {
   const [manualRequester, setManualRequester] = useState<{ id: string; name: string; email: string } | null>(null);
   const requesterName = sessionRequester?.name ?? manualRequester?.name ?? "";
   const requesterEmail = sessionRequester?.email ?? manualRequester?.email ?? "";
 
+  const [requestKind, setRequestKind] = useState<RequestKind>("NDA");
   const [description, setDescription] = useState("");
 
   const [supplierName, setSupplierName] = useState("");
@@ -27,6 +30,10 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
   const [supplierContactRole, setSupplierContactRole] = useState("");
   const [supplierContactEmail, setSupplierContactEmail] = useState("");
   const [supplierContactPhone, setSupplierContactPhone] = useState("");
+
+  const [contractId, setContractId] = useState("");
+  const [contractSupplierName, setContractSupplierName] = useState("");
+  const [contractObject, setContractObject] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +49,10 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category: "nda", requesterName, requesterEmail, description,
-          supplierName, supplierContactName, supplierContactRole, supplierContactEmail, supplierContactPhone,
+          category: "nda", requesterName, requesterEmail, description, requestKind,
+          ...(requestKind === "NDA"
+            ? { supplierName, supplierContactName, supplierContactRole, supplierContactEmail, supplierContactPhone }
+            : { contractId, contractSupplierName, contractObject }),
         }),
       });
       const data = await res.json();
@@ -73,7 +82,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
           <div>
             <h2 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700 }}>Solicitação enviada com sucesso!</h2>
             <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-              Sua solicitação de NDA <strong style={{ color: "var(--acerto-green-dark)" }}>{result.code}</strong> foi
+              Sua solicitação <strong style={{ color: "var(--acerto-green-dark)" }}>{result.code}</strong> foi
               registrada e já está disponível para acompanhamento. Você receberá um e-mail de confirmação em breve.
             </p>
             <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
@@ -109,57 +118,101 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
       </div>
 
       <div className="form-section">
+        <p className="form-section-label">Tipo de solicitação</p>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button type="button" variant={requestKind === "NDA" ? "primary" : "secondary"} onClick={() => setRequestKind("NDA")}>
+            Envio de NDA
+          </Button>
+          <Button type="button" variant={requestKind === "CONTRATO" ? "primary" : "secondary"} onClick={() => setRequestKind("CONTRATO")}>
+            Dúvida sobre contrato ativo
+          </Button>
+        </div>
+      </div>
+
+      <div className="form-section">
         <Field
           label="Descrição detalhada"
           required
-          help="Descreva o motivo do envio do NDA, o contexto da negociação, o objetivo do compartilhamento de informações e qualquer detalhe relevante."
+          help={
+            requestKind === "NDA"
+              ? "Descreva o motivo do envio do NDA, o contexto da negociação, o objetivo do compartilhamento de informações e qualquer detalhe relevante."
+              : "Descreva sua dúvida sobre o contrato — o que precisa esclarecer, prazo, cláusula específica etc."
+          }
         >
           <Textarea
             style={{ minHeight: 140, resize: "vertical" }}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Ex: Estamos negociando uma parceria com o fornecedor X para o projeto Y e precisamos compartilhar informações confidenciais antes de formalizar o contrato."
+            placeholder={
+              requestKind === "NDA"
+                ? "Ex: Estamos negociando uma parceria com o fornecedor X para o projeto Y e precisamos compartilhar informações confidenciais antes de formalizar o contrato."
+                : "Ex: Preciso confirmar se o contrato com o fornecedor X permite renovação automática e qual o prazo de aviso prévio para cancelamento."
+            }
           />
         </Field>
       </div>
 
-      <div className="form-section">
-        <p className="form-section-label">Contatos do fornecedor <span style={{ fontWeight: 400, color: "var(--ink-muted)" }}>(opcional)</span></p>
-        <p className="help" style={{ marginTop: -4 }}>
-          Preencha se já souber com quem o NDA será compartilhado — ajuda o jurídico a agilizar o envio. Pode deixar em branco e completar depois.
-        </p>
+      {requestKind === "NDA" ? (
+        <div className="form-section">
+          <p className="form-section-label">Contatos do fornecedor <span style={{ fontWeight: 400, color: "var(--ink-muted)" }}>(opcional)</span></p>
+          <p className="help" style={{ marginTop: -4 }}>
+            Preencha se já souber com quem o NDA será compartilhado — ajuda o jurídico a agilizar o envio. Pode deixar em branco e completar depois.
+          </p>
 
-        <Field label="Fornecedor cadastrado (opcional)" help="Se o fornecedor já tiver cadastro, selecione para preencher automaticamente.">
-          <SupplierPicker
-            onSelect={(s) => {
-              setSupplierName(s.legalName);
-              setSupplierContactName(s.contactName ?? "");
-              setSupplierContactEmail(s.contactEmail ?? "");
-              setSupplierContactPhone(s.contactPhone ?? "");
-            }}
-          />
-        </Field>
+          <Field label="Fornecedor cadastrado (opcional)" help="Se o fornecedor já tiver cadastro, selecione para preencher automaticamente.">
+            <SupplierPicker
+              onSelect={(s) => {
+                setSupplierName(s.legalName);
+                setSupplierContactName(s.contactName ?? "");
+                setSupplierContactEmail(s.contactEmail ?? "");
+                setSupplierContactPhone(s.contactPhone ?? "");
+              }}
+            />
+          </Field>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <Field label="Nome do fornecedor">
-            <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="Razão social ou nome fantasia" />
-          </Field>
-          <Field label="Nome do contato">
-            <Input value={supplierContactName} onChange={(e) => setSupplierContactName(e.target.value)} />
-          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <Field label="Nome do fornecedor">
+              <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} placeholder="Razão social ou nome fantasia" />
+            </Field>
+            <Field label="Nome do contato">
+              <Input value={supplierContactName} onChange={(e) => setSupplierContactName(e.target.value)} />
+            </Field>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <Field label="Cargo">
+              <Input value={supplierContactRole} onChange={(e) => setSupplierContactRole(e.target.value)} placeholder="Ex: Gerente Comercial" />
+            </Field>
+            <Field label="E-mail">
+              <Input type="email" value={supplierContactEmail} onChange={(e) => setSupplierContactEmail(e.target.value)} />
+            </Field>
+            <Field label="Telefone">
+              <Input value={supplierContactPhone} onChange={(e) => setSupplierContactPhone(e.target.value)} placeholder="+55 ..." />
+            </Field>
+          </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-          <Field label="Cargo">
-            <Input value={supplierContactRole} onChange={(e) => setSupplierContactRole(e.target.value)} placeholder="Ex: Gerente Comercial" />
+      ) : (
+        <div className="form-section">
+          <p className="form-section-label">Contrato relacionado</p>
+          <p className="help" style={{ marginTop: -4 }}>
+            Selecione o contrato ativo ao qual sua dúvida se refere.
+          </p>
+
+          <Field label="Contrato ativo">
+            <ContractPicker
+              onSelect={(c) => {
+                setContractId(c.id);
+                setContractSupplierName(c.supplierTradeName ?? c.supplierName);
+                setContractObject(c.contractObject ?? "");
+              }}
+            />
           </Field>
-          <Field label="E-mail">
-            <Input type="email" value={supplierContactEmail} onChange={(e) => setSupplierContactEmail(e.target.value)} />
-          </Field>
-          <Field label="Telefone">
-            <Input value={supplierContactPhone} onChange={(e) => setSupplierContactPhone(e.target.value)} placeholder="+55 ..." />
-          </Field>
+          {contractSupplierName && (
+            <p className="help" style={{ marginTop: -2 }}>
+              Selecionado: <strong>{contractSupplierName}</strong>{contractObject ? ` — ${contractObject}` : ""}
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
       {error && (
         <p role="alert" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--danger)", background: "var(--danger-bg)", border: "1px solid #f8b4ac", borderRadius: 8, padding: "10px 12px", margin: 0 }}>

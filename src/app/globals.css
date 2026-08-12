@@ -1980,40 +1980,6 @@ a.table-row:hover {
   font-weight: 700;
   color: var(--acerto-green-dark);
 }
-/* Card com atalho (ver ServiceOption.quickAction): "Acessar" e o atalho
-   ficam lado a lado na mesma linha inferior do card. */
-.exec-tile-actions {
-  margin-top: auto;
-  padding-top: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  row-gap: 6px;
-  column-gap: 8px;
-  width: 100%;
-}
-.exec-tile-actions .exec-tile-cta {
-  margin-top: 0;
-  padding-top: 0;
-  white-space: nowrap;
-}
-.exec-tile-quick-action {
-  font-family: var(--font-sans);
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--acerto-green-dark);
-  background: var(--acerto-green-50);
-  border-radius: 999px;
-  padding: 4px 10px;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color 0.15s;
-}
-.exec-tile-quick-action:hover {
-  background: var(--acerto-green-100);
-}
-
 .exec-footer {
   display: flex;
   justify-content: center;

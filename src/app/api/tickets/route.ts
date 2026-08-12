@@ -18,13 +18,16 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/tickets — cria um novo chamado (nome, e-mail, descrição livre).
-// supplierName/supplierContact* são exclusivos do fluxo de NDA (ver
-// NdaRequestForm.tsx) e opcionais — ficam undefined para Viagens/Facilities.
+// supplierName/supplierContact* e requestKind/contract* são exclusivos do
+// fluxo de Jurídico (ver NdaRequestForm.tsx) e opcionais — ficam undefined
+// para Viagens/Facilities. requestKind distingue "NDA" de "CONTRATO" dentro
+// dessa mesma categoria.
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
-    category: categorySlug, requesterName, requesterEmail, description,
+    category: categorySlug, requesterName, requesterEmail, description, requestKind,
     supplierName, supplierContactName, supplierContactRole, supplierContactEmail, supplierContactPhone,
+    contractId, contractSupplierName, contractObject,
   } = body;
 
   if (!isTicketCategorySlug(categorySlug)) {
@@ -41,11 +44,15 @@ export async function POST(req: NextRequest) {
   const ticket = await prisma.simpleTicket.create({
     data: {
       code, category: config.enumValue, requesterName, requesterEmail, description,
+      requestKind: requestKind || undefined,
       supplierName: supplierName || undefined,
       supplierContactName: supplierContactName || undefined,
       supplierContactRole: supplierContactRole || undefined,
       supplierContactEmail: supplierContactEmail || undefined,
       supplierContactPhone: supplierContactPhone || undefined,
+      contractId: contractId || undefined,
+      contractSupplierName: contractSupplierName || undefined,
+      contractObject: contractObject || undefined,
     },
   });
 

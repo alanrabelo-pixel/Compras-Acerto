@@ -818,6 +818,18 @@ model SimpleTicket {
   supplierContactEmail String?
   supplierContactPhone String?
 
+  // Subtipo do pedido dentro da categoria Jurídico/NDA (ver
+  // src/components/NdaRequestForm.tsx) — "NDA" (usa os campos supplier*
+  // acima) ou "CONTRATO" (dúvida sobre contrato ativo, usa os campos
+  // contract* abaixo). Nulo para Viagens/Facilities. contractId não é uma
+  // relação Prisma de propósito — mesmo padrão denormalizado já usado para
+  // supplierName acima (sem FK pra Supplier), só guarda de qual Contract
+  // real o pedido partiu, sem inventar dado novo.
+  requestKind          String?
+  contractId           String?
+  contractSupplierName String?
+  contractObject       String? @db.Text
+
   messages TicketMessage[]
 }
 

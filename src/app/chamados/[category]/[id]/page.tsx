@@ -72,6 +72,23 @@ export default async function ChamadoDetailPage({
           </section>
         )}
 
+        {ticket.contractSupplierName && (
+          <section className="card section-gap">
+            <h2 className="card-title">Contrato relacionado</h2>
+            <div style={{ fontSize: 12.5 }}>
+              <p style={{ margin: 0 }}><span className="text-muted">Fornecedor:</span> {ticket.contractSupplierName}</p>
+              {ticket.contractObject && (
+                <p style={{ margin: "6px 0 0" }}><span className="text-muted">Objeto:</span> {ticket.contractObject}</p>
+              )}
+              {ticket.contractId && (
+                <p style={{ margin: "6px 0 0" }}>
+                  <a href={`/contratos/${ticket.contractId}`} style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Ver contrato →</a>
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
         <ChamadoThread
           ticketId={ticket.id}
           status={ticket.status}
