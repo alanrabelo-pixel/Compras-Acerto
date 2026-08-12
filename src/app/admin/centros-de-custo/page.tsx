@@ -7,6 +7,7 @@ import { CreateCostCenterForm } from "@/components/CreateCostCenterForm";
 import { ApprovalLevelPicker } from "@/components/ApprovalLevelPicker";
 import { ApproverCostCentersPicker } from "@/components/ApproverCostCentersPicker";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
+import { TableWrap, TableHeadRow, TableRow, TableEmpty, Tabs } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -56,90 +57,94 @@ export default async function CentrosDeCustoPage({
           centro de custo a renomeá-lo ou excluí-lo — preserva o histórico das solicitações já vinculadas a ele.
         </p>
 
-        <div className="section-gap">
-          <SearchFilterBar
-            searchPlaceholder="Nome do centro de custo..."
-            filters={[
-              { key: "status", label: "Status", options: [{ value: "ativo", label: "Ativo" }, { value: "inativo", label: "Inativo" }] },
-              {
-                key: "gestor", label: "Gestor",
-                options: [
-                  { value: "sem", label: "Sem gestor definido" },
-                  ...approvers.map((u) => ({ value: u.id, label: u.name })),
-                ],
-              },
-              { key: "solicitacoes", label: "Solicitações", options: [{ value: "com", label: "Com solicitações" }, { value: "sem", label: "Sem solicitações" }] },
-            ]}
-          />
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "var(--space-4)" }}>
-          <CreateCostCenterForm />
-        </div>
-
-        <div className="table-wrap" style={{ marginTop: 10 }}>
-          <div className="table-head-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 1.1fr" }}>
-            <span>Centro de Custo</span>
-            <span>Gestor(es) aprovador(es)</span>
-            <span>Solicitações</span>
-            <span>Status</span>
-          </div>
-          {costCenters.map((cc) => (
-            <div key={cc.id} className="table-row" style={{ gridTemplateColumns: "1.8fr 2fr 0.8fr 1.1fr", alignItems: "center" }}>
-              <span style={{ fontWeight: 600 }}>{cc.name}</span>
-              <span><CostCenterManagerPicker costCenterId={cc.id} initialManagerIds={cc.managers.map((m) => m.id)} /></span>
-              <span className="text-soft">{cc._count.requests}</span>
-              <span><CostCenterActiveToggle costCenterId={cc.id} active={cc.active} /></span>
+        <Tabs
+          tabs={[
+            { id: "centros", label: "Centros de Custo" },
+            { id: "alcadas", label: "Alçadas de Aprovação" },
+            { id: "aprovador", label: "Por Aprovador" },
+          ]}
+        >
+          <div className="section-gap">
+            <SearchFilterBar
+              searchPlaceholder="Nome do centro de custo..."
+              filters={[
+                { key: "status", label: "Status", options: [{ value: "ativo", label: "Ativo" }, { value: "inativo", label: "Inativo" }] },
+                {
+                  key: "gestor", label: "Gestor",
+                  options: [
+                    { value: "sem", label: "Sem gestor definido" },
+                    ...approvers.map((u) => ({ value: u.id, label: u.name })),
+                  ],
+                },
+                { key: "solicitacoes", label: "Solicitações", options: [{ value: "com", label: "Com solicitações" }, { value: "sem", label: "Sem solicitações" }] },
+              ]}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", margin: "10px 0" }}>
+              <CreateCostCenterForm />
             </div>
-          ))}
-          {costCenters.length === 0 && (
-            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum centro de custo encontrado neste recorte.</p>
-          )}
-        </div>
-
-        <h2 className="page-title" style={{ fontSize: 18, marginTop: 32 }}>Alçadas de Aprovação</h2>
-        <p className="page-subtitle">
-          Aprovador(es) padrão de cada alçada de valor, atribuído(s) automaticamente ao criar a Aprovação na etapa
-          "Aprovação" (depois de Cotação/Mapa de Cotação) — mais de um é permitido, qualquer um pode decidir.
-        </p>
-        <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "1.6fr 2fr" }}>
-            <span>Alçada</span>
-            <span>Aprovador(es)</span>
+            <TableWrap>
+              <TableHeadRow columns="1.8fr 2fr 0.8fr 1.1fr">
+                <span>Centro de Custo</span>
+                <span>Gestor(es) aprovador(es)</span>
+                <span>Solicitações</span>
+                <span>Status</span>
+              </TableHeadRow>
+              {costCenters.map((cc) => (
+                <TableRow key={cc.id} columns="1.8fr 2fr 0.8fr 1.1fr" style={{ alignItems: "center" }}>
+                  <span style={{ fontWeight: 600 }}>{cc.name}</span>
+                  <span><CostCenterManagerPicker costCenterId={cc.id} initialManagerIds={cc.managers.map((m) => m.id)} /></span>
+                  <span className="text-soft">{cc._count.requests}</span>
+                  <span><CostCenterActiveToggle costCenterId={cc.id} active={cc.active} /></span>
+                </TableRow>
+              ))}
+              {costCenters.length === 0 && <TableEmpty>Nenhum centro de custo encontrado neste recorte.</TableEmpty>}
+            </TableWrap>
           </div>
-          {[1, 2, 3].map((level) => (
-            <div key={level} className="table-row" style={{ gridTemplateColumns: "1.6fr 2fr", alignItems: "center" }}>
-              <span style={{ fontWeight: 600 }}>{LEVEL_LABEL[level]}</span>
-              <span>
-                <ApprovalLevelPicker level={level} initialApproverIds={levelRows.filter((r) => r.level === level).map((r) => r.userId)} />
-              </span>
-            </div>
-          ))}
-        </div>
 
-        <h2 className="page-title" style={{ fontSize: 18, marginTop: 32 }}>Por Aprovador</h2>
-        <p className="page-subtitle">
-          Visão inversa da tabela de Centros de Custo acima: escolha, por pessoa, quais centros de custo ela pode
-          aprovar. Quem não estiver marcado para um centro de custo não vê a solicitação em "Minhas Pendências"
-          quando ela chega na etapa "Aprovação do Gestor".
-        </p>
-        <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "1.6fr 2.4fr" }}>
-            <span>Aprovador</span>
-            <span>Centros de custo que pode aprovar</span>
+          <div className="section-gap">
+            <p className="page-subtitle" style={{ marginBottom: 14 }}>
+              Aprovador(es) padrão de cada alçada de valor, atribuído(s) automaticamente ao criar a Aprovação na etapa
+              "Aprovação" (depois de Cotação/Mapa de Cotação) — mais de um é permitido, qualquer um pode decidir.
+            </p>
+            <TableWrap>
+              <TableHeadRow columns="1.6fr 2fr">
+                <span>Alçada</span>
+                <span>Aprovador(es)</span>
+              </TableHeadRow>
+              {[1, 2, 3].map((level) => (
+                <TableRow key={level} columns="1.6fr 2fr" style={{ alignItems: "center" }}>
+                  <span style={{ fontWeight: 600 }}>{LEVEL_LABEL[level]}</span>
+                  <span>
+                    <ApprovalLevelPicker level={level} initialApproverIds={levelRows.filter((r) => r.level === level).map((r) => r.userId)} />
+                  </span>
+                </TableRow>
+              ))}
+            </TableWrap>
           </div>
-          {approvers.map((u) => (
-            <div key={u.id} className="table-row" style={{ gridTemplateColumns: "1.6fr 2.4fr", alignItems: "center" }}>
-              <span style={{ fontWeight: 600 }}>{u.name} <span className="text-soft" style={{ fontWeight: 400 }}>({u.email})</span></span>
-              <span>
-                <ApproverCostCentersPicker userId={u.id} initialCostCenterIds={u.costCentersManaged.map((cc) => cc.id)} />
-              </span>
-            </div>
-          ))}
-          {approvers.length === 0 && (
-            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Ninguém com o papel Aprovador ainda.</p>
-          )}
-        </div>
+
+          <div className="section-gap">
+            <p className="page-subtitle" style={{ marginBottom: 14 }}>
+              Visão inversa da tabela de Centros de Custo: escolha, por pessoa, quais centros de custo ela pode
+              aprovar. Quem não estiver marcado para um centro de custo não vê a solicitação em "Minhas Pendências"
+              quando ela chega na etapa "Aprovação do Gestor".
+            </p>
+            <TableWrap>
+              <TableHeadRow columns="1.6fr 2.4fr">
+                <span>Aprovador</span>
+                <span>Centros de custo que pode aprovar</span>
+              </TableHeadRow>
+              {approvers.map((u) => (
+                <TableRow key={u.id} columns="1.6fr 2.4fr" style={{ alignItems: "center" }}>
+                  <span style={{ fontWeight: 600 }}>{u.name} <span className="text-soft" style={{ fontWeight: 400 }}>({u.email})</span></span>
+                  <span>
+                    <ApproverCostCentersPicker userId={u.id} initialCostCenterIds={u.costCentersManaged.map((cc) => cc.id)} />
+                  </span>
+                </TableRow>
+              ))}
+              {approvers.length === 0 && <TableEmpty>Ninguém com o papel Aprovador ainda.</TableEmpty>}
+            </TableWrap>
+          </div>
+        </Tabs>
       </main>
     </AppShell>
   );

@@ -18,4 +18,6 @@ export { Breadcrumb } from "./Breadcrumb";
 export type { BreadcrumbItem } from "./Breadcrumb";
 export { Modal } from "./Modal";
 export { WarningNotice } from "./WarningNotice";
+export { Tabs } from "./Tabs";
+export type { TabDef } from "./Tabs";
 export { cx } from "./cx";

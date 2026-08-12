@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { RoleAccessToggles } from "@/components/RoleAccessToggles";
 import { UserActiveToggle } from "@/components/UserActiveToggle";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
+import { TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/components/ui";
 import type { Prisma, RoleName } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -74,33 +75,31 @@ export default async function AcessosPage({
           ]}
         />
 
-        <div className="table-wrap section-gap">
-          <div className="table-head-row" style={{ gridTemplateColumns: "1.3fr 1.7fr 2.3fr 1.2fr 0.8fr 0.8fr" }}>
+        <TableWrap className="section-gap">
+          <TableHeadRow columns="1.3fr 1.7fr 2.3fr 1.2fr 0.8fr 0.8fr">
             <span>Nome</span>
             <span>E-mail</span>
             <span>Tipos de acesso</span>
             <span>Outros papéis (etapa)</span>
             <span>Status</span>
             <span>Origem</span>
-          </div>
+          </TableHeadRow>
           {users.map((u) => {
             const managed = u.roles.filter((r) => MANAGED_ROLES.includes(r.role)).map((r) => r.role);
             const other = u.roles.filter((r) => !MANAGED_ROLES.includes(r.role)).map((r) => r.role);
             return (
-              <div key={u.id} className="table-row" style={{ gridTemplateColumns: "1.3fr 1.7fr 2.3fr 1.2fr 0.8fr 0.8fr", alignItems: "center" }}>
+              <TableRow key={u.id} columns="1.3fr 1.7fr 2.3fr 1.2fr 0.8fr 0.8fr" style={{ alignItems: "center" }}>
                 <span style={{ fontWeight: 600 }}>{u.name}</span>
                 <span className="text-soft">{u.email}</span>
                 <span><RoleAccessToggles userId={u.id} initialRoles={managed} /></span>
                 <span className="text-soft" style={{ fontSize: 11.5 }}>{other.join(", ") || "—"}</span>
                 <span><UserActiveToggle userId={u.id} active={u.active} /></span>
                 <span className="badge badge-info" style={{ fontSize: 10.5 }}>{u.googleId ? "SSO" : "Manual"}</span>
-              </div>
+              </TableRow>
             );
           })}
-          {users.length === 0 && (
-            <p style={{ padding: 20, fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma pessoa encontrada neste recorte.</p>
-          )}
-        </div>
+          {users.length === 0 && <TableEmpty>Nenhuma pessoa encontrada neste recorte.</TableEmpty>}
+        </TableWrap>
       </main>
     </AppShell>
   );
