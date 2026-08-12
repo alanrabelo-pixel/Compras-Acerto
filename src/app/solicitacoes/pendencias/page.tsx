@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { WhoAmIPicker } from "@/components/WhoAmIPicker";
 import { Badge } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
+import { formatCurrency } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +122,7 @@ export default async function PendenciasPage({
                           </p>
                           <p style={{ margin: "var(--space-1) 0 0", fontSize: 11, color: "var(--ink-muted)" }}>
                             {r.requester.name} · {r.costCenter.name}
-                            {r.estimatedValue !== null && <> · R$ {Number(r.estimatedValue).toLocaleString("pt-BR")}</>}
+                            {r.estimatedValue !== null && <> · {formatCurrency(Number(r.estimatedValue))}</>}
                           </p>
                         </div>
                         <span style={{ fontSize: 11, color: "var(--ink-muted)", flex: "none", whiteSpace: "nowrap" }}>

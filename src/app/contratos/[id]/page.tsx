@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { ContractActions } from "@/components/ContractActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
-import { formatDateOnly } from "@/lib/format";
+import { formatDateOnly, formatDateTime } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge } from "@/components/ui";
 import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
@@ -161,7 +161,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           {contract.alerts.map((a) => (
             <div key={a.id} className="timeline-item">
               <span className="timeline-dot" />
-              <span>{a.channel} · {new Date(a.sentAt).toLocaleString("pt-BR")}</span>
+              <span>{a.channel} · {formatDateTime(a.sentAt)}</span>
             </div>
           ))}
         </section>

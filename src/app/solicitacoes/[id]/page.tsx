@@ -8,7 +8,7 @@ import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { RequestChatWidget } from "@/components/RequestChatWidget";
 import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { StageOverrideControls } from "@/components/StageOverrideControls";
-import { formatDateOnly } from "@/lib/format";
+import { formatDateOnly, formatCurrency } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
@@ -134,7 +134,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px", fontSize: 12.5 }}>
             <p style={{ margin: 0 }}>
               <span className="text-muted">Valor estimado:</span>{" "}
-              {request.estimatedValue !== null ? `R$ ${Number(request.estimatedValue).toLocaleString("pt-BR")}` : "ainda não informado"}
+              {request.estimatedValue !== null ? formatCurrency(Number(request.estimatedValue)) : "ainda não informado"}
             </p>
             <p style={{ margin: 0 }}><span className="text-muted">Tipo de demanda:</span> {request.demandType}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Quantidade:</span> {request.quantity}</p>

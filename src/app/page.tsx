@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { ShoppingCart, Plane, Wrench, Scale, ArrowRight } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
+import { formatDateTime } from "@/lib/format";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
 import { CommandPalette } from "@/components/CommandPalette";
 import { UserMenu } from "@/components/UserMenu";
@@ -45,10 +46,6 @@ const SECONDARY_SERVICES = [
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
 export const dynamic = "force-dynamic";
-
-function formatUpdatedAt(date: Date) {
-  return date.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
 
 export default async function HomePage() {
   const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
@@ -134,7 +131,7 @@ export default async function HomePage() {
                   <span className="exec-worklist-row-code">{item.code}</span>
                   <span className="exec-worklist-row-title">{item.title}</span>
                   <Badge variant="neutral">{item.statusLabel}</Badge>
-                  <span className="exec-worklist-row-date">{formatUpdatedAt(item.updatedAt)}</span>
+                  <span className="exec-worklist-row-date">{formatDateTime(item.updatedAt)}</span>
                 </TableRow>
               ))}
             </TableWrap>

@@ -36,7 +36,7 @@ export default async function NovoChamadoPage({ params }: { params: { category: 
     <>
       <ChamadoHeader categoryLabel={config.label} backHref={`/chamados/${categorySlug}`} backLabel="← voltar aos chamados" />
       <main className="page-narrow" style={{ paddingTop: 28 }}>
-        <h1 className="page-title">Nova solicitação — {config.label}</h1>
+        <h1 className="page-title">Novo Chamado — {config.label}</h1>
         <p className="page-subtitle">
           {categorySlug === "nda"
             ? "Preencha as informações abaixo para solicitar o envio de um NDA ou tirar uma dúvida sobre um contrato ativo com fornecedor."

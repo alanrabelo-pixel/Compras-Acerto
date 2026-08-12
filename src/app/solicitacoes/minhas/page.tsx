@@ -6,12 +6,9 @@ import { AppShell } from "@/components/AppShell";
 import { WhoAmIPicker } from "@/components/WhoAmIPicker";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
+import { formatDateTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-function formatUpdatedAt(date: Date) {
-  return date.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
 
 /**
  * Recorte de quem só tem o papel Solicitante (sem acesso ao quadro geral —
@@ -105,7 +102,7 @@ export default async function MinhasSolicitacoesPage({
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.shortDescription}</span>
                   <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge>
                   <Badge variant="neutral">{STAGES[r.currentStage].label}</Badge>
-                  <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{formatUpdatedAt(r.updatedAt)}</span>
+                  <span style={{ fontSize: 12, color: "var(--ink-muted)" }}>{formatDateTime(r.updatedAt)}</span>
                 </TableRow>
               ))}
             </TableWrap>

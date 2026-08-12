@@ -1,13 +1,9 @@
-import { formatDateOnly } from "@/lib/format";
+import { formatDateOnly, formatDateTime, formatCurrency as money } from "@/lib/format";
 import type { Stage } from "@prisma/client";
-
-function money(v: number | string) {
-  return Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 function dateTime(d: Date | string | null | undefined) {
   if (!d) return null;
-  return new Date(d).toLocaleString("pt-BR");
+  return formatDateTime(d);
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
