@@ -960,6 +960,9 @@ textarea.input:focus {
   overflow: hidden;
 }
 .view-toggle a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 7px 14px;
   font-size: 12.5px;
   font-weight: 600;

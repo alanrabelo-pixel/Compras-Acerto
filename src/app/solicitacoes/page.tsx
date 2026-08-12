@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { Badge, TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
+import { LayoutGrid, List } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -138,8 +139,12 @@ export default async function SolicitacoesPage({
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
             <div className="view-toggle">
-              <a href={viewHref("kanban")} className={viewMode === "kanban" ? "active" : ""}>☰ Kanban</a>
-              <a href={viewHref("lista")} className={viewMode === "lista" ? "active" : ""}>▤ Lista</a>
+              <a href={viewHref("kanban")} className={viewMode === "kanban" ? "active" : ""}>
+                <LayoutGrid size={14} strokeWidth={1.75} aria-hidden /> Kanban
+              </a>
+              <a href={viewHref("lista")} className={viewMode === "lista" ? "active" : ""}>
+                <List size={14} strokeWidth={1.75} aria-hidden /> Lista
+              </a>
             </div>
             <a href="/solicitacoes/pendencias" className="btn btn-secondary">Minhas Pendências →</a>
           </div>
