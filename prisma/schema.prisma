@@ -476,12 +476,18 @@ enum AttachmentCategory {
 
 model Attachment {
   id         String   @id @default(cuid())
-  requestId  String
-  request    PurchaseRequest @relation(fields: [requestId], references: [id])
+  // Um anexo pertence a uma PurchaseRequest OU a um SimpleTicket (Chamados),
+  // nunca os dois — por isso os dois lados são opcionais. Chamados não têm
+  // Stage (fluxo de workflow da Compras não se aplica a eles), daí stage
+  // também virar opcional em vez de exigir um valor sem sentido.
+  requestId  String?
+  request    PurchaseRequest? @relation(fields: [requestId], references: [id])
+  ticketId   String?
+  ticket     SimpleTicket? @relation(fields: [ticketId], references: [id])
   fileName   String
   storageUrl String   // Google Drive fileId/URL ou S3 key
   uploadedBy String
-  stage      Stage
+  stage      Stage?
   category   AttachmentCategory @default(GERAL)
   createdAt  DateTime @default(now())
 
@@ -830,7 +836,8 @@ model SimpleTicket {
   contractSupplierName String?
   contractObject       String? @db.Text
 
-  messages TicketMessage[]
+  messages    TicketMessage[]
+  attachments Attachment[]
 }
 
 model TicketMessage {

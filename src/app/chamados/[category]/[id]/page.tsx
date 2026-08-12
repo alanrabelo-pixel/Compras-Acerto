@@ -4,6 +4,7 @@ import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, isTicketCategorySlug } from "@/
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
 import { ChamadoThread } from "@/components/ChamadoThread";
+import { TicketAttachmentsPanel } from "@/components/TicketAttachmentsPanel";
 import { Badge, Breadcrumb } from "@/components/ui";
 import { TICKET_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
 
@@ -18,7 +19,10 @@ export default async function ChamadoDetailPage({
 
   const ticket = await prisma.simpleTicket.findUnique({
     where: { id: params.id },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
+    include: {
+      messages: { orderBy: { createdAt: "asc" } },
+      attachments: { orderBy: { createdAt: "desc" } },
+    },
   });
   if (!ticket || ticket.category !== config.enumValue) notFound();
 
@@ -55,6 +59,12 @@ export default async function ChamadoDetailPage({
           <h2 className="card-title">Descrição</h2>
           <p style={{ fontSize: 12.5, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{ticket.description}</p>
         </section>
+
+        <TicketAttachmentsPanel
+          ticketId={ticket.id}
+          attachments={ticket.attachments.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+          defaultUploadedBy={ticket.requesterName}
+        />
 
         {ticket.supplierName && (
           <section className="card section-gap">

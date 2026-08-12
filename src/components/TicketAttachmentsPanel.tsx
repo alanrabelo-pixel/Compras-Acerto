@@ -2,23 +2,22 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { UserPicker } from "@/components/UserPicker";
+import { formatDateOnly } from "@/lib/format";
 
-type Attachment = { id: string; fileName: string; uploadedBy: string; stage: string | null; createdAt: string };
+type Attachment = { id: string; fileName: string; uploadedBy: string; createdAt: string };
 
-export function AttachmentsPanel({
-  requestId, attachments, uploaderId, category, title = "Anexos", emptyLabel = "Nenhum anexo ainda.",
-}: {
-  requestId: string;
-  attachments: Attachment[];
-  uploaderId: string;
-  category?: string;
-  title?: string;
-  emptyLabel?: string;
-}) {
+/**
+ * Anexos de um chamado (Viagens/Facilities/NDA) — mesmo mecanismo de
+ * armazenamento do AttachmentsPanel (solicitações), mas sem UserPicker: quem
+ * abre/responde um chamado não precisa ser um usuário cadastrado no sistema
+ * (mesmo padrão de "Seu nome" livre já usado em ChamadoThread).
+ */
+export function TicketAttachmentsPanel({
+  ticketId, attachments, defaultUploadedBy = "",
+}: { ticketId: string; attachments: Attachment[]; defaultUploadedBy?: string }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [uploadedBy, setUploadedBy] = useState(uploaderId ?? "");
+  const [uploadedBy, setUploadedBy] = useState(defaultUploadedBy);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +30,7 @@ export function AttachmentsPanel({
       const form = new FormData();
       form.append("file", file);
       form.append("uploadedBy", uploadedBy);
-      if (category) form.append("category", category);
-      const res = await fetch(`/api/requests/${requestId}/attachments`, { method: "POST", body: form });
+      const res = await fetch(`/api/tickets/${ticketId}/attachments`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao enviar anexo.");
       if (fileRef.current) fileRef.current.value = "";
@@ -46,18 +44,18 @@ export function AttachmentsPanel({
 
   return (
     <section className="card section-gap">
-      <h2 className="card-title accent">{title}</h2>
-      {attachments.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>{emptyLabel}</p>}
+      <h2 className="card-title accent">Anexos</h2>
+      {attachments.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum anexo ainda.</p>}
       {attachments.map((a) => (
         <div key={a.id} className="timeline-item" style={{ justifyContent: "space-between" }}>
           <a href={`/api/attachments/${a.id}/file`} style={{ color: "var(--acerto-green-dark)", textDecoration: "none", fontWeight: 600 }}>{a.fileName}</a>
-          <span className="text-muted">{a.stage} · {new Date(a.createdAt).toLocaleDateString("pt-BR")}</span>
+          <span className="text-muted">{a.uploadedBy} · {formatDateOnly(a.createdAt)}</span>
         </div>
       ))}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10, marginTop: 14, alignItems: "end" }}>
-        <div>
+        <div className="field">
           <label className="label">Enviado por</label>
-          <UserPicker value={uploadedBy} onChange={setUploadedBy} placeholder="Selecione quem envia" />
+          <input className="input" value={uploadedBy} onChange={(e) => setUploadedBy(e.target.value)} placeholder="Seu nome" />
         </div>
         <input ref={fileRef} type="file" className="input" style={{ padding: 6 }} />
         <button className="btn btn-primary" disabled={loading || !uploadedBy} onClick={upload}>Enviar</button>
