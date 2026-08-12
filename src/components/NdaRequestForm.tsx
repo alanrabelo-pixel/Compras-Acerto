@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { UserPicker, type UserOption } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { ContractPicker } from "@/components/ContractPicker";
@@ -35,6 +35,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
   const [contractSupplierName, setContractSupplierName] = useState("");
   const [contractObject, setContractObject] = useState("");
 
+  const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ id: string; code: string } | null>(null);
@@ -57,6 +58,17 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Não foi possível enviar a solicitação.");
+
+      // Anexo é opcional — se o upload falhar, a solicitação já foi aberta
+      // normalmente (pode anexar depois na própria tela da solicitação).
+      const file = fileRef.current?.files?.[0];
+      if (file) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("uploadedBy", requesterName);
+        await fetch(`/api/tickets/${data.id}/attachments`, { method: "POST", body: form }).catch(() => {});
+      }
+
       setResult({ id: data.id, code: data.code });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro inesperado — tente novamente em instantes.");
@@ -149,6 +161,9 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
                 : "Ex: Preciso confirmar se o contrato com o fornecedor X permite renovação automática e qual o prazo de aviso prévio para cancelamento."
             }
           />
+        </Field>
+        <Field label="Anexo (opcional)" help="Ex: minuta de contrato, proposta ou qualquer documento de apoio.">
+          <input ref={fileRef} type="file" className="input" style={{ padding: 6 }} />
         </Field>
       </div>
 

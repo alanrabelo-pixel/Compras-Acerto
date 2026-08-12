@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketCategorySlug } from "@/lib/tickets";
 
@@ -15,6 +15,7 @@ export function ChamadoRequestForm({ categorySlug }: { categorySlug: TicketCateg
   const [requesterName, setRequesterName] = useState("");
   const [requesterEmail, setRequesterEmail] = useState("");
   const [description, setDescription] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +30,18 @@ export function ChamadoRequestForm({ categorySlug }: { categorySlug: TicketCateg
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao abrir chamado.");
+
+      // Anexo é opcional — se o upload falhar, o chamado já foi aberto
+      // normalmente (pode anexar depois na própria tela do chamado), então
+      // isso nunca bloqueia a navegação.
+      const file = fileRef.current?.files?.[0];
+      if (file) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("uploadedBy", requesterName);
+        await fetch(`/api/tickets/${data.id}/attachments`, { method: "POST", body: form }).catch(() => {});
+      }
+
       router.push(`/chamados/${categorySlug}/${data.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro inesperado.");
@@ -58,6 +71,10 @@ export function ChamadoRequestForm({ categorySlug }: { categorySlug: TicketCateg
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Descreva sua solicitação com o máximo de detalhes possível."
         />
+      </div>
+      <div className="field">
+        <label className="label" htmlFor="chamado-attachment">Anexo (opcional)</label>
+        <input ref={fileRef} id="chamado-attachment" type="file" className="input" style={{ padding: 6 }} />
       </div>
 
       {error && <p style={{ fontSize: 12.5, color: "var(--danger)", margin: 0 }}>{error}</p>}
