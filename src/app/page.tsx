@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { ShoppingCart, Plane, Wrench, Scale, ClipboardList, LifeBuoy, FileClock } from "lucide-react";
+import { ShoppingCart, Plane, Wrench, Scale, ArrowRight } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { loadHomeData } from "@/lib/home-data";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
@@ -7,40 +7,38 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { UserMenu } from "@/components/UserMenu";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
-import { ServiceCatalog, type ServiceOption } from "@/components/home/ServiceCatalog";
 
-// Pictogramas simples e neutros no lugar das ilustrações antigas (pessoas
-// desenhadas em estilo cartoon) — o padrão que plataformas de Procurement
-// corporativas (Coupa, Ariba, Ramp) usam em catálogo de serviço é um ícone
-// discreto, não uma ilustração decorativa competindo com o conteúdo.
-const OPTIONS: ServiceOption[] = [
-  {
-    href: "/solicitacoes",
-    eyebrow: "Compras",
-    title: "Solicitação de Compras",
-    description: "Solicite e acompanhe o status do processo de compras.",
-    icon: <ShoppingCart size={18} strokeWidth={1.75} />,
-  },
+// Compras é o único serviço com fluxo completo (triagem, cotação, aprovação,
+// contrato) — os outros 3 são canais de chamado mais simples. Tratá-los como
+// 4 peers num grid uniforme escondia essa diferença real; agora Compras é o
+// card em destaque e os outros formam uma faixa secundária mais discreta
+// (ver "Outros canais" abaixo).
+const FEATURED_SERVICE = {
+  href: "/solicitacoes",
+  eyebrow: "Compras",
+  title: "Solicitação de Compras",
+  description: "Abra uma solicitação e acompanhe todo o processo — triagem, cotação, aprovação e contrato — em um só lugar.",
+  icon: <ShoppingCart size={22} strokeWidth={1.75} />,
+};
+
+const SECONDARY_SERVICES = [
   {
     href: "/chamados/viagens",
-    eyebrow: "Viagens",
     title: "Viagens Acerto",
-    description: "Canal para dúvidas em viagem a trabalho, Uber Corporativo e Reembolsos.",
-    icon: <Plane size={18} strokeWidth={1.75} />,
+    description: "Dúvidas de viagem, Uber Corporativo e reembolsos.",
+    icon: <Plane size={16} strokeWidth={1.75} />,
   },
   {
     href: "/chamados/facilities",
-    eyebrow: "Facilities",
     title: "Gestão de Facilities",
-    description: "Manutenção, solicitação de material e eventos internos.",
-    icon: <Wrench size={18} strokeWidth={1.75} />,
+    description: "Manutenção, materiais e eventos internos.",
+    icon: <Wrench size={16} strokeWidth={1.75} />,
   },
   {
     href: "/chamados/nda",
-    eyebrow: "Jurídico",
     title: "NDA e Contratos de Fornecedores",
-    description: "NDA, contratos de fornecedores ativos e consultas gerais sobre fornecedores.",
-    icon: <Scale size={18} strokeWidth={1.75} />,
+    description: "NDA, contratos ativos e consultas sobre fornecedores.",
+    icon: <Scale size={16} strokeWidth={1.75} />,
   },
 ];
 
@@ -114,31 +112,13 @@ export default async function HomePage() {
         <p className="exec-welcome-banner-date">{today}</p>
       </div>
 
-      <div className="exec-kpi-row" role="group" aria-label="Resumo geral">
-        <a className="exec-kpi exec-kpi-link" href="/solicitacoes?view=lista">
-          <span className="exec-kpi-icon" aria-hidden><ClipboardList size={16} strokeWidth={1.75} /></span>
-          <span className="exec-kpi-value">{homeData.stats.openRequests}</span>
-          <span className="exec-kpi-label">Solicitações em aberto</span>
-        </a>
-        {/* Sem link: "abertos" soma todas as categorias de chamados, e hoje não existe uma lista
-            unificada de chamados (só um board por categoria em /chamados/[category]) — linkar para
-            uma única categoria representaria errado o número agregado mostrado aqui. */}
-        <div className="exec-kpi exec-kpi-warning">
-          <span className="exec-kpi-icon" aria-hidden><LifeBuoy size={16} strokeWidth={1.75} /></span>
-          <span className="exec-kpi-value">{homeData.stats.openTickets}</span>
-          <span className="exec-kpi-label">Chamados abertos</span>
-        </div>
-        <a className="exec-kpi exec-kpi-neutral exec-kpi-link" href="/contratos">
-          <span className="exec-kpi-icon" aria-hidden><FileClock size={16} strokeWidth={1.75} /></span>
-          <span className="exec-kpi-value">{homeData.stats.expiringContracts}</span>
-          <span className="exec-kpi-label">Contratos vencendo em 30 dias</span>
-        </a>
-      </div>
-
+      {/* O que precisa de ação agora vem ANTES dos números de referência —
+          por isso "Minha Atenção" (era "Meu Painel") passou a liderar a
+          tela, e os indicadores abaixo viraram uma faixa quieta de apoio. */}
       {homeData.personalized && (
         <section className="exec-section">
           <div className="exec-section-header">
-            <p className="exec-section-title">Meu Painel</p>
+            <p className="exec-section-title">Minha Atenção</p>
             <span className="exec-section-meta">{homeData.requesterName}</span>
           </div>
           {homeData.items.length > 0 ? (
@@ -166,6 +146,24 @@ export default async function HomePage() {
         </section>
       )}
 
+      <div className="exec-stat-strip" role="group" aria-label="Resumo geral">
+        <a className="exec-stat exec-stat-link" href="/solicitacoes?view=lista">
+          <span className="exec-stat-value">{homeData.stats.openRequests}</span>
+          <span className="exec-stat-label">Solicitações em aberto</span>
+        </a>
+        {/* Sem link: "abertos" soma todas as categorias de chamados, e hoje não existe uma lista
+            unificada de chamados (só um board por categoria em /chamados/[category]) — linkar para
+            uma única categoria representaria errado o número agregado mostrado aqui. */}
+        <div className="exec-stat">
+          <span className="exec-stat-value">{homeData.stats.openTickets}</span>
+          <span className="exec-stat-label">Chamados abertos</span>
+        </div>
+        <a className="exec-stat exec-stat-link" href="/contratos">
+          <span className="exec-stat-value">{homeData.stats.expiringContracts}</span>
+          <span className="exec-stat-label">Contratos vencendo em 30 dias</span>
+        </a>
+      </div>
+
       <section className="exec-section">
         <div className="exec-section-header">
           <div>
@@ -173,7 +171,30 @@ export default async function HomePage() {
             <p className="exec-section-subtitle">Escolha um serviço para abrir uma nova solicitação ou acompanhar o que já está em andamento.</p>
           </div>
         </div>
-        <ServiceCatalog services={OPTIONS} popularHref={homeData.popularHref} />
+
+        <a href={FEATURED_SERVICE.href} className="exec-service-featured">
+          <span className="exec-service-featured-icon" aria-hidden>{FEATURED_SERVICE.icon}</span>
+          <span className="exec-service-featured-body">
+            <span className="exec-service-featured-eyebrow">{FEATURED_SERVICE.eyebrow}</span>
+            <span className="exec-service-featured-title">{FEATURED_SERVICE.title}</span>
+            <span className="exec-service-featured-desc">{FEATURED_SERVICE.description}</span>
+          </span>
+          <span className="exec-service-featured-cta">Acessar <ArrowRight size={15} strokeWidth={2} /></span>
+        </a>
+
+        <p className="exec-service-secondary-heading">Outros canais de atendimento</p>
+        <div className="exec-service-secondary-row">
+          {SECONDARY_SERVICES.map((s) => (
+            <a key={s.href} href={s.href} className="exec-service-secondary-card">
+              {s.href === homeData.popularHref && (
+                <span className="exec-service-secondary-badge" title="Mais solicitado nos últimos 30 dias">Mais usado</span>
+              )}
+              <span className="exec-service-secondary-icon" aria-hidden>{s.icon}</span>
+              <span className="exec-service-secondary-title">{s.title}</span>
+              <p className="exec-service-secondary-desc">{s.description}</p>
+            </a>
+          ))}
+        </div>
       </section>
 
     </main>

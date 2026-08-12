@@ -1688,82 +1688,47 @@ a.table-row:hover {
   margin-top: 2px;
 }
 
-.exec-kpi-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: 36px;
-}
-/* Layout compacto (ícone + número lado a lado, card mais baixo) — mesmo
-   protótipo aprovado, substitui o formato antigo (barra colorida à esquerda
-   + ícone monocromático solto no canto + número empilhado abaixo). */
-/* Grid (não flex) porque o ícone e o par valor/legenda não têm um elemento
-   pai em comum no JSX — o ícone ocupa as duas linhas da coluna 1, valor e
-   legenda ficam empilhados na coluna 2, sem precisar de um <div> extra. */
-.exec-kpi {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 12px;
-  align-items: center;
+/* Faixa de indicadores DELIBERADAMENTE quieta — sem ícone, sem card
+   separado por número, sem cor. É informação de apoio, não o conteúdo
+   principal da tela (isso agora é "Minha Atenção", acima). Uma faixa única
+   com divisórias internas lê como dado de referência; três cards coloridos
+   lado a lado liam como um mini-dashboard competindo pela atenção com o
+   que realmente precisa de ação. */
+.exec-stat-strip {
+  display: flex;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 12px 16px;
-  box-shadow: var(--shadow-sm);
+  margin-bottom: 40px;
+  overflow: hidden;
 }
-.exec-kpi-icon {
-  grid-column: 1;
-  grid-row: 1 / 3;
+.exec-stat {
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  background: var(--acerto-green-50);
-  color: var(--acerto-green-dark);
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 22px;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s;
 }
-.exec-kpi-icon svg {
-  width: 15px;
-  height: 15px;
+.exec-stat + .exec-stat {
+  border-left: 1px solid var(--border);
 }
-.exec-kpi-warning .exec-kpi-icon {
-  background: var(--warning-bg);
-  color: var(--warning);
+.exec-stat-link:hover {
+  background: var(--surface-muted);
 }
-.exec-kpi-neutral .exec-kpi-icon {
-  background: var(--info-bg);
-  color: var(--info);
-}
-.exec-kpi-value {
-  grid-column: 2;
-  grid-row: 1;
-  display: block;
-  font-size: 22px;
+.exec-stat-value {
+  font-size: 21px;
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.1;
 }
-.exec-kpi-label {
-  grid-column: 2;
-  grid-row: 2;
-  display: block;
+.exec-stat-label {
   font-size: 11.5px;
   color: var(--ink-muted);
   font-weight: 500;
-  margin-top: 2px;
-}
-/* Cards com link (nem todo indicador tem um destino honesto — ver page.tsx) */
-.exec-kpi-link {
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-}
-.exec-kpi-link:hover {
-  border-color: var(--acerto-green);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .exec-section {
@@ -1821,175 +1786,157 @@ a.table-row:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.exec-catalog-controls {
+/* Serviços deixa de ser um catálogo uniforme de 4 itens iguais com busca e
+   filtro (over-engineering pra só 4 opções, e tratava o fluxo completo de
+   Compras como se fosse mais um canal de chamado como os outros). Agora tem
+   hierarquia real: Compras é o card em destaque (fluxo completo, com
+   aprovação/cotação/contrato); os outros 3 viram uma faixa secundária mais
+   discreta, rotulada como "Outros canais". */
+.exec-service-featured {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-.exec-catalog-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 220px;
-  max-width: 320px;
-  padding: 8px 12px;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--ink-muted);
-}
-.exec-catalog-search input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  color: var(--ink);
-}
-.exec-catalog-search input::placeholder {
-  color: var(--ink-muted);
-}
-.exec-catalog-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.exec-catalog-chip {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
-}
-.exec-catalog-chip:hover {
-  border-color: var(--acerto-green);
-  color: var(--acerto-green-dark);
-}
-.exec-catalog-chip.active {
-  /* Verso mais contido do que preenchimento sólido + texto branco (que lia
-     como filtro de app de consumo) — tinta suave da marca com o texto na
-     própria cor da marca já comunica "selecionado" sem subir o volume. */
-  background: var(--acerto-green-50);
-  border-color: var(--acerto-green-100);
-  color: var(--acerto-green-dark);
-}
-
-.exec-catalog-empty {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 32px 20px;
-  text-align: center;
-}
-.exec-catalog-empty p {
-  margin: 0 0 10px;
-  font-size: 12.5px;
-  color: var(--ink-muted);
-}
-.exec-catalog-empty-clear {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--acerto-green-dark);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.exec-tile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
-}
-/* Catálogo de serviço no estilo enterprise (Coupa/Ariba/ServiceNow): card
-   compacto alinhado à esquerda, ícone pequeno e neutro liderando o texto —
-   não mais o azulejo alto centralizado com uma ilustração ocupando a maior
-   parte do card, que lia como tile de app de consumo. */
-.exec-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 20px;
+  border-radius: var(--radius-lg);
+  padding: 26px 30px;
+  margin-bottom: 22px;
   text-decoration: none;
   color: var(--ink);
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.exec-tile:hover {
+.exec-service-featured::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--acerto-green);
+}
+.exec-service-featured:hover {
   border-color: var(--acerto-green);
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
-.exec-tile-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin-bottom: 8px;
-}
-.exec-tile-icon-wrap {
+.exec-service-featured-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-md);
+  background: var(--acerto-green-50);
+  color: var(--acerto-green-dark);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  color: var(--ink-soft);
   flex-shrink: 0;
 }
-.exec-tile-badge {
-  background: var(--acerto-green-50);
-  color: var(--acerto-green-dark);
-  font-size: 9px;
+.exec-service-featured-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.exec-service-featured-eyebrow {
+  margin: 0 0 4px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 3px 7px;
-  border-radius: 999px;
+  letter-spacing: 0.06em;
+  color: var(--acerto-green-dark);
 }
-.exec-tile-eyebrow {
-  font-size: 9.5px;
+.exec-service-featured-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.exec-service-featured-desc {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.exec-service-featured-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--acerto-green-dark);
+  white-space: nowrap;
+}
+
+.exec-service-secondary-heading {
+  margin: 0 0 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ink-muted);
 }
-.exec-tile-title {
-  font-size: 13.5px;
+.exec-service-secondary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.exec-service-secondary-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 15px 16px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.exec-service-secondary-card:hover {
+  border-color: var(--acerto-green);
+  box-shadow: var(--shadow-sm);
+}
+.exec-service-secondary-icon {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.exec-service-secondary-title {
+  font-size: 12.5px;
   font-weight: 700;
-  line-height: 1.3;
-  margin-top: 1px;
+  color: var(--ink);
 }
-.exec-tile-desc {
-  font-size: 11.5px;
-  color: var(--ink-muted);
-  line-height: 1.45;
-  margin: 2px 0 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.exec-tile-cta {
-  margin-top: auto;
-  padding-top: 8px;
+.exec-service-secondary-desc {
   font-size: 11px;
-  font-weight: 700;
+  color: var(--ink-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+.exec-service-secondary-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--acerto-green-50);
   color: var(--acerto-green-dark);
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 7px;
+  border-radius: 999px;
 }
 .exec-footer {
   display: flex;
