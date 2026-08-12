@@ -24,7 +24,7 @@ export default function LoginPage({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/acerto-logo.svg" alt="Acerto" className="login-logo" />
         <p className="login-eyebrow">Portal de Serviços Corporativos</p>
-        <h1 className="login-title">Entrar no Compras</h1>
+        <h1 className="login-title">Compras</h1>
         <p className="login-subtitle">Acesso restrito a contas corporativas @acerto.com.br.</p>
 
         {errorMessage && <p className="hint-box hint-box-danger login-error">{errorMessage}</p>}

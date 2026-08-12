@@ -39,7 +39,7 @@ const OPTIONS: ServiceOption[] = [
     href: "/chamados/nda",
     eyebrow: "Jurídico",
     title: "Envio de NDA (Termo de Confidencialidade)",
-    description: "Solicite o envio de um termo de confidencialidade a um fornecedor.",
+    description: "NDA, contratos de fornecedores ativos e consultas gerais sobre fornecedores.",
     icon: <Scale size={18} strokeWidth={1.75} />,
   },
 ];
