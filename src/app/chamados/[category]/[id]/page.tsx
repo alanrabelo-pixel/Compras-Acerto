@@ -4,7 +4,7 @@ import { TICKET_CATEGORIES, TICKET_STATUS_LABEL, isTicketCategorySlug } from "@/
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { ChamadoHeader } from "@/components/ChamadoHeader";
 import { ChamadoThread } from "@/components/ChamadoThread";
-import { Badge } from "@/components/ui";
+import { Badge, Breadcrumb } from "@/components/ui";
 import { TICKET_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,9 @@ export default async function ChamadoDetailPage({
     <>
       <ChamadoHeader categoryLabel={config.label} backHref={`/chamados/${params.category}`} backLabel="← voltar aos chamados" />
       <main className="page-narrow" style={{ paddingTop: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Breadcrumb items={[{ label: config.label, href: `/chamados/${params.category}` }, { label: ticket.code }]} />
+
+        <div className="section-gap" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h1 className="page-title">{ticket.code}</h1>
             <p className="page-subtitle">{ticket.requesterName} · {ticket.requesterEmail}</p>

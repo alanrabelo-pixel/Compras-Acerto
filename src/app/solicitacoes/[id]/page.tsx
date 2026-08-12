@@ -10,8 +10,7 @@ import { HistoryTimeline } from "@/components/HistoryTimeline";
 import { StageOverrideControls } from "@/components/StageOverrideControls";
 import { formatDateOnly } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
-import { Breadcrumb, Badge } from "@/components/ui";
-import { AlertTriangle } from "lucide-react";
+import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 
 export const dynamic = "force-dynamic";
@@ -125,13 +124,9 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         </div>
 
         {request.fragmentationFlag && (
-          <div
-            className="section-gap"
-            style={{ display: "flex", gap: 8, background: "var(--warning-bg)", border: "1px solid #fbdba0", borderRadius: 10, padding: 12, fontSize: 12.5, color: "var(--warning)" }}
-          >
-            <AlertTriangle size={15} strokeWidth={1.75} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
-            <span>Sinalizada por risco de fracionamento — a soma das compras deste fornecedor nos últimos 12 meses ultrapassa a alçada individual desta solicitação. Revisão da Controladoria recomendada.</span>
-          </div>
+          <WarningNotice className="section-gap">
+            Sinalizada por risco de fracionamento — a soma das compras deste fornecedor nos últimos 12 meses ultrapassa a alçada individual desta solicitação. Revisão da Controladoria recomendada.
+          </WarningNotice>
         )}
 
         <section className="card section-gap">

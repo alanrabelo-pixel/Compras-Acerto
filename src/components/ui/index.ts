@@ -17,4 +17,5 @@ export { TableWrap, TableHeadRow, TableRow, TableEmpty } from "./Table";
 export { Breadcrumb } from "./Breadcrumb";
 export type { BreadcrumbItem } from "./Breadcrumb";
 export { Modal } from "./Modal";
+export { WarningNotice } from "./WarningNotice";
 export { cx } from "./cx";
