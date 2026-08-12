@@ -65,7 +65,7 @@ export async function middleware(req: NextRequest) {
 }
 
 function signInRedirect(req: NextRequest) {
-  const signInUrl = new URL("/api/auth/signin", req.url);
+  const signInUrl = new URL("/login", req.url);
   signInUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
   return NextResponse.redirect(signInUrl);
 }

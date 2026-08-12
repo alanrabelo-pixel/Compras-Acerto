@@ -16,6 +16,11 @@ import { prisma } from "@/lib/db";
  * com Rafael Martins (SI e Privacidade) antes de ir a produção.
  */
 export const authOptions: NextAuthOptions = {
+  // Tela de login com a marca da Acerto em vez da página genérica que o
+  // NextAuth gera sozinho — ver src/app/login/page.tsx.
+  pages: {
+    signIn: "/login",
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

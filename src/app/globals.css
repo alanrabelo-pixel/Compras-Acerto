@@ -619,6 +619,87 @@ button:focus-visible,
 .hint-box-neutral { background: var(--surface-muted); color: var(--ink-soft); }
 .hint-box-danger { background: var(--danger-bg); color: var(--danger); }
 
+/* Tela de login (src/app/login/page.tsx) — substitui a página genérica que
+   o NextAuth mostra sozinho quando não há pages.signIn configurado. */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 0%, var(--acerto-green-50), var(--bg) 60%);
+}
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 40px 32px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.login-logo {
+  height: 32px;
+  margin-bottom: 24px;
+}
+.login-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  margin: 0;
+}
+.login-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 4px 0 0;
+}
+.login-subtitle {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 8px 0 24px;
+  line-height: 1.5;
+  max-width: 30ch;
+}
+.login-error {
+  width: 100%;
+  margin: 0 0 20px;
+  text-align: left;
+}
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.google-signin-btn:hover {
+  border-color: var(--acerto-green);
+  box-shadow: var(--shadow-sm);
+}
+.login-footer {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+
 /* Painel do Assistente de IA (Claude + Gemini) — ver AiInsightPanel.tsx */
 .ai-panel {
   border: 1px solid var(--acerto-green-100);
