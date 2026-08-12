@@ -127,7 +127,8 @@ type RequestData = {
   requesterId: string;
   buyerId?: string | null;
   approverManager: { name: string; email: string } | null;
-  costCenter: { managers: { id: string; name: string; email: string }[] };
+  costCenter: { name: string; managers: { id: string; name: string; email: string }[] };
+  diretoria: string;
   demandType: string;
   shortDescription: string;
   longDescription: string;
@@ -136,7 +137,12 @@ type RequestData = {
   conflictDeclarations: { id: string; hasConflict: boolean; declaredBy: string; details: string | null; createdAt: Date }[];
   approvals: { id: string; level: number; decision: string; approver: { name: string } }[];
   quotes: Quote[];
-  purchaseOrder: { id: string; needsMeasurement: boolean; pdfUrl?: string | null; paymentCondition?: string } | null;
+  legalReview?: { observations: string | null } | null;
+  purchaseOrder: {
+    id: string; needsMeasurement: boolean; pdfUrl?: string | null; paymentCondition?: string;
+    supplierId?: string | null; supplierLegalName?: string; supplierCnpj?: string;
+    supplier?: { tradeName: string | null } | null; createdAt?: Date;
+  } | null;
   contract: { id: string } | null;
   supplierEvaluation: { id: string } | null;
 };
@@ -1312,29 +1318,72 @@ const DOCUMENT_TYPES = [
   "Outro",
 ];
 
+function toDateInputValue(d: Date | string) {
+  return (typeof d === "string" ? new Date(d) : d).toISOString().slice(0, 10);
+}
+
+function addMonths(dateStr: string, months: number) {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function monthsBetweenDates(startStr: string, endStr: string) {
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  return Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30.44)));
+}
+
 function MapeamentoContratoForm({
   request, onSubmit, loading, error, sessionActor,
 }: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
   const winningQuote = request.quotes.find((q) => q.selected);
+  const po = request.purchaseOrder;
   const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
-  const [supplierId, setSupplierId] = useState("");
-  const [supplierName, setSupplierName] = useState(winningQuote?.supplierName ?? "");
-  const [supplierTradeName, setSupplierTradeName] = useState("");
-  const [supplierCnpj, setSupplierCnpj] = useState("");
+  // Por esta etapa, o Pedido de Compra (etapa anterior) já garante fornecedor
+  // e CNPJ reais — usar esses valores em vez de deixar em branco evita
+  // repetir manualmente o que já foi capturado no processo (pedido do
+  // usuário: poucos campos com preenchimento manual obrigatório).
+  const [supplierId, setSupplierId] = useState(po?.supplierId ?? "");
+  const [supplierName, setSupplierName] = useState(po?.supplierLegalName ?? winningQuote?.supplierName ?? "");
+  const [supplierTradeName, setSupplierTradeName] = useState(po?.supplier?.tradeName ?? "");
+  const [supplierCnpj, setSupplierCnpj] = useState(po?.supplierCnpj ?? "");
   const [documentType, setDocumentType] = useState("");
   const [contractObject, setContractObject] = useState(request.shortDescription ?? "");
-  const [prazo, setPrazo] = useState("");
-  const [paymentCondition, setPaymentCondition] = useState(request.purchaseOrder?.paymentCondition ?? winningQuote?.paymentCondition ?? "");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [renewalDate, setRenewalDate] = useState("");
-  const [terminationClause, setTerminationClause] = useState("");
+  const [paymentCondition, setPaymentCondition] = useState(po?.paymentCondition ?? winningQuote?.paymentCondition ?? "");
+  // Início sugerido = data de emissão do Pedido de Compra (quando existe) —
+  // ponto de partida razoável, sempre editável se a assinatura real do
+  // contrato ocorrer em outra data.
+  const [startDate, setStartDate] = useState(po?.createdAt ? toDateInputValue(po.createdAt) : toDateInputValue(new Date()));
+  // Fim/renovação/prazo não têm nenhuma fonte anterior no processo (nenhuma
+  // etapa captura "duração do contrato") — 12 meses é só um ponto de partida
+  // comum, recalculado automaticamente a partir daqui enquanto a pessoa não
+  // editar esses campos manualmente (ver useEffect abaixo).
+  const [endDate, setEndDate] = useState(toDateInputValue(addMonths(startDate, 12)));
+  const [renewalDate, setRenewalDate] = useState(toDateInputValue(addMonths(startDate, 11)));
+  const [prazo, setPrazo] = useState(`${monthsBetweenDates(startDate, toDateInputValue(addMonths(startDate, 12)))} meses`);
+  const [endDateTouched, setEndDateTouched] = useState(false);
+  const [renewalDateTouched, setRenewalDateTouched] = useState(false);
+  const [prazoTouched, setPrazoTouched] = useState(false);
+  const [terminationClause, setTerminationClause] = useState(request.legalReview?.observations ?? "");
   const [contractManagerId, setContractManagerId] = useState(request.buyerId ?? "");
-  const [area, setArea] = useState("");
+  const [area, setArea] = useState(request.diretoria ?? "");
   const [lgpdClause, setLgpdClause] = useState(false);
   const [nonCompete, setNonCompete] = useState(false);
   const [brandUse, setBrandUse] = useState(false);
   const [corporateChangeClause, setCorporateChangeClause] = useState(false);
+
+  // Início é o único ponto de partida real (vem do Pedido de Compra); fim,
+  // renovação e prazo são derivados dele e só se recalculam enquanto a
+  // pessoa não tiver digitado um valor próprio em cada um.
+  useEffect(() => {
+    if (!endDateTouched) setEndDate(toDateInputValue(addMonths(startDate, 12)));
+    if (!renewalDateTouched) setRenewalDate(toDateInputValue(addMonths(startDate, 11)));
+  }, [startDate, endDateTouched, renewalDateTouched]);
+
+  useEffect(() => {
+    if (!prazoTouched && startDate && endDate) setPrazo(`${monthsBetweenDates(startDate, endDate)} meses`);
+  }, [startDate, endDate, prazoTouched]);
 
   return (
     <Panel title="Mapeamento de Contrato">
@@ -1405,18 +1454,18 @@ function MapeamentoContratoForm({
             </div>
             <div>
               <label className="label" htmlFor="mapeamento-end-date">Fim da Vigência</label>
-              <input id="mapeamento-end-date" className="input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <input id="mapeamento-end-date" className="input" type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setEndDateTouched(true); }} />
             </div>
             <div>
               <label className="label" htmlFor="mapeamento-renewal-date">Renovação prevista</label>
-              <input id="mapeamento-renewal-date" className="input" type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} />
+              <input id="mapeamento-renewal-date" className="input" type="date" value={renewalDate} onChange={(e) => { setRenewalDate(e.target.value); setRenewalDateTouched(true); }} />
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
               <label className="label" htmlFor="mapeamento-prazo">Prazo</label>
-              <input id="mapeamento-prazo" className="input" value={prazo} onChange={(e) => setPrazo(e.target.value)} placeholder="Ex: 12 meses, renovação automática" />
+              <input id="mapeamento-prazo" className="input" value={prazo} onChange={(e) => { setPrazo(e.target.value); setPrazoTouched(true); }} placeholder="Ex: 12 meses, renovação automática" />
             </div>
             <div>
               <label className="label" htmlFor="mapeamento-payment-condition">Condição de Pagamento</label>

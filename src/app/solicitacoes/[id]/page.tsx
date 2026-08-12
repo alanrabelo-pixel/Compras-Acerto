@@ -30,7 +30,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       quotes: { orderBy: { createdAt: "asc" } },
       approvals: { include: { approver: true } },
       legalReview: true,
-      purchaseOrder: { include: { items: { orderBy: { order: "asc" } } } },
+      purchaseOrder: { include: { items: { orderBy: { order: "asc" } }, supplier: true } },
       measurement: true,
       fiscalDocument: true,
       payment: true,
