@@ -43,7 +43,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     code: request.code,
     diretoria: request.diretoria,
     costCenter: request.costCenter.name,
-    budgetLine: request.budgetLine ? { code: request.budgetLine.externalCode, description: request.budgetLine.description } : null,
+    budgetLine: request.budgetLine
+      ? { code: request.budgetLine.externalCode, description: request.budgetLine.description }
+      : request.budgetLineText ? { code: null, description: request.budgetLineText } : null,
     requester: { name: request.requester.name, email: request.requester.email },
     shortDescription: request.shortDescription,
     longDescription: request.longDescription,

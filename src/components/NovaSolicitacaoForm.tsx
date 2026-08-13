@@ -7,11 +7,12 @@ import { Button, Field, AiTag, WarningNotice } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
 
 type CostCenter = { id: string; name: string; managers: { name: string }[] };
-type BudgetLine = { id: string; description: string; externalCode: string };
 
-// Sentinela pro "Orçamento Extra" no <select> de Linha do Orçamento — não é
-// um BudgetLine.id real, então nunca é enviado como budgetLineId (ver submit()).
+// Sentinelas do <select> de Linha do Orçamento — hoje um campo manual (sem
+// integração com a base de orçamento), então só existem 2 escolhas reais:
+// Orçamento Extra (anexo obrigatório) ou Outros (texto livre, ver budgetLineText).
 const EXTRA_BUDGET = "ORCAMENTO_EXTRA";
+const OTHER_BUDGET = "OUTROS";
 
 // Conta dias úteis (seg-sex, sem calendário de feriados) entre hoje e a data
 // informada — usado só pro alerta de prazo apertado, não afeta o valor salvo.
@@ -56,7 +57,6 @@ type SessionRequester = { id: string; name: string; email: string } | null;
 export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionRequester?: SessionRequester }) {
   const router = useRouter();
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
-  const [budgetLines, setBudgetLines] = useState<BudgetLine[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Preenchido quando a solicitação já foi criada mas o anexo obrigatório de
@@ -68,7 +68,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [costCenterId, setCostCenterId] = useState("");
   const [diretoria, setDiretoria] = useState("TECNOLOGIA");
   const [leadershipPreApproved, setLeadershipPreApproved] = useState<"SIM" | "NAO" | "">("");
-  const [budgetLineId, setBudgetLineId] = useState("");
+  const [budgetLineChoice, setBudgetLineChoice] = useState("");
+  const [budgetLineText, setBudgetLineText] = useState("");
   const [demandType, setDemandType] = useState("COMPRA_SERVICO");
   const [shortDescription, setShortDescription] = useState("");
   const [longDescription, setLongDescription] = useState("");
@@ -83,7 +84,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [affectedUsers, setAffectedUsers] = useState("");
 
   const [extraBudgetFileSelected, setExtraBudgetFileSelected] = useState(false);
-  const isExtraBudget = budgetLineId === EXTRA_BUDGET;
+  const isExtraBudget = budgetLineChoice === EXTRA_BUDGET;
+  const isOtherBudget = budgetLineChoice === OTHER_BUDGET;
 
   // Assistente de preenchimento (Fase 1 de IA) — lê a Descrição Detalhada já
   // digitada e sugere demandType/priority + um alerta antecipado de
@@ -123,7 +125,6 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
   useEffect(() => {
     fetch("/api/cost-centers").then((res) => res.json()).then(setCostCenters).catch(() => setCostCenters([]));
-    fetch("/api/budget-lines").then((res) => res.json()).then(setBudgetLines).catch(() => setBudgetLines([]));
   }, []);
 
   async function uploadIfPresent(requestId: string, ref: React.RefObject<HTMLInputElement>, category: string) {
@@ -147,7 +148,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         body: JSON.stringify({
           requesterId, costCenterId, diretoria,
           leadershipPreApproved: leadershipPreApproved === "SIM",
-          budgetLineId: isExtraBudget ? undefined : budgetLineId || undefined,
+          budgetLineText: isExtraBudget ? undefined : (budgetLineText || undefined),
           extraBudget: isExtraBudget,
           demandType, shortDescription, longDescription,
           priority, suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
@@ -188,9 +189,10 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   }
 
   const canSubmit =
-    requesterId && costCenterId && leadershipPreApproved && budgetLineId &&
+    requesterId && costCenterId && leadershipPreApproved && budgetLineChoice &&
     shortDescription && longDescription && suggestedDeadline && quantity > 0 &&
-    (!isExtraBudget || extraBudgetFileSelected);
+    (!isExtraBudget || extraBudgetFileSelected) &&
+    (!isOtherBudget || budgetLineText.trim());
 
   return (
     <main className="page-narrow" style={{ paddingTop: 28 }}>
@@ -273,13 +275,25 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             required
             help="Indicar o nome da linha do orçamento responsável por absorver essa solicitação de compra."
           >
-            <select className="input" value={budgetLineId} onChange={(e) => setBudgetLineId(e.target.value)}>
+            <select className="input" value={budgetLineChoice} onChange={(e) => setBudgetLineChoice(e.target.value)}>
               <option value="">Selecione</option>
               <option value={EXTRA_BUDGET}>Orçamento Extra</option>
-              {budgetLines.map((bl) => (
-                <option key={bl.id} value={bl.id}>{bl.description} ({bl.externalCode})</option>
-              ))}
+              <option value={OTHER_BUDGET}>Outros</option>
             </select>
+            {isOtherBudget && (
+              <>
+                <input
+                  className="input"
+                  style={{ marginTop: 8 }}
+                  placeholder="Digite o nome da linha do orçamento"
+                  value={budgetLineText}
+                  onChange={(e) => setBudgetLineText(e.target.value)}
+                />
+                <WarningNotice className="section-gap">
+                  Confirme se esta é a linha de orçamento correta e se ela possui saldo disponível para esta aquisição.
+                </WarningNotice>
+              </>
+            )}
             {isExtraBudget && (
               <WarningNotice className="section-gap">
                 Orçamento Extra exige anexo obrigatório: o print da validação do orçamento pelo time de FP&A, no campo logo abaixo.

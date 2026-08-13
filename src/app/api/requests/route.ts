@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     diretoria,
     costCenterId,
     leadershipPreApproved,
-    budgetLineId,
+    budgetLineText,
     extraBudget,
     priority,
     demandType,
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
   // estimatedValue NÃO é obrigatório aqui, de propósito — ver
   // gate na Triagem, que exige o valor antes de calcular alçada/lane.
   //
-  // budgetLineId é dispensado quando extraBudget=true ("Orçamento Extra"
-  // selecionado no lugar de uma linha real) — nesse caso o formulário exige o
-  // anexo de Aprovação Extra-orçamentária em vez de uma linha específica.
+  // budgetLineText é dispensado quando extraBudget=true ("Orçamento Extra"
+  // selecionado no lugar de uma linha) — nesse caso o formulário exige o
+  // anexo de Aprovação Extra-orçamentária em vez do texto da linha.
   //
   // approverManagerId NÃO vem mais do formulário (pedido do usuário: o gestor
   // aprovador é o dono do centro de custo escolhido, resolvido abaixo via
@@ -62,8 +62,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Campo obrigatório ausente: ${key}` }, { status: 400 });
     }
   }
-  if (!budgetLineId && !extraBudget) {
-    return NextResponse.json({ error: "Campo obrigatório ausente: budgetLineId (ou selecione Orçamento Extra)" }, { status: 400 });
+  if (!budgetLineText && !extraBudget) {
+    return NextResponse.json({ error: "Campo obrigatório ausente: budgetLineText (ou selecione Orçamento Extra)" }, { status: 400 });
   }
 
   const costCenter = await prisma.costCenter.findUnique({
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       costCenterId,
       leadershipPreApproved,
       approverManagerId,
-      budgetLineId,
+      budgetLineText,
       priority,
       demandType,
       shortDescription,

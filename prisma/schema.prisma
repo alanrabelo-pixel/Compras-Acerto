@@ -294,6 +294,11 @@ model PurchaseRequest {
 
   budgetLineId String?
   budgetLine   BudgetLine? @relation(fields: [budgetLineId], references: [id])
+  // Texto livre pra "Linha do Orçamento" quando não é Orçamento Extra — hoje
+  // esse campo é manual (sem integração com a base de orçamento), então não
+  // referencia BudgetLine; budgetLineId/budgetLine seguem só pra registros
+  // antigos que já tinham uma linha real vinculada.
+  budgetLineText String?
 
   priority         Priority
   demandType       DemandType

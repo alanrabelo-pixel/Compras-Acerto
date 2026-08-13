@@ -43,6 +43,7 @@ export type StageHistoryRequest = {
   managerApprovalJustification: string | null;
   managerApprovalDecidedAt: Date | null;
   budgetLine: { externalCode: string; description: string; monthRef: string } | null;
+  budgetLineText: string | null;
   leadershipPreApproved: boolean;
   suggestedDeadline: Date;
   indicatedSupplierName: string | null;
@@ -114,7 +115,11 @@ export function stageDataFields(
           <Field label="Quantidade">{request.quantity}</Field>
           <Field label="Valor estimado">{request.estimatedValue !== null ? money(request.estimatedValue) : "ainda não informado"}</Field>
           <Field label="Gestor aprovador">{request.approverManager ? `${request.approverManager.name} · ${request.approverManager.email}` : "sem gestor definido para este centro de custo"}</Field>
-          <Field label="Linha do Orçamento">{request.budgetLine ? `${request.budgetLine.description} (${request.budgetLine.externalCode}) · ${request.budgetLine.monthRef}` : "não informada"}</Field>
+          <Field label="Linha do Orçamento">
+            {request.budgetLine
+              ? `${request.budgetLine.description} (${request.budgetLine.externalCode}) · ${request.budgetLine.monthRef}`
+              : request.budgetLineText ?? "não informada"}
+          </Field>
           <Field label="Aprovado pela liderança na abertura">{request.leadershipPreApproved ? "Sim" : "Não"}</Field>
           <Field label="Data limite sugerida">{formatDateOnly(request.suggestedDeadline)}</Field>
           <Full><Field label="Título">{request.shortDescription}</Field></Full>
