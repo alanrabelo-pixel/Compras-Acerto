@@ -13,6 +13,25 @@ type BudgetLine = { id: string; description: string; externalCode: string };
 // um BudgetLine.id real, então nunca é enviado como budgetLineId (ver submit()).
 const EXTRA_BUDGET = "ORCAMENTO_EXTRA";
 
+// Conta dias úteis (seg-sex, sem calendário de feriados) entre hoje e a data
+// informada — usado só pro alerta de prazo apertado, não afeta o valor salvo.
+function countBusinessDaysUntil(dateStr: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  target.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (target <= today) return 0;
+  let count = 0;
+  const cur = new Date(today);
+  while (cur < target) {
+    cur.setDate(cur.getDate() + 1);
+    const day = cur.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
 // Rótulos mantidos estáveis, inclusive o "Dowgrade" (sem "n") — de propósito,
 // para não conflitar com o texto já usado em solicitações antigas.
 const DEMAND_TYPES = [
@@ -237,6 +256,11 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
               <label className="checkbox-row"><input type="radio" name="leadership" checked={leadershipPreApproved === "SIM"} onChange={() => setLeadershipPreApproved("SIM")} /> Sim</label>
               <label className="checkbox-row"><input type="radio" name="leadership" checked={leadershipPreApproved === "NAO"} onChange={() => setLeadershipPreApproved("NAO")} /> Não</label>
             </div>
+            {leadershipPreApproved === "NAO" && (
+              <WarningNotice className="section-gap">
+                Sem alinhamento prévio, a solicitação tem mais chance de ser devolvida na etapa de Aprovação. Se der, alinhe com a liderança antes de enviar.
+              </WarningNotice>
+            )}
           </Field>
 
         </div>
@@ -256,6 +280,11 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
                 <option key={bl.id} value={bl.id}>{bl.description} ({bl.externalCode})</option>
               ))}
             </select>
+            {isExtraBudget && (
+              <WarningNotice className="section-gap">
+                Orçamento Extra exige anexo obrigatório: o print da validação do orçamento pelo time de FP&A, no campo logo abaixo.
+              </WarningNotice>
+            )}
           </Field>
 
           <Field
@@ -362,6 +391,11 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             help="Informar uma data sugerida para conclusão do processo de compra."
           >
             <input className="input" type="date" value={suggestedDeadline} onChange={(e) => setSuggestedDeadline(e.target.value)} />
+            {suggestedDeadline && countBusinessDaysUntil(suggestedDeadline) < 7 && (
+              <WarningNotice className="section-gap">
+                Prazo com menos de 7 dias úteis — cotação, aprovação e emissão do pedido levam tempo, e esse prazo pode não ser cumprido. Avalie se dá para ampliar a data.
+              </WarningNotice>
+            )}
           </Field>
 
           <Field
