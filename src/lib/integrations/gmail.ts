@@ -96,11 +96,11 @@ export const templates = {
     html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que a solicitação de compra <b>${descricao}</b> entrou na fase de "${etapa}".</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   reprovado: (nome: string, descricao: string, motivo: string) => ({
-    subject: `Reprovado a Solicitação de Compra - ${descricao}`,
+    subject: `Reprovada a Solicitação de Compra - ${descricao}`,
     html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que a solicitação de compra <b>${descricao}</b> foi reprovada. Motivo: ${motivo}</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   aprovado: (nome: string, descricao: string) => ({
-    subject: `Aprovado a Solicitação de Compra - ${descricao}`,
+    subject: `Aprovada a Solicitação de Compra - ${descricao}`,
     html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que a solicitação de compra <b>${descricao}</b> foi aprovada no fluxo financeiro e de compras.</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   pedidoCompraGerado: (nome: string, descricao: string, codigoPedido: string, pdfUrl: string) => ({

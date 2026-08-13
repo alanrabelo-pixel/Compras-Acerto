@@ -265,7 +265,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             help={
               isExtraBudget
                 ? "Obrigatório: você selecionou \"Orçamento Extra\" acima. Anexe o e-mail com a validação do diretor imediato e do time de FP&A."
-                : "Anexar o e-mail com a validação do diretor imediato e do time de FP&A. Solicitações abertas sem a previsão de orçamento, deverá obrigatoriamente ser anexado o print com a validação do orçamento Extra pelo time de FP&A."
+                : "Anexar o e-mail com a validação do diretor imediato e do time de FP&A. Solicitações abertas sem a previsão de orçamento deverão ter obrigatoriamente anexado o print com a validação do orçamento Extra pelo time de FP&A."
             }
           >
             <input
