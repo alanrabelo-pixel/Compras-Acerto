@@ -384,6 +384,21 @@ button:focus-visible,
   color: var(--ink-soft);
 }
 
+.topbar-alai-full {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+.topbar-alai-icon {
+  height: 20px;
+  width: auto;
+  display: none;
+}
+@media (max-width: 520px) {
+  .topbar-alai-full { display: none; }
+  .topbar-alai-icon { display: block; }
+}
+
 /* ---------------------------------------------------------------------- */
 /* Sidebar (Compras — ver AppShell.tsx)                                    */
 /*                                                                          */
@@ -428,6 +443,20 @@ button:focus-visible,
 
 .sidebar-logo {
   height: 18px;
+  width: auto;
+  display: block;
+}
+
+/* Sidebar é sempre estreita (240px) — cabe só o ícone da ALAi, sem o
+   wordmark completo, ao lado da logo da Acerto. */
+.sidebar-alai-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 8px;
+}
+.sidebar-alai-icon {
+  height: 22px;
   width: auto;
   display: block;
 }
@@ -746,8 +775,21 @@ button:focus-visible,
   align-items: center;
 }
 .login-logo {
-  height: 32px;
-  margin-bottom: 24px;
+  height: 18px;
+  margin-bottom: 20px;
+  opacity: 0.7;
+}
+.login-alai-logo {
+  height: 44px;
+  margin-bottom: 14px;
+}
+.login-tagline {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acerto-green-dark);
+  margin: 0;
 }
 .login-eyebrow {
   font-size: 11px;
@@ -1346,11 +1388,22 @@ a.table-row:hover {
   height: 26px;
   background: var(--border);
 }
-.exec-topbar-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 0;
+/* Marca ALAi ao lado da logo da Acerto — mesmo padrão de "logo cheia acima
+   de X px / só o ícone abaixo" reaproveitado no topbar de Chamados e na
+   sidebar (ver .topbar-alai-* e .sidebar-alai-icon mais abaixo). */
+.exec-topbar-alai-full {
+  height: 26px;
+  width: auto;
+  display: block;
+}
+.exec-topbar-alai-icon {
+  height: 26px;
+  width: auto;
+  display: none;
+}
+@media (max-width: 520px) {
+  .exec-topbar-alai-full { display: none; }
+  .exec-topbar-alai-icon { display: block; }
 }
 .exec-topbar-meta {
   font-size: 12px;

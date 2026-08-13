@@ -1,0 +1,11 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#33E37A"/>
+      <stop offset="100%" stop-color="#17B84F"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="120" height="120" rx="26" fill="#14181C"/>
+  <path d="M24,64 L48,90 L98,30" fill="none" stroke="#25D366" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path transform="translate(102,18) scale(0.95)" d="M0,-15 C2,-4 4,-2 15,0 C4,2 2,4 0,15 C-2,4 -4,2 -15,0 C-4,-2 -2,-4 0,-15 Z" fill="url(#sparkGrad)"/>
+</svg>

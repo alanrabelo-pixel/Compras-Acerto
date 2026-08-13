@@ -75,7 +75,10 @@ export default async function HomePage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="exec-topbar-logo" />
           <span className="exec-topbar-divider" aria-hidden />
-          <h1 className="exec-topbar-title">Compras | F&amp;NC</h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/alai-logo.svg" alt="ALAi" className="exec-topbar-alai-full" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/alai-mark.svg" alt="ALAi" className="exec-topbar-alai-icon" />
         </div>
 
         <div className="exec-topbar-search">

@@ -65,6 +65,9 @@ export async function AppShell({ active, children }: { active?: string; children
         <Link href="/" className="sidebar-brand" title="Voltar ao menu de apps da Acerto">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="sidebar-logo" />
+          <span className="sidebar-alai-divider" aria-hidden />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/alai-mark.svg" alt="ALAi" className="sidebar-alai-icon" />
         </Link>
 
         <CommandPalette />
