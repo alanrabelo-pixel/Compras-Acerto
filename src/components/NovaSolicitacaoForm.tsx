@@ -13,8 +13,8 @@ type BudgetLine = { id: string; description: string; externalCode: string };
 // um BudgetLine.id real, então nunca é enviado como budgetLineId (ver submit()).
 const EXTRA_BUDGET = "ORCAMENTO_EXTRA";
 
-// Rótulos idênticos ao formulário Pipefy em produção (https://app.pipefy.com/public/form/a5QZ3k8p),
-// incluindo o "Dowgrade" (sem "n") — mantido de propósito para bater com o texto real.
+// Rótulos mantidos estáveis, inclusive o "Dowgrade" (sem "n") — de propósito,
+// para não conflitar com o texto já usado em solicitações antigas.
 const DEMAND_TYPES = [
   { value: "COMPRA_PRODUTO", label: "Compra de Produtos" },
   { value: "COMPRA_SERVICO", label: "Compra de Serviço" },
@@ -182,8 +182,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         <img src="/brand/alai-logo.svg" alt="ALAi" className="form-brand-alai" />
       </div>
       <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
-      <h1 className="page-title" style={{ marginTop: 12 }}>Nova Solicitação de Compra</h1>
-      <p className="page-subtitle">Os campos seguem a mesma ordem e os mesmos textos de ajuda do formulário Pipefy, para quem já está acostumado.</p>
+      <h1 className="page-title" style={{ marginTop: 12 }}>Solicitação de Compra</h1>
 
       <div className="card section-gap" style={{ display: "grid", gap: 18 }}>
         <div className="form-section">

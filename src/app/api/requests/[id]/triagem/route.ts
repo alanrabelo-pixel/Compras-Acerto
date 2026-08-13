@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     supplierRiskTier,
     handlesPersonalData,
     priorRequestsValueLast12Months, // calculado no client ou em uma query auxiliar antes de chamar esta rota
-    estimatedValue, // preenchido pelo comprador quando a solicitação chegou sem valor estimado (campo opcional no Pipefy)
+    estimatedValue, // preenchido pelo comprador quando a solicitação chegou sem valor estimado (campo opcional)
   } = body;
 
   const request = await prisma.purchaseRequest.findUnique({
@@ -82,8 +82,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ ...updated, _meta: { skippedToJuridico: true } });
   }
 
-  // Gate: Valor Estimado é opcional na Solicitação (paridade com o Pipefy),
-  // mas o motor de alçadas (determineLane, checkFragmentationRisk,
+  // Gate: Valor Estimado é opcional na Solicitação, mas o motor de alçadas (determineLane, checkFragmentationRisk,
   // approvalLevel, budgetExceptionLevel) exige um número — a Triagem é onde
   // isso é resolvido, já que o comprador tem contexto para estimar o valor.
   let resolvedEstimatedValue = request.estimatedValue !== null ? Number(request.estimatedValue) : null;

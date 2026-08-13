@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(requests);
 }
 
-// POST /api/requests — cria uma nova Solicitação de Compra. Campos e ordem
-// espelham o formulário Pipefy em produção (ver Nova Solicitação na UI).
+// POST /api/requests — cria uma nova Solicitação de Compra (ver Nova
+// Solicitação na UI).
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
@@ -41,9 +41,9 @@ export async function POST(req: NextRequest) {
     affectedUsers,
   } = body;
 
-  // Validação mínima dos campos obrigatórios (marcados com * no formulário Pipefy).
-  // estimatedValue NÃO é obrigatório aqui (paridade consciente com o Pipefy — ver
-  // gate na Triagem, que exige o valor antes de calcular alçada/lane).
+  // Validação mínima dos campos obrigatórios (marcados com * no formulário).
+  // estimatedValue NÃO é obrigatório aqui, de propósito — ver
+  // gate na Triagem, que exige o valor antes de calcular alçada/lane.
   //
   // budgetLineId é dispensado quando extraBudget=true ("Orçamento Extra"
   // selecionado no lugar de uma linha real) — nesse caso o formulário exige o
