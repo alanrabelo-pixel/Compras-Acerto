@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
-import { Button, Field, AiTag } from "@/components/ui";
+import { Button, Field, AiTag, WarningNotice } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
 
 type CostCenter = { id: string; name: string; managers: { name: string }[] };
@@ -349,6 +349,11 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
               ))}
             </select>
             {aiSuggestedFields.has("priority") && <div style={{ marginTop: 4 }}><AiTag /></div>}
+            {(priority === "ALTA" || priority === "CRITICA") && (
+              <WarningNotice className="section-gap">
+                Prioridades altas têm custo — geram fila fora de ordem e podem pressionar prazos de outras solicitações. Confirma que essa é mesmo uma urgência real?
+              </WarningNotice>
+            )}
           </Field>
 
           <Field
