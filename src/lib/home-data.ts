@@ -1,7 +1,7 @@
 import type { Stage } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
-import { TICKET_STATUS_LABEL, CATEGORY_ENUM_TO_SLUG } from "@/lib/tickets";
+import { TICKET_STATUS_LABEL, CATEGORY_ENUM_TO_SLUG, TICKET_CATEGORIES, type TicketCategorySlug } from "@/lib/tickets";
 import { loadPendingRequestsForUser } from "@/lib/pendencias";
 
 const TERMINAL_STAGES: Stage[] = ["CONCLUIDO", "CANCELADO"];
@@ -17,9 +17,12 @@ export type HomeActivityItem = {
   updatedAt: Date;
 };
 
+export type TicketCategoryCount = { slug: TicketCategorySlug; label: string; count: number };
+
 export type HomeStats = {
   openRequests: number;
   openTickets: number;
+  ticketsByCategory: TicketCategoryCount[];
   expiringContracts: number;
 };
 
@@ -53,19 +56,19 @@ async function loadStats(where: { requesterId?: string; requesterEmail?: string 
   const expiringLimit = new Date();
   expiringLimit.setDate(expiringLimit.getDate() + EXPIRING_WINDOW_DAYS);
 
-  const [openRequests, openTickets, expiringContracts] = await Promise.all([
+  const ticketWhere = {
+    status: { not: "CONCLUIDO" as const },
+    ...(where.requesterEmail ? { requesterEmail: where.requesterEmail } : {}),
+  };
+
+  const [openRequests, ticketCounts, expiringContracts] = await Promise.all([
     prisma.purchaseRequest.count({
       where: {
         currentStage: { notIn: TERMINAL_STAGES },
         ...(where.requesterId ? { requesterId: where.requesterId } : {}),
       },
     }),
-    prisma.simpleTicket.count({
-      where: {
-        status: { not: "CONCLUIDO" },
-        ...(where.requesterEmail ? { requesterEmail: where.requesterEmail } : {}),
-      },
-    }),
+    prisma.simpleTicket.groupBy({ by: ["category"], where: ticketWhere, _count: { _all: true } }),
     // Contratos vencendo é sempre um recorte organizacional (não "meu
     // contrato" — o gestor de contrato é atribuído, não necessariamente quem
     // abriu a solicitação de origem), então não é filtrado por usuário mesmo
@@ -73,7 +76,18 @@ async function loadStats(where: { requesterId?: string; requesterEmail?: string 
     prisma.contract.count({ where: { status: "ATIVO", renewalDate: { lte: expiringLimit } } }),
   ]);
 
-  return { openRequests, openTickets, expiringContracts };
+  // Sempre as 3 categorias, mesmo com 0 chamados — pra "Chamados abertos"
+  // mostrar a distribuição completa ao passar o mouse, não só as que tiverem
+  // algo aberto no momento (ver hover breakdown em page.tsx).
+  const countByCategory = new Map(ticketCounts.map((t) => [t.category, t._count._all]));
+  const ticketsByCategory: TicketCategoryCount[] = (Object.keys(TICKET_CATEGORIES) as TicketCategorySlug[]).map((slug) => ({
+    slug,
+    label: TICKET_CATEGORIES[slug].label,
+    count: countByCategory.get(TICKET_CATEGORIES[slug].enumValue) ?? 0,
+  }));
+  const openTickets = ticketsByCategory.reduce((sum, c) => sum + c.count, 0);
+
+  return { openRequests, openTickets, ticketsByCategory, expiringContracts };
 }
 
 /**

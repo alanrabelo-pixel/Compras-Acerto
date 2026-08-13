@@ -146,14 +146,24 @@ export default async function HomePage() {
       <div className="exec-stat-strip" role="group" aria-label="Resumo geral">
         <a className="exec-stat exec-stat-link" href="/solicitacoes?view=lista">
           <span className="exec-stat-value">{homeData.stats.openRequests}</span>
-          <span className="exec-stat-label">Solicitações em aberto</span>
+          <span className="exec-stat-label">Solicitações de Compra em aberto</span>
         </a>
-        {/* Sem link: "abertos" soma todas as categorias de chamados, e hoje não existe uma lista
-            unificada de chamados (só um board por categoria em /chamados/[category]) — linkar para
-            uma única categoria representaria errado o número agregado mostrado aqui. */}
-        <div className="exec-stat">
+        {/* Sem link direto: "abertos" soma as 3 categorias de chamados, e não existe
+            uma lista unificada pra abrir (só um board por categoria em
+            /chamados/[category]). Em vez de linkar pra uma categoria só (errado, já
+            que o número é o agregado), passar o mouse revela a distribuição real por
+            canal, cada um levando ao board certo. */}
+        <div className="exec-stat exec-stat-hoverable" tabIndex={0}>
           <span className="exec-stat-value">{homeData.stats.openTickets}</span>
           <span className="exec-stat-label">Chamados abertos</span>
+          <div className="exec-stat-breakdown" role="menu">
+            {homeData.stats.ticketsByCategory.map((c) => (
+              <a key={c.slug} href={`/chamados/${c.slug}`} className="exec-stat-breakdown-item" role="menuitem">
+                <span>{c.label}</span>
+                <span className="exec-stat-breakdown-count">{c.count}</span>
+              </a>
+            ))}
+          </div>
         </div>
         <a className="exec-stat exec-stat-link" href="/contratos">
           <span className="exec-stat-value">{homeData.stats.expiringContracts}</span>

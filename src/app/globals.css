@@ -1821,9 +1821,13 @@ a.table-row:hover {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   margin-bottom: 40px;
-  overflow: hidden;
+  /* visible (não hidden): "Chamados abertos" abre um dropdown de hover que
+     precisa escapar os limites do card — os cantos arredondados são
+     garantidos abaixo, no primeiro/último item, em vez de via clip. */
+  overflow: visible;
 }
 .exec-stat {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1833,6 +1837,8 @@ a.table-row:hover {
   color: inherit;
   transition: background-color 0.15s;
 }
+.exec-stat:first-child { border-top-left-radius: var(--radius-md); border-bottom-left-radius: var(--radius-md); }
+.exec-stat:last-child { border-top-right-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
 .exec-stat + .exec-stat {
   border-left: 1px solid var(--border);
 }
@@ -1850,6 +1856,55 @@ a.table-row:hover {
   font-size: 11.5px;
   color: var(--ink-muted);
   font-weight: 500;
+}
+
+/* "Chamados abertos" — sem link direto (o número é o agregado de 3
+   categorias), mas passar o mouse revela a distribuição real, cada linha
+   levando ao board certo. */
+.exec-stat-hoverable { cursor: default; }
+.exec-stat-breakdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 12px;
+  min-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 6px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+  z-index: 20;
+}
+.exec-stat-hoverable:hover .exec-stat-breakdown,
+.exec-stat-hoverable:focus-within .exec-stat-breakdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.exec-stat-breakdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+}
+.exec-stat-breakdown-item:hover,
+.exec-stat-breakdown-item:focus-visible {
+  background: var(--surface-muted);
+  color: var(--acerto-green-dark);
+}
+.exec-stat-breakdown-count {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
 }
 
 .exec-section {
