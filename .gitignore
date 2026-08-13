@@ -5,3 +5,8 @@ node_modules/
 /uploads/
 /public/pedidos-compra/
 *.tsbuildinfo
+
+# Artefatos do Google Drive para Desktop (backup da pasta local do projeto,
+# ver conversa sobre sincronização) — não são arquivos do projeto.
+desktop.ini
+.tmp.driveupload/
