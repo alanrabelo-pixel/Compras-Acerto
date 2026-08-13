@@ -796,6 +796,21 @@ button:focus-visible,
 .form-brand-alai {
   height: 34px;
 }
+
+/* Ícone da ALAi (check + centelha) usado como "assinatura" nos pontos de
+   ajuda/sugestão da IA no formulário — no lugar de um ícone genérico de
+   sparkle ou de um personagem/mascote à parte (ver NovaSolicitacaoForm.tsx). */
+.ai-assist-mark {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.ai-assist-mark-lg {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
 .login-alai-logo {
   height: 44px;
   margin-bottom: 14px;

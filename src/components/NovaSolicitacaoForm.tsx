@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
 import { Button, Field, AiTag } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
-import { Sparkles } from "lucide-react";
 
 type CostCenter = { id: string; name: string; managers: { name: string }[] };
 type BudgetLine = { id: string; description: string; externalCode: string };
@@ -310,7 +309,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
                 disabled={assisting || !requesterId || longDescription.trim().length < 10}
                 onClick={requestAssist}
               >
-                <Sparkles size={12} strokeWidth={1.75} aria-hidden />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/brand/alai-mark.svg" alt="" aria-hidden className="ai-assist-mark" />
                 {assisting ? "Analisando..." : "Sugerir com IA"}
               </Button>
               {!requesterId && <span className="help" style={{ margin: 0 }}>Selecione o solicitante acima para usar o assistente.</span>}
@@ -320,6 +320,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             {assistNote && (
               <div className="hint-box hint-box-neutral" style={{ marginTop: 8, display: "grid", gap: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/brand/alai-mark.svg" alt="" aria-hidden className="ai-assist-mark ai-assist-mark-lg" />
                   <AiTag />
                 </div>
                 <p style={{ margin: 0 }}>{assistNote.note}</p>
