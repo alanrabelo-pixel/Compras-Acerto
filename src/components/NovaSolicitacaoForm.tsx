@@ -176,6 +176,12 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
   return (
     <main className="page-narrow" style={{ paddingTop: 28 }}>
+      <div className="form-brand-block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/acerto-logo.svg" alt="Acerto" className="form-brand-acerto" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/alai-logo.svg" alt="ALAi" className="form-brand-alai" />
+      </div>
       <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
       <h1 className="page-title" style={{ marginTop: 12 }}>Nova Solicitação de Compra</h1>
       <p className="page-subtitle">Os campos seguem a mesma ordem e os mesmos textos de ajuda do formulário Pipefy, para quem já está acostumado.</p>
