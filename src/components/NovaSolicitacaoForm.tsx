@@ -26,9 +26,9 @@ const DEMAND_TYPES = [
 ];
 
 const PRIORITIES = [
-  { value: "BAIXA", label: "Baixa" },
-  { value: "MEDIA", label: "Média" },
-  { value: "ALTA", label: "Alta" },
+  { value: "BAIXA", label: "Baixa (Rotineira)" },
+  { value: "MEDIA", label: "Média (Importante)" },
+  { value: "ALTA", label: "Alta (Urgente)" },
   { value: "CRITICA", label: "Crítica (Urgência Máxima)" },
 ];
 
