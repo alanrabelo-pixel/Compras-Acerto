@@ -2237,7 +2237,14 @@ a.table-row:hover {
   background: var(--acerto-green-dark);
 }
 .exec-brand-footer-inner {
-  max-width: 1180px;
+  /* Pedido do usuário: bloco do rodapé centralizado na página (com respiro
+     visível dos dois lados em telas largas) — mais estreito que o container
+     de 1180px do resto da página, só o suficiente pra caber a fileira de
+     links numa linha só. Links Úteis e a logo da Acerto ficam alinhados à
+     esquerda DENTRO desse bloco centralizado (ver justify-content: flex-start
+     em .exec-brand-footer-links .exec-footer e .exec-brand-footer-company),
+     então os dois acabam em paralelo um com o outro. */
+  max-width: 920px;
   margin: 0 auto;
   padding: 32px 24px 28px;
   display: flex;
