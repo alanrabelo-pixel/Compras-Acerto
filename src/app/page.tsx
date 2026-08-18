@@ -212,7 +212,7 @@ export default async function HomePage() {
     <footer className="exec-brand-footer">
       <div className="exec-brand-footer-inner">
         <div className="exec-brand-footer-links">
-          <p className="exec-brand-footer-links-title">Links úteis</p>
+          <p className="exec-brand-footer-links-title">Links úteis:</p>
           <div className="exec-footer">
             <a href="/api/manual/pdf" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -2259,15 +2259,15 @@ a.table-row:hover {
   color: rgba(255, 255, 255, 0.75);
   margin: 0 0 14px;
 }
-/* Pedido do usuário: título "Links Úteis" alinhado à esquerda (ver
-   .exec-brand-footer-links-title acima), mas os cards de link centralizados
-   como grupo — os dois não seguem o mesmo alinhamento. Quebra em mais de uma
-   linha quando não cabem; tentativa anterior de forçar tudo numa linha só
-   com scroll horizontal (overflow-x: auto) foi revertida por não ter
+/* Pedido do usuário: título "Links Úteis" e os cards de link alinhados no
+   mesmo início à esquerda (uma tentativa anterior centralizou os cards como
+   grupo, divergindo do título — revertida). Quebra em mais de uma linha
+   quando não cabem; tentativa anterior de forçar tudo numa linha só com
+   scroll horizontal (overflow-x: auto) também foi revertida por não ter
    agradado, e os cards foram encolhidos (ver .exec-footer-link) até caberem
    numa linha só na largura padrão da tela. */
 .exec-brand-footer-links .exec-footer {
-  justify-content: center;
+  justify-content: flex-start;
   margin: 0;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
@@ -2287,12 +2287,14 @@ a.table-row:hover {
 }
 .exec-brand-footer-company {
   display: flex;
-  /* Pedido do usuário: texto em uma linha só, logo centralizada com ele —
-     antes o texto quebrava em 2 linhas (por causa do max-width no <p>), o
-     que forçava a logo a ficar no topo (flex-start) para não boiar entre
-     as duas linhas; sem quebra, center alinha logo e texto perfeitamente. */
+  /* Pedido do usuário: texto em uma linha só, logo alinhada com ele — antes
+     o texto quebrava em 2 linhas (por causa do max-width no <p>), o que
+     forçava a logo a ficar no topo (flex-start vertical) para não boiar
+     entre as duas linhas; sem quebra, center no eixo vertical (align-items)
+     alinha logo e texto perfeitamente. Horizontalmente (justify-content)
+     fica à esquerda, no mesmo início de "Links Úteis" e dos cards acima. */
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 14px;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -2300,7 +2302,7 @@ a.table-row:hover {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.18);
-  text-align: center;
+  text-align: left;
 }
 .exec-brand-footer-logo {
   height: 20px;
