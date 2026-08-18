@@ -217,7 +217,7 @@ export default async function HomePage() {
             <a href="/api/manual/pdf" target="_blank" rel="noopener noreferrer" className="exec-footer-link">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/documento-generico.png" alt="" />
-              Baixar manual do processo — alAi (PDF)
+              Baixar manual do processo alAi (PDF)
             </a>
             <a
               href="https://acerto.atlassian.net/wiki/spaces/~712020937f655593794b57918a9de7aea12eac/pages/1562738748/POL+TICA+DE+COMPRAS+V.04.25"
