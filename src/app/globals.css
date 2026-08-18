@@ -447,7 +447,7 @@ button:focus-visible,
   display: block;
 }
 
-/* Sidebar é sempre estreita (240px) — cabe só o ícone da ALAi, sem o
+/* Sidebar é sempre estreita (240px) — cabe só o ícone da alAi, sem o
    wordmark completo, ao lado da logo da Acerto. */
 .sidebar-alai-divider {
   width: 1px;
@@ -780,7 +780,7 @@ button:focus-visible,
   opacity: 0.7;
 }
 
-/* Mesmo padrão logo Acerto (pequena) + ALAi da tela de login, reaproveitado
+/* Mesmo padrão logo Acerto (pequena) + alAi da tela de login, reaproveitado
    no topo do formulário de Nova Solicitação (ver NovaSolicitacaoForm.tsx). */
 .form-brand-block {
   display: flex;
@@ -797,7 +797,7 @@ button:focus-visible,
   height: 34px;
 }
 
-/* Ícone da ALAi (check + centelha) usado como "assinatura" nos pontos de
+/* Ícone da alAi (check + centelha) usado como "assinatura" nos pontos de
    ajuda/sugestão da IA no formulário — no lugar de um ícone genérico de
    sparkle ou de um personagem/mascote à parte (ver NovaSolicitacaoForm.tsx). */
 .ai-assist-mark {
@@ -1420,7 +1420,7 @@ a.table-row:hover {
   height: 26px;
   background: var(--border);
 }
-/* Marca ALAi ao lado da logo da Acerto — mesmo padrão de "logo cheia acima
+/* Marca alAi ao lado da logo da Acerto — mesmo padrão de "logo cheia acima
    de X px / só o ícone abaixo" reaproveitado no topbar de Chamados e na
    sidebar (ver .topbar-alai-* e .sidebar-alai-icon mais abaixo). */
 .exec-topbar-alai-full {

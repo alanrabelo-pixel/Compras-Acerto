@@ -200,7 +200,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/acerto-logo.svg" alt="Acerto" className="form-brand-acerto" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/alai-logo.svg" alt="ALAi" className="form-brand-alai" />
+        <img src="/brand/alai-logo.svg" alt="alAi" className="form-brand-alai" />
       </div>
       <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
       <h1 className="page-title" style={{ marginTop: 12 }}>Solicitação de Compra</h1>

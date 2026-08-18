@@ -67,7 +67,7 @@ export async function AppShell({ active, children }: { active?: string; children
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="sidebar-logo" />
           <span className="sidebar-alai-divider" aria-hidden />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/alai-mark.svg" alt="ALAi" className="sidebar-alai-icon" />
+          <img src="/brand/alai-mark.svg" alt="alAi" className="sidebar-alai-icon" />
         </Link>
 
         <CommandPalette />

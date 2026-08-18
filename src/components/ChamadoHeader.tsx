@@ -7,9 +7,9 @@ export function ChamadoHeader({ categoryLabel, backHref, backLabel }: { category
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="topbar-logo" />
           <span className="topbar-divider" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/alai-logo.svg" alt="ALAi" className="topbar-alai-full" />
+          <img src="/brand/alai-logo.svg" alt="alAi" className="topbar-alai-full" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/alai-mark.svg" alt="ALAi" className="topbar-alai-icon" />
+          <img src="/brand/alai-mark.svg" alt="alAi" className="topbar-alai-icon" />
           <span className="topbar-divider" />
           <span className="topbar-title">{categoryLabel}</span>
         </a>

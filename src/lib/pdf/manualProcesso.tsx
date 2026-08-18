@@ -58,7 +58,8 @@ const styles = StyleSheet.create({
   },
   coverWordmark: { width: 150, height: 38, objectFit: "contain", marginTop: 90, marginLeft: 48 },
   coverTitle: { color: WHITE, fontSize: 30, fontWeight: 700, marginTop: 120, marginLeft: 48, marginRight: 48, lineHeight: 1.25 },
-  coverSubtitle: { color: WHITE, fontSize: 13, fontWeight: 600, marginTop: 14, marginLeft: 48, opacity: 0.92 },
+  coverSystem: { color: WHITE, fontSize: 15, fontWeight: 700, marginTop: 16, marginLeft: 48 },
+  coverSubtitle: { color: WHITE, fontSize: 13, fontWeight: 600, marginTop: 8, marginLeft: 48, marginRight: 48, opacity: 0.92, lineHeight: 1.35 },
   coverTag: {
     color: GREEN_DARK, backgroundColor: WHITE, fontSize: 9, fontWeight: 700, alignSelf: "flex-start",
     marginLeft: 48, marginTop: 22, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 10,
@@ -201,7 +202,8 @@ export function ManualProcessoDocument() {
         {ASSETS.wordmarkWhite && <Image style={styles.coverWordmark} src={{ data: ASSETS.wordmarkWhite, format: "png" }} />}
         <Text style={styles.coverTag}>ORIENTAÇÃO INTERNA</Text>
         <Text style={styles.coverTitle}>Manual do Processo{"\n"}de Solicitações Internas</Text>
-        <Text style={styles.coverSubtitle}>Solicitação de Compras · Viagens Acerto · Facilities</Text>
+        <Text style={styles.coverSystem}>Sistema alAi</Text>
+        <Text style={styles.coverSubtitle}>Solicitação de Compras · Viagens Acerto · Facilities · NDA e Contratos de Fornecedores</Text>
         <Text style={styles.coverDate}>Atualizado em {TODAY}</Text>
         {ASSETS.sorrisoBranco && <Image style={styles.coverSorriso} src={{ data: ASSETS.sorrisoBranco, format: "png" }} />}
       </Page>
@@ -224,7 +226,8 @@ export function ManualProcessoDocument() {
             "6. Quem pode acessar o quê",
             "7. Viagens Acerto",
             "8. Facilities",
-            "9. Dúvidas e contato",
+            "9. NDA e Contratos de Fornecedores",
+            "10. Dúvidas e contato",
           ].map((line) => (
             <View key={line} style={styles.toc}>
               <Text style={styles.tocText}>{line}</Text>
@@ -235,19 +238,20 @@ export function ManualProcessoDocument() {
         {/* 1. Introdução */}
         <H1 bookmark="1. Introdução">1. Introdução</H1>
         <P>
-          Este manual explica, de ponta a ponta, como funcionam as três formas de abrir uma solicitação
-          para as áreas internas da Acerto: Solicitação de Compras, Viagens Acerto e Facilities. A ideia é
+          Este manual explica, de ponta a ponta, como funcionam as quatro formas de abrir uma solicitação
+          no <Text style={{ fontWeight: 700, color: BLACK }}>alAi</Text>, o sistema que reúne Solicitação de
+          Compras, Viagens Acerto, Facilities e NDA e Contratos de Fornecedores num só lugar. A ideia é
           que qualquer pessoa da empresa consiga entender o caminho que a própria solicitação percorre —
           da abertura até a conclusão — sem precisar perguntar para ninguém.
         </P>
         <P>
-          Ao acessar o sistema, você encontra um cardápio com três opções. Cada uma delas tem seu próprio
+          Ao acessar o sistema, você encontra um cardápio com quatro opções. Cada uma delas tem seu próprio
           fluxo, detalhado nas seções a seguir.
         </P>
         <Card title="Solicitação de Compras">
           Para comprar produtos, contratar serviços, homologar ferramentas novas, renovar ou cancelar
-          contratos. É o fluxo mais completo, com etapas de triagem, orçamento, cotação, aprovação e
-          pagamento.
+          contratos. É o fluxo mais completo, com etapas de aprovação do gestor, triagem, orçamento,
+          cotação, aprovação e pagamento.
         </Card>
         <Card title="Viagens Acerto">
           Para pedidos relacionados a viagens a trabalho. Um fluxo simples: você descreve o que precisa e
@@ -256,6 +260,10 @@ export function ManualProcessoDocument() {
         <Card title="Facilities">
           Para pedidos de infraestrutura e manutenção do dia a dia do escritório. Mesmo formato simples de
           chamado do Viagens Acerto.
+        </Card>
+        <Card title="NDA e Contratos de Fornecedores">
+          Para pedidos de NDA, dúvidas sobre contratos ativos e consultas sobre fornecedores. Mesmo formato
+          simples de chamado do Viagens Acerto e Facilities.
         </Card>
 
         {/* 2. Compras — visão geral */}
@@ -267,20 +275,21 @@ export function ManualProcessoDocument() {
           acontece:
         </P>
         <Stage n={1} label="Solicitação de Compra" desc="Quem precisa comprar algo abre a solicitação com os dados básicos: o que é, para qual centro de custo, valor estimado e prioridade." />
-        <Stage n={2} label="Homologação e Triagem" desc="O time de Compras | F&NC confere se as informações estão completas antes de seguir." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={3} label="Validação Orçamentária" desc="Verificamos se existe orçamento disponível na linha informada. Se não houver, a solicitação entra em um fluxo de exceção orçamentária até uma decisão." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={4} label="Due Diligence (Privacidade)" desc="Só acontece para contratação de ferramenta nova ou que lide com dados pessoais: avaliação de privacidade e segurança antes de cotar." sla="2 dias úteis" />
-        <Stage n={5} label="Cotação" desc="O time de Compras busca propostas com fornecedores. O número mínimo de cotações depende do valor da compra (veja seção 4)." sla="5 dias úteis (Corporativo) · 7 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={6} label="Mapa de Cotação" desc="As propostas recebidas são organizadas lado a lado para comparação e escolha do fornecedor." />
-        <Stage n={7} label="Aprovação" desc="A solicitação segue para quem tem alçada de aprovar aquele valor (veja a tabela de alçadas na seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={8} label="Jurídico" desc="Quando a compra exige contrato formal, o Jurídico revisa e valida as cláusulas antes de seguir." sla="20 dias úteis (Corporativo) · 30 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={9} label="Pedido de Compra" desc="Emitimos o Pedido de Compra oficial em PDF, com dados do fornecedor, itens, valores e condições de pagamento." />
-        <Stage n={10} label="Aguardando Entrega/Conclusão" desc="Aguardamos a entrega do produto ou a execução do serviço contratado." />
-        <Stage n={11} label="Medição e Aprovação Financeira" desc="Para compras que exigem medição (ex.: serviços recorrentes, obras), validamos o quanto foi efetivamente entregue antes do pagamento." />
-        <Stage n={12} label="Validação Fiscal" desc="Conferência fiscal da nota/documento antes de liberar o pagamento." />
-        <Stage n={13} label="Tesouraria (Pagamento)" desc="Efetivação do pagamento ao fornecedor." />
-        <Stage n={14} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." />
-        <Stage n={15} label="Concluído" desc="A solicitação é encerrada." />
+        <Stage n={2} label="Aprovação do Gestor" desc="O gestor do centro de custo escolhido decide se aprova antes de qualquer ação do time de Compras — ver alerta de alinhamento prévio na seção 3." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={3} label="Homologação e Triagem" desc="O time de Compras | F&NC confere se as informações estão completas antes de seguir." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={4} label="Validação Orçamentária" desc="Verificamos se existe orçamento disponível na linha informada. Se não houver, a solicitação entra em um fluxo de exceção orçamentária até uma decisão (veja seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={5} label="Due Diligence (Privacidade)" desc="Só acontece para contratação de ferramenta nova ou que lide com dados pessoais: avaliação de privacidade e segurança antes de cotar." sla="2 dias úteis" />
+        <Stage n={6} label="Cotação" desc="O time de Compras busca propostas com fornecedores. O número mínimo de cotações depende do valor da compra (veja seção 4)." sla="5 dias úteis (Corporativo) · 7 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={7} label="Mapa de Cotação" desc="As propostas recebidas são organizadas lado a lado para comparação e escolha do fornecedor." />
+        <Stage n={8} label="Aprovação" desc="A solicitação segue para quem tem alçada de aprovar aquele valor (veja a tabela de alçadas na seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={9} label="Jurídico" desc="Quando a compra exige contrato formal, o Jurídico revisa e valida as cláusulas antes de seguir." sla="20 dias úteis (Corporativo) · 30 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={10} label="Pedido de Compra" desc="Emitimos o Pedido de Compra oficial em PDF, com dados do fornecedor, itens, valores e condições de pagamento." />
+        <Stage n={11} label="Aguardando Entrega/Conclusão" desc="Aguardamos a entrega do produto ou a execução do serviço contratado." />
+        <Stage n={12} label="Medição e Aprovação Financeira" desc="Para compras que exigem medição (ex.: serviços recorrentes, obras), validamos o quanto foi efetivamente entregue antes do pagamento." />
+        <Stage n={13} label="Validação Fiscal" desc="Conferência fiscal da nota/documento antes de liberar o pagamento." />
+        <Stage n={14} label="Tesouraria (Pagamento)" desc="Efetivação do pagamento ao fornecedor." />
+        <Stage n={15} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." />
+        <Stage n={16} label="Concluído" desc="A solicitação é encerrada." />
         <Card title="Cancelamento">
           A solicitação pode ser cancelada em praticamente qualquer etapa do fluxo — por exemplo, se o
           orçamento for reprovado ou a aprovação for negada.
@@ -295,10 +304,16 @@ export function ManualProcessoDocument() {
         <Bullet><Text style={{ fontWeight: 700 }}>Solicitante</Text> — quem está pedindo a compra.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Centro de custo</Text> e <Text style={{ fontWeight: 700 }}>diretoria</Text> — Corporativo, Revenue ou Tecnologia (define os prazos de SLA de cada etapa).</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Tipo de demanda</Text> — Compra de Produtos, Compra de Serviço, Compra de Nova Ferramenta, inclusão/remoção de usuários em ferramenta já existente, upgrade ou downgrade de versão, renovação de contrato existente, ou cancelamento de contrato/serviço/ferramenta.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Descrição curta e detalhada</Text> do que está sendo solicitado.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text> — Baixa, Média, Alta ou Crítica (urgência máxima). Prioridade Crítica reduz o prazo total do fluxo pela metade.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text>, <Text style={{ fontWeight: 700 }}>linha orçamentária</Text>, e se a compra já teve <Text style={{ fontWeight: 700 }}>pré-aprovação da liderança</Text> (e, se sim, de qual gestor).</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Descrição curta e detalhada</Text> do que está sendo solicitado — um assistente de IA pode sugerir o tipo de demanda e a prioridade a partir do texto digitado.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text> — Baixa (rotineira), Média (importante), Alta (urgente) ou Crítica (urgência máxima). Ao marcar Alta ou Crítica, o sistema pede para confirmar que a urgência é real, já que prioridades altas furam fila e pressionam prazo de outras solicitações.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text> para conclusão — se a data for menor que 7 dias úteis, um alerta lembra que cotação, aprovação e emissão do pedido levam tempo.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Linha do Orçamento</Text> — escolha <Text style={{ fontWeight: 700 }}>Orçamento Extra</Text> quando não há linha prevista (exige anexar o print da validação do orçamento pelo time de FP&A) ou <Text style={{ fontWeight: 700 }}>Outros</Text> para digitar o nome da linha manualmente.</Bullet>
+        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não) — marcar "Não" mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
         <Bullet>Anexos de apoio (proposta, briefing, etc.), quando fizer sentido.</Bullet>
+        <P>
+          Depois de enviada, a solicitação passa primeiro pelo gestor do centro de custo escolhido (etapa
+          Aprovação do Gestor) antes de chegar ao time de Compras | F&NC.
+        </P>
         <P>
           Depois de aberta, a solicitação aparece no quadro de Solicitações, organizado por etapa, e pode
           ser acompanhada por qualquer pessoa com acesso ao quadro (veja a seção 6).
@@ -341,17 +356,51 @@ export function ManualProcessoDocument() {
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>1</Text>
             <Text style={[styles.td, { width: 110 }]}>Até R$ 50 mil</Text>
-            <Text style={[styles.td, { flex: 1 }]}>Coordenação F&NC com procuração, ou Gerente F&NC</Text>
+            <Text style={[styles.td, { flex: 1 }]}>1 aprovador, dentre os designados pelo administrador para o centro de custo</Text>
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>2</Text>
             <Text style={[styles.td, { width: 110 }]}>Até R$ 500 mil</Text>
-            <Text style={[styles.td, { flex: 1 }]}>Gerente F&NC</Text>
+            <Text style={[styles.td, { flex: 1 }]}>2 aprovadores distintos, dentre os designados (dupla checagem)</Text>
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>3</Text>
             <Text style={[styles.td, { width: 110 }]}>Acima de R$ 500 mil</Text>
-            <Text style={[styles.td, { flex: 1 }]}>Gerente F&NC + CEO</Text>
+            <Text style={[styles.td, { flex: 1 }]}>2 aprovadores distintos, dentre os designados (dupla checagem)</Text>
+          </View>
+        </View>
+        <P>
+          Os aprovadores de cada nível são configurados por um administrador em Centros de Custo →
+          Alçadas de Aprovação — mais de uma pessoa pode ser designada por nível, e qualquer uma delas
+          pode decidir.
+        </P>
+
+        <H2 icon={ASSETS.documentoCheck}>Exceção orçamentária</H2>
+        <P>
+          Quando a Validação Orçamentária não encontra saldo disponível, a solicitação entra em exceção e
+          espera uma decisão — o nível de alçada aqui é calculado pelo valor da compra, separado da tabela
+          de Aprovação acima:
+        </P>
+        <View style={styles.table}>
+          <View style={styles.trHead}>
+            <Text style={[styles.th, { width: 60 }]}>Nível</Text>
+            <Text style={[styles.th, { width: 110 }]}>Valor da compra</Text>
+            <Text style={[styles.th, { flex: 1 }]}>Quem decide</Text>
+          </View>
+          <View style={styles.tr}>
+            <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>1</Text>
+            <Text style={[styles.td, { width: 110 }]}>Até R$ 5 mil</Text>
+            <Text style={[styles.td, { flex: 1 }]}>Coordenação</Text>
+          </View>
+          <View style={styles.tr}>
+            <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>2</Text>
+            <Text style={[styles.td, { width: 110 }]}>Até R$ 25 mil</Text>
+            <Text style={[styles.td, { flex: 1 }]}>Gerente F&NC</Text>
+          </View>
+          <View style={styles.tr}>
+            <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>3</Text>
+            <Text style={[styles.td, { width: 110 }]}>Acima de R$ 25 mil</Text>
+            <Text style={[styles.td, { flex: 1 }]}>Gerente F&NC</Text>
           </View>
         </View>
 
@@ -433,8 +482,16 @@ export function ManualProcessoDocument() {
         <Stage n={3} label="Troca de mensagens" desc="Toda a conversa com o time de Facilities acontece dentro do próprio chamado, mantendo o histórico completo." />
         <Stage n={4} label="Conclusão" desc="Quando o pedido é resolvido, o time responsável marca o chamado como Concluído." />
 
-        {/* 9. Dúvidas */}
-        <H1 bookmark="9. Dúvidas e contato">9. Dúvidas e contato</H1>
+        {/* 9. NDA e Contratos de Fornecedores */}
+        <H1 bookmark="9. NDA e Contratos de Fornecedores">9. NDA e Contratos de Fornecedores</H1>
+        <P>Mesmo modelo simples do Viagens Acerto e Facilities, para pedidos de NDA, dúvidas sobre contratos ativos e consultas sobre fornecedores.</P>
+        <Stage n={1} label="Abrir chamado" desc="Informe seu nome, e-mail e descreva o que você precisa." />
+        <Stage n={2} label="Acompanhamento" desc="O chamado aparece no quadro em uma das três colunas: Aberto, Em Andamento ou Concluído." />
+        <Stage n={3} label="Troca de mensagens" desc="Toda a conversa com o time responsável acontece dentro do próprio chamado, mantendo o histórico completo." />
+        <Stage n={4} label="Conclusão" desc="Quando o pedido é resolvido, o time responsável marca o chamado como Concluído." />
+
+        {/* 10. Dúvidas */}
+        <H1 bookmark="10. Dúvidas e contato">10. Dúvidas e contato</H1>
         <P>
           Ficou com alguma dúvida sobre o processo? Fale com o time de Compras | F&NC. Para dúvidas sobre
           acesso ao sistema, procure o administrador responsável pela lista de permissões.

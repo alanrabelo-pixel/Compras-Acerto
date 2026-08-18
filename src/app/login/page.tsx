@@ -24,7 +24,7 @@ export default function LoginPage({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/acerto-logo.svg" alt="Acerto" className="login-logo" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/alai-logo.svg" alt="ALAi" className="login-alai-logo" />
+        <img src="/brand/alai-logo.svg" alt="alAi" className="login-alai-logo" />
         <p className="login-tagline">Certo, com inteligência.</p>
         <p className="login-subtitle">Acesso restrito a contas corporativas @acerto.com.br.</p>
 
