@@ -2202,7 +2202,7 @@ a.table-row:hover {
 .exec-footer {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 6px;
   margin-top: 8px;
   flex-wrap: wrap;
 }
@@ -2211,14 +2211,14 @@ a.table-row:hover {
   align-items: center;
   flex-shrink: 0;
   white-space: nowrap;
-  gap: 7px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 9.5px;
   font-weight: 600;
   color: var(--ink-soft);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 16px;
+  padding: 4px 8px;
   text-decoration: none;
   transition: border-color 0.15s, color 0.15s;
 }
@@ -2227,8 +2227,8 @@ a.table-row:hover {
   color: var(--acerto-green-dark);
 }
 .exec-footer-link img {
-  width: 15px;
-  height: 15px;
+  width: 10px;
+  height: 10px;
   object-fit: contain;
 }
 
@@ -2259,13 +2259,15 @@ a.table-row:hover {
   color: rgba(255, 255, 255, 0.75);
   margin: 0 0 14px;
 }
-/* Pedido do usuário: links alinhados à esquerda (mesmo início do título
-   acima) em vez de centralizados como grupo. Quebra em mais de uma linha
-   quando não cabem — tentativa anterior de forçar tudo numa linha só com
-   scroll horizontal (overflow-x: auto) foi revertida a pedido do usuário,
-   que não gostou da barra de rolagem. */
+/* Pedido do usuário: título "Links Úteis" alinhado à esquerda (ver
+   .exec-brand-footer-links-title acima), mas os cards de link centralizados
+   como grupo — os dois não seguem o mesmo alinhamento. Quebra em mais de uma
+   linha quando não cabem; tentativa anterior de forçar tudo numa linha só
+   com scroll horizontal (overflow-x: auto) foi revertida por não ter
+   agradado, e os cards foram encolhidos (ver .exec-footer-link) até caberem
+   numa linha só na largura padrão da tela. */
 .exec-brand-footer-links .exec-footer {
-  justify-content: flex-start;
+  justify-content: center;
   margin: 0;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
