@@ -2259,19 +2259,14 @@ a.table-row:hover {
   color: rgba(255, 255, 255, 0.75);
   margin: 0 0 14px;
 }
-/* Pedido do usuário: os 5 links em uma linha só, não mais quebrados em
-   duas (3+2), e alinhados à esquerda (mesmo início do título acima) em vez
-   de centralizados como grupo. Sem largura máxima limitando o container;
-   nowrap mantém tudo na mesma linha, e overflow-x: auto vira um scroll
-   horizontal só deste bloco (não da página) se a janela ficar estreita
-   demais para caber tudo. */
+/* Pedido do usuário: links alinhados à esquerda (mesmo início do título
+   acima) em vez de centralizados como grupo. Quebra em mais de uma linha
+   quando não cabem — tentativa anterior de forçar tudo numa linha só com
+   scroll horizontal (overflow-x: auto) foi revertida a pedido do usuário,
+   que não gostou da barra de rolagem. */
 .exec-brand-footer-links .exec-footer {
   justify-content: flex-start;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  max-width: 100%;
   margin: 0;
-  padding-bottom: 2px;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
    verde — mesma marcação/links, só a aparência muda aqui dentro. */
