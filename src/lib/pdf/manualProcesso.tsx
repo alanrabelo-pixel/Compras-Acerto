@@ -309,7 +309,11 @@ export function ManualProcessoDocument() {
         <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text> para conclusão: se a data for menor que 7 dias úteis, um alerta lembra que cotação, aprovação e emissão do pedido levam tempo.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Linha do Orçamento</Text>: escolha <Text style={{ fontWeight: 700 }}>Orçamento Extra</Text> quando não há linha prevista (exige anexar o print da validação do orçamento pelo time de FP&A) ou <Text style={{ fontWeight: 700 }}>Outros</Text> para digitar o nome da linha manualmente.</Bullet>
         <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não): marcar "Não" mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
-        <Bullet>Anexos de apoio (proposta, briefing, etc.), quando fizer sentido.</Bullet>
+        <Bullet>
+          Anexos de apoio (proposta, briefing, etc.), quando fizer sentido. São aceitos PDF, imagem,
+          documento e planilha do Office, e-mail salvo e zip, com até 15MB por arquivo. Páginas de
+          internet e executáveis não são aceitos, por segurança.
+        </Bullet>
         <P>
           Depois de enviada, a solicitação passa primeiro pelo gestor do centro de custo escolhido (etapa
           Aprovação do Gestor) antes de chegar ao time de Compras | F&NC.
@@ -371,8 +375,13 @@ export function ManualProcessoDocument() {
         </View>
         <P>
           Os aprovadores de cada nível são configurados por um administrador em Centros de Custo →
-          Alçadas de Aprovação. Mais de uma pessoa pode ser designada por nível, e qualquer uma delas
-          pode decidir.
+          Alçadas de Aprovação. Mais de uma pessoa pode ser designada por nível.
+        </P>
+        <P>
+          Cada pessoa designada decide a própria aprovação, e ninguém decide no lugar de outra: o sistema
+          confere quem está registrando a decisão. A exceção é a personificação, que é controlada, exige
+          justificativa e avisa por Slack o aprovador real. Nos Níveis 2 e 3, as duas pessoas precisam
+          decidir para a solicitação avançar; uma única reprovação já cancela, sem esperar a outra.
         </P>
 
         <H2 icon={ASSETS.documentoCheck}>Exceção orçamentária</H2>
@@ -464,6 +473,11 @@ export function ManualProcessoDocument() {
           Essas três áreas só ficam visíveis para uma lista específica de pessoas autorizadas, mantida por
           um administrador do sistema. Se você tentar acessar sem estar na lista, verá uma tela informando
           que não tem permissão. Nesse caso, procure o administrador do sistema para solicitar acesso.
+        </Card>
+        <Card title="A sessão expira em 8 horas">
+          Depois desse tempo o sistema pede login de novo. É proposital: mudanças de acesso, inclusive o
+          desligamento de alguém, passam a valer no login seguinte, e uma sessão longa demais atrasaria
+          isso. Toda alteração de acesso fica registrada, com quem alterou e quando.
         </Card>
 
         {/* 7. Viagens Acerto */}
