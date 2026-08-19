@@ -4,7 +4,7 @@ import { nextAfterAprovacaoGestor } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { requireRole } from "@/lib/rbac";
 import { logger } from "@/lib/logger";
-import { avancarEtapa } from "@/lib/etapa";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/aprovacao-gestor
@@ -95,6 +95,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id }).catch((erro) => {
       logger.warn("email_reprovacao_gestor_falhou", { solicitacao: request.code, erro });
     });
+  } else {
+    // Esta etapa avisava só quando reprovava. Era a única do fluxo assim: em
+    // todas as outras o solicitante fica sabendo que avançou. Quem passava
+    // pela aprovação do gestor ficava no escuro justamente no momento em que
+    // a solicitação foi liberada para seguir.
+    await notificarAvancoDeEtapa(updated, nextStage);
   }
 
   return NextResponse.json(updated);

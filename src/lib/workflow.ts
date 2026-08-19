@@ -349,3 +349,26 @@ export function requiresBasicVendorScreening(params: { supplierIsNew: boolean })
  * sistema deve notificar (não decidir sozinho) o próximo nível hierárquico e
  * a Controladoria, para evitar que a solicitação fique parada indefinidamente. */
 export const APPROVAL_ESCALATION_BUSINESS_DAYS = 3;
+
+/**
+ * Soma dias ÚTEIS a uma data, pulando sábado e domingo.
+ *
+ * O prazo de escalonamento se chamava "dias úteis" e era calculado somando
+ * dias corridos: uma aprovação aberta numa quinta vencia no domingo, e o
+ * aprovador era cobrado por um atraso que incluía o fim de semana. O nome
+ * dizia uma coisa e a conta fazia outra.
+ *
+ * Não considera feriado: seria preciso uma tabela de feriados nacionais e
+ * locais, que o sistema não tem. Fica registrado como limitação conhecida, em
+ * vez de fingir precisão que não existe.
+ */
+export function somarDiasUteis(inicio: Date, dias: number): Date {
+  const resultado = new Date(inicio);
+  let restantes = dias;
+  while (restantes > 0) {
+    resultado.setDate(resultado.getDate() + 1);
+    const diaDaSemana = resultado.getDay();
+    if (diaDaSemana !== 0 && diaDaSemana !== 6) restantes--;
+  }
+  return resultado;
+}

@@ -593,7 +593,7 @@ model BudgetException {
   id          String   @id @default(cuid())
   requestId   String   @unique
   request     PurchaseRequest @relation(fields: [requestId], references: [id])
-  level       Int      // 1: até 5k (coordenação c/ procuração) | 2: até 25k (Gerente F&NC) | 3: acima 25k (Gerente F&NC + CEO)
+  level       Int      // 1: até 5k (Coordenação) | 2: até 25k (Gerente F&NC) | 3: acima de 25k (Gerente F&NC)
   decision    ApprovalDecision @default(PENDENTE)
   justification String?
   decidedAt   DateTime?
@@ -654,7 +654,7 @@ model Approval {
   id            String   @id @default(cuid())
   requestId     String
   request       PurchaseRequest @relation(fields: [requestId], references: [id])
-  level         Int      // 1: até 50k | 2: até 500k | 3: acima de 500k (CEO). Renumerado, ver revisão
+  level         Int      // 1: até 50k | 2: até 500k | 3: acima de 500k. Renumerado, ver revisão
   approverId    String
   approver      User     @relation(fields: [approverId], references: [id])
   decision      ApprovalDecision @default(PENDENTE)

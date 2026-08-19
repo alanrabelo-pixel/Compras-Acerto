@@ -16,6 +16,7 @@ import {
   minimumQuotesRequired,
   determineLane,
   requiresBasicVendorScreening,
+  somarDiasUteis,
 } from "./workflow";
 
 describe("nextAfterValidacaoOrcamentaria", () => {
@@ -271,5 +272,37 @@ describe("requiresBasicVendorScreening", () => {
   it("requires screening only for new suppliers", () => {
     expect(requiresBasicVendorScreening({ supplierIsNew: true })).toBe(true);
     expect(requiresBasicVendorScreening({ supplierIsNew: false })).toBe(false);
+  });
+});
+
+describe("somarDiasUteis", () => {
+  it("pula o fim de semana, que era o defeito do cálculo anterior", () => {
+    // Quinta + 3 dias úteis = terça. Somando dias corridos daria domingo, e o
+    // aprovador seria cobrado por um atraso que incluía o fim de semana.
+    const quinta = new Date("2026-08-20T12:00:00");
+    expect(quinta.getDay()).toBe(4);
+
+    const prazo = somarDiasUteis(quinta, 3);
+
+    expect(prazo.getDay()).toBe(2);
+    expect(prazo.getDate()).toBe(25);
+  });
+
+  it("dentro da semana se comporta como dias corridos", () => {
+    const segunda = new Date("2026-08-17T12:00:00");
+    const prazo = somarDiasUteis(segunda, 3);
+    expect(prazo.getDate()).toBe(20);
+  });
+
+  it("partindo de sexta, três dias úteis caem na quarta seguinte", () => {
+    const sexta = new Date("2026-08-21T12:00:00");
+    expect(sexta.getDay()).toBe(5);
+    expect(somarDiasUteis(sexta, 3).getDay()).toBe(3);
+  });
+
+  it("não altera a data de origem", () => {
+    const origem = new Date("2026-08-20T12:00:00");
+    somarDiasUteis(origem, 5);
+    expect(origem.getDate()).toBe(20);
   });
 });

@@ -7,9 +7,15 @@ import { verificarTokenDeMaquina } from "@/lib/segredos";
 import { logger } from "@/lib/logger";
 
 /**
- * Alerta semanal de renovação de contrato: dispara toda segunda-feira, 3 meses
- * antes da data de renovação prevista, conforme seção "Mapeamento do contrato"
- * do documento de referência.
+ * Alerta de renovação de contrato: seleciona os contratos ativos cuja renovação
+ * está prevista para os próximos 3 meses, conforme a seção "Mapeamento do
+ * contrato" do documento de referência.
+ *
+ * A CADÊNCIA é do agendador, não daqui: esta rota não verifica dia da semana.
+ * O comentário anterior dizia que disparava toda segunda-feira, o que o código
+ * nunca garantiu. Chamar duas vezes no mesmo dia reenvia os mesmos avisos,
+ * porque não há guarda de repetição (diferente do cron de escalonamento, que
+ * marca escalatedAt).
  *
  * Configurar como job agendado (Railway Cron / Vercel Cron) chamando esta rota
  * com um header de autenticação simples (CRON_SECRET); não expor publicamente.

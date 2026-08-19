@@ -6,6 +6,7 @@ import {
   canPersonifyApprover,
   nextAfterAprovacao,
   APPROVAL_ESCALATION_BUSINESS_DAYS,
+  somarDiasUteis,
 } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
@@ -93,8 +94,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     );
   }
 
-  const dueAt = new Date();
-  dueAt.setDate(dueAt.getDate() + APPROVAL_ESCALATION_BUSINESS_DAYS);
+  // Dias úteis de verdade. Antes somava dias corridos apesar do nome: uma
+  // aprovação aberta numa quinta vencia no domingo, e o aprovador era cobrado
+  // por um atraso que incluía o fim de semana.
+  const dueAt = somarDiasUteis(new Date(), APPROVAL_ESCALATION_BUSINESS_DAYS);
 
   const approvals = await Promise.all(
     approverIds.map((approverId) => prisma.approval.create({ data: { requestId: request.id, level, approverId, dueAt } }))

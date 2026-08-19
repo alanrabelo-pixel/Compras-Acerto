@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { verificarTokenDeMaquina } from "@/lib/segredos";
+import { APPROVAL_ESCALATION_BUSINESS_DAYS } from "@/lib/workflow";
 import { logger } from "@/lib/logger";
 import { DESTINO_CONTROLADORIA } from "@/lib/destinatarios";
 
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     // que o lembrete parou de chegar.
     await sendSlackDM({
       slackUserEmail: approval.approver.email,
-      text: `Lembrete: a solicitação ${approval.request.code} está aguardando sua aprovação há mais de ${process.env.APPROVAL_ESCALATION_DAYS ?? 3} dias úteis.`,
+      text: `Lembrete: a solicitação ${approval.request.code} está aguardando sua aprovação há mais de ${APPROVAL_ESCALATION_BUSINESS_DAYS} dias úteis.`,
     }).catch((erro) => {
       falhasDeAviso++;
       logger.warn("cron_escalonamento_slack_falhou", { destino: "aprovador", solicitacao: approval.request.code, erro });
