@@ -54,7 +54,27 @@ const PRIORITIES = [
 
 type SessionRequester = { id: string; name: string; email: string } | null;
 
-export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionRequester?: SessionRequester }) {
+/**
+ * Contrato que originou esta solicitação, quando a pessoa chegou pelo link do
+ * e-mail de alerta de renovação. Antes esse link levava a um formulário em
+ * branco: o parâmetro existia na URL e não era lido em lugar nenhum.
+ */
+type ContratoDeOrigem = {
+  id: string;
+  fornecedor: string;
+  objeto: string | null;
+  centroDeCusto: string;
+  diretoria: string | null;
+  fimDaVigencia: string;
+} | null;
+
+export function NovaSolicitacaoForm({
+  sessionRequester = null,
+  contratoDeOrigem = null,
+}: {
+  sessionRequester?: SessionRequester;
+  contratoDeOrigem?: ContratoDeOrigem;
+}) {
   const router = useRouter();
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,16 +86,27 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
 
   const [requesterId, setRequesterId] = useState(sessionRequester?.id ?? "");
   const [costCenterId, setCostCenterId] = useState("");
-  const [diretoria, setDiretoria] = useState("TECNOLOGIA");
+  const [diretoria, setDiretoria] = useState(contratoDeOrigem?.diretoria ?? "TECNOLOGIA");
   const [leadershipPreApproved, setLeadershipPreApproved] = useState<"SIM" | "NAO" | "">("");
   const [budgetLineChoice, setBudgetLineChoice] = useState("");
   const [budgetLineText, setBudgetLineText] = useState("");
-  const [demandType, setDemandType] = useState("COMPRA_SERVICO");
-  const [shortDescription, setShortDescription] = useState("");
-  const [longDescription, setLongDescription] = useState("");
+  const [demandType, setDemandType] = useState(contratoDeOrigem ? "RENOVACAO_CONTRATO" : "COMPRA_SERVICO");
+  const [shortDescription, setShortDescription] = useState(
+    contratoDeOrigem ? `Renovação de contrato: ${contratoDeOrigem.fornecedor}` : ""
+  );
+  const [longDescription, setLongDescription] = useState(
+    contratoDeOrigem
+      ? [
+          `Renovação do contrato com ${contratoDeOrigem.fornecedor}, com vigência até ${new Date(contratoDeOrigem.fimDaVigencia).toLocaleDateString("pt-BR")}.`,
+          contratoDeOrigem.objeto ? `Objeto do contrato atual: ${contratoDeOrigem.objeto}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n\n")
+      : ""
+  );
   const [priority, setPriority] = useState("MEDIA");
   const [suggestedDeadline, setSuggestedDeadline] = useState("");
-  const [indicatedSupplierName, setIndicatedSupplierName] = useState("");
+  const [indicatedSupplierName, setIndicatedSupplierName] = useState(contratoDeOrigem?.fornecedor ?? "");
   const [indicatedSupplierPhone, setIndicatedSupplierPhone] = useState("");
   const [indicatedSupplierEmail, setIndicatedSupplierEmail] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -124,7 +155,22 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const complementaryFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/cost-centers").then((res) => res.json()).then(setCostCenters).catch(() => setCostCenters([]));
+    fetch("/api/cost-centers")
+      .then((res) => res.json())
+      .then((lista: CostCenter[]) => {
+        setCostCenters(lista);
+        // O contrato guarda o centro de custo como texto livre, não como id,
+        // então a correspondência é por nome. Não achando, deixa em branco
+        // para a pessoa escolher, em vez de chutar um centro de custo errado
+        // numa solicitação que vai definir quem aprova.
+        if (contratoDeOrigem && !costCenterId) {
+          const correspondente = lista.find(
+            (cc) => cc.name.trim().toLowerCase() === contratoDeOrigem.centroDeCusto.trim().toLowerCase()
+          );
+          if (correspondente) setCostCenterId(correspondente.id);
+        }
+      })
+      .catch(() => setCostCenters([]));
   }, []);
 
   async function uploadIfPresent(requestId: string, ref: React.RefObject<HTMLInputElement>, category: string) {
@@ -204,6 +250,26 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
       </div>
       <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
       <h1 className="page-title" style={{ marginTop: 12 }}>Solicitação de Compra</h1>
+
+      {contratoDeOrigem && (
+        <p
+          className="section-gap"
+          style={{
+            fontSize: 12.5,
+            color: "var(--acerto-green-dark)",
+            background: "rgba(37,211,102,0.08)",
+            border: "1px solid var(--acerto-green)",
+            borderRadius: 4,
+            padding: "9px 12px",
+            margin: 0,
+          }}
+          role="status"
+        >
+          Preenchemos o que dava a partir do contrato com <strong>{contratoDeOrigem.fornecedor}</strong>, que vence
+          em {new Date(contratoDeOrigem.fimDaVigencia).toLocaleDateString("pt-BR")}. Confira e ajuste o que for
+          preciso antes de enviar.
+        </p>
+      )}
 
       <div className="card section-gap" style={{ display: "grid", gap: 18 }}>
         <div className="form-section">
