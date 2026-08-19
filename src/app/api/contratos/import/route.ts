@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import * as XLSX from "xlsx";
 import { prisma } from "@/lib/db";
+import { authOptions } from "@/lib/auth";
+import { bypassAuthAtivo } from "@/lib/bypass";
 import type { Diretoria } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
+
+// Limites do upload. A rota lê uma planilha inteira para a memória e cria uma
+// linha por registro, então sem teto um único arquivo derruba o processo ou
+// enche a base. Números escolhidos para caber com folga uma carteira de
+// contratos legada real, sem deixar a porta aberta.
+const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024;
+const MAXIMO_DE_LINHAS = 2000;
 
 const VALID_STATUS = ["ATIVO", "RENOVACAO_EM_ANDAMENTO", "CANCELADO"];
 const VALID_DIRETORIA = ["CORPORATIVO", "REVENUE", "TECNOLOGIA"];
@@ -75,10 +85,33 @@ function parseDate(row: Row, key: string): Date | undefined {
  * (ex.: Solicitações) se necessário no futuro.
  */
 export async function POST(req: NextRequest) {
+  // Antes esta rota não checava nada. Como ela cria contratos em massa e aceita
+  // o e-mail do gestor vindo da planilha, dava para injetar contratos falsos
+  // apontando para um executivo real: eles entram no cron de renovação e
+  // disparam e-mail e Slack em nome do sistema, o que é um vetor de fraude
+  // interna com credibilidade total.
+  if (!bypassAuthAtivo()) {
+    const session = await getServerSession(authOptions);
+    const roles = (session?.user as { roles?: string[] } | undefined)?.roles ?? [];
+    if (!session || !roles.includes("ADMIN")) {
+      return NextResponse.json(
+        { error: "Apenas administradores podem importar contratos em massa." },
+        { status: 403 }
+      );
+    }
+  }
+
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Nenhum arquivo enviado (campo 'file')." }, { status: 400 });
+  }
+
+  if (file.size > TAMANHO_MAXIMO_BYTES) {
+    return NextResponse.json(
+      { error: `Arquivo muito grande (máximo ${TAMANHO_MAXIMO_BYTES / 1024 / 1024}MB).` },
+      { status: 413 }
+    );
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -88,6 +121,13 @@ export async function POST(req: NextRequest) {
 
   if (rows.length === 0) {
     return NextResponse.json({ error: "Planilha vazia ou sem cabeçalho reconhecível." }, { status: 400 });
+  }
+
+  if (rows.length > MAXIMO_DE_LINHAS) {
+    return NextResponse.json(
+      { error: `Planilha com ${rows.length} linhas excede o limite de ${MAXIMO_DE_LINHAS} por importação. Divida em arquivos menores.` },
+      { status: 413 }
+    );
   }
 
   const managerEmails = Array.from(

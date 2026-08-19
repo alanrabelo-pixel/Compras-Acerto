@@ -66,7 +66,13 @@ async function handleIncomingDM(event: { channel: string; user: string; text: st
 
 function verifySignature(req: NextRequest, rawBody: string): boolean {
   const secret = process.env.SLACK_SIGNING_SECRET;
-  if (!secret) return true; // sem segredo configurado ainda neste ambiente local, ver comentário no topo do arquivo
+  // Sem segredo configurado, REJEITA. Antes esta linha devolvia true, ou seja,
+  // a ausência da variável transformava o endpoint em porta aberta: qualquer
+  // POST era aceito como evento legítimo do Slack e injetava mensagem no chat
+  // entre comprador e solicitante em nome de terceiros. Um deploy onde a
+  // variável não propagasse abriria o endpoint sem ninguém perceber, porque
+  // tudo continuaria "funcionando".
+  if (!secret) return false;
 
   const timestamp = req.headers.get("x-slack-request-timestamp");
   const signature = req.headers.get("x-slack-signature");
