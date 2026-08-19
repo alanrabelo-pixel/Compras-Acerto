@@ -27,7 +27,7 @@ export function ContractPicker({ onSelect, id }: { onSelect: (contract: Contract
   }, []);
 
   if (contracts === null) return <p className="help">Carregando contratos ativos…</p>;
-  if (contracts.length === 0) return <p className="help">Nenhum contrato ativo cadastrado no momento.</p>;
+  if (contracts.length === 0) return <p className="help">Nenhum contrato ativo cadastrado. Contratos aparecem aqui depois do Mapeamento de Contrato, ou por importação em massa.</p>;
 
   return (
     <select

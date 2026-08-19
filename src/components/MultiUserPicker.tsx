@@ -87,7 +87,7 @@ export function MultiUserPicker({
               {u.name} <span style={{ color: "var(--ink-muted)" }}>({u.email})</span>
             </label>
           ))}
-          {users.length === 0 && <p style={{ fontSize: 12, color: "var(--ink-muted)" }}>Nenhum usuário com esse papel.</p>}
+          {users.length === 0 && <p style={{ fontSize: 12, color: "var(--ink-muted)" }}>Ninguém tem esse papel ainda. Um administrador concede em Administração, aba Acessos.</p>}
         </div>
       )}
     </div>

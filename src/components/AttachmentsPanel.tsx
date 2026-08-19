@@ -7,7 +7,7 @@ import { UserPicker } from "@/components/UserPicker";
 type Attachment = { id: string; fileName: string; uploadedBy: string; stage: string | null; createdAt: string };
 
 export function AttachmentsPanel({
-  requestId, attachments, uploaderId, category, title = "Anexos", emptyLabel = "Nenhum anexo ainda.",
+  requestId, attachments, uploaderId, category, title = "Anexos", emptyLabel = "Nenhum anexo ainda. Use o campo abaixo para enviar um arquivo.",
 }: {
   requestId: string;
   attachments: Attachment[];

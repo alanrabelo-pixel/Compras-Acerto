@@ -82,7 +82,7 @@ export function ChamadoThread({
 
       <section className="card section-gap">
         <h2 className="card-title accent">Histórico de mensagens</h2>
-        {messages.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma mensagem ainda.</p>}
+        {messages.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhuma mensagem ainda. Escreva abaixo para falar com quem abriu o chamado.</p>}
         <div style={{ display: "grid", gap: 10 }}>
           {messages.map((m) => (
             <div key={m.id} style={{ background: "var(--surface-muted)", borderRadius: 10, padding: 12 }}>

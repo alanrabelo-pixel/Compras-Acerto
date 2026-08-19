@@ -90,7 +90,7 @@ export function AnnouncementsBody({
 
       <div className="announcements-list">
         {items === null && <p className="announcements-empty">Carregando…</p>}
-        {items?.length === 0 && <p className="announcements-empty">Nenhum comunicado ainda.</p>}
+        {items?.length === 0 && <p className="announcements-empty">Nenhum comunicado publicado ainda. Os avisos do time de Compras aparecem aqui.</p>}
         {items?.map((a) => (
           <button
             key={a.id}

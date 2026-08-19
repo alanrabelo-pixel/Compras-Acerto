@@ -221,7 +221,7 @@ export default async function SolicitacoesPage({
               <span className="text-soft">{r.requester.name} · {r.costCenter.name}</span>
             </TableRow>
           ))}
-          {requests.length === 0 && <TableEmpty>Nenhuma solicitação encontrada neste recorte.</TableEmpty>}
+          {requests.length === 0 && <TableEmpty>Nenhuma solicitação encontrada com estes filtros. Use "Limpar filtros" acima para ver todas.</TableEmpty>}
         </TableWrap>
         )}
 

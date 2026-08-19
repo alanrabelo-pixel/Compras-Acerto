@@ -45,7 +45,7 @@ export function TicketAttachmentsPanel({
   return (
     <section className="card section-gap">
       <h2 className="card-title accent">Anexos</h2>
-      {attachments.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum anexo ainda.</p>}
+      {attachments.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum anexo ainda. Use o campo abaixo para enviar um arquivo.</p>}
       {attachments.map((a) => (
         <div key={a.id} className="timeline-item" style={{ justifyContent: "space-between" }}>
           <a href={`/api/attachments/${a.id}/file`} style={{ color: "var(--acerto-green-dark)", textDecoration: "none", fontWeight: 600 }}>{a.fileName}</a>

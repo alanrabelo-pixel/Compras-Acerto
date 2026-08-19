@@ -135,7 +135,7 @@ export function AiInsightPanel({
       {loadingList && <p style={{ fontSize: 11.5, color: "var(--ink-muted)" }}>Carregando histórico...</p>}
 
       {!loadingList && insights.length === 0 && !error && (
-        <p style={{ fontSize: 11.5, color: "var(--ink-muted)" }}>Nenhuma análise gerada ainda para esta solicitação.</p>
+        <p style={{ fontSize: 11.5, color: "var(--ink-muted)" }}>Nenhuma análise gerada ainda. Use o botão acima para pedir uma leitura da IA sobre esta etapa.</p>
       )}
 
       {latest && <InsightCard insight={latest} highlight />}

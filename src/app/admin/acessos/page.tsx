@@ -98,7 +98,7 @@ export default async function AcessosPage({
               </TableRow>
             );
           })}
-          {users.length === 0 && <TableEmpty>Nenhuma pessoa encontrada neste recorte.</TableEmpty>}
+          {users.length === 0 && <TableEmpty>Nenhuma pessoa encontrada com estes filtros. Use "Limpar filtros" acima para ver todas.</TableEmpty>}
         </TableWrap>
       </main>
     </AppShell>

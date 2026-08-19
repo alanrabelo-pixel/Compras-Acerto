@@ -165,7 +165,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
 
         <section className="card section-gap">
           <h2 className="card-title">Alertas de renovação enviados</h2>
-          {contract.alerts.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum alerta enviado ainda.</p>}
+          {contract.alerts.length === 0 && <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Nenhum alerta enviado ainda. O aviso de renovação sai automaticamente 3 meses antes do vencimento.</p>}
           {contract.alerts.map((a) => (
             <div key={a.id} className="timeline-item">
               <span className="timeline-dot" />

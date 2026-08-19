@@ -85,8 +85,16 @@ export default async function MinhasSolicitacoesPage({
         </div>
 
         {myRequests.length === 0 ? (
-          <div className="card" style={{ marginTop: 20, padding: 28, textAlign: "center", color: "var(--ink-muted)" }}>
-            Você ainda não abriu nenhuma solicitação de compra.
+          <div className="card" style={{ marginTop: 20, padding: 28, textAlign: "center" }}>
+            <p style={{ margin: 0, color: "var(--ink-muted)" }}>
+              Você ainda não abriu nenhuma solicitação de compra.
+            </p>
+            <p style={{ margin: "8px 0 16px", fontSize: 12.5, color: "var(--ink-muted)" }}>
+              Toda compra da Acerto começa por aqui. Depois de enviar, você acompanha cada etapa nesta mesma tela.
+            </p>
+            <a href="/solicitacoes/nova" className="btn btn-primary" style={{ textDecoration: "none" }}>
+              Abrir minha primeira solicitação
+            </a>
           </div>
         ) : (
           <div style={{ marginTop: 20 }}>
