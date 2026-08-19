@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { RoleName } from "@prisma/client";
-import { BOARD_ROLES } from "@/lib/roles";
+import { BOARD_ROLES, ALL_MANAGED_ROLES } from "@/lib/roles";
 import { bypassAuthAtivo } from "@/lib/bypass";
 import { registrarMudancaDePermissao, comoTexto } from "@/lib/auditoria-permissao";
 
@@ -27,7 +27,10 @@ import { registrarMudancaDePermissao, comoTexto } from "@/lib/auditoria-permissa
  * (ver .env e middleware.ts) para continuar utilizável localmente enquanto o
  * SSO real não está configurado.
  */
-const MANAGED_ROLES: RoleName[] = ["ADMIN", "COMPRADOR", "SOLICITANTE", "APROVADOR", "CONTROLADORIA"];
+// Os 11 papéis, vindos de src/lib/roles.ts. Antes esta lista tinha só 5, e os
+// outros 6 (Jurídico, Privacidade, Fiscal, Tesouraria, Coordenação, Gerente
+// F&NC) não tinham como ser concedidos pela interface: só direto no banco.
+const MANAGED_ROLES: RoleName[] = ALL_MANAGED_ROLES;
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (!bypassAuthAtivo()) {

@@ -3,15 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAcaoRemota, StatusDaAcao } from "@/components/useAcaoRemota";
+import { ACCESS_ROLES, STAGE_ROLES } from "@/lib/roles";
 
-const TIERS: { role: string; label: string }[] = [
-  { role: "ADMIN", label: "Admin" },
-  { role: "COMPRADOR", label: "Compras" },
-  { role: "SOLICITANTE", label: "Solicitante" },
-  { role: "APROVADOR", label: "Aprovador" },
-  { role: "CONTROLADORIA", label: "Controladoria" },
-];
-
+/**
+ * Concede e revoga os 11 papéis de uma pessoa.
+ *
+ * Antes cobria só os 5 primeiros. Os outros 6 (Jurídico, Privacidade, Fiscal,
+ * Tesouraria, Coordenação e Gerente F&NC) apareciam em /admin/acessos como
+ * texto sem edição, e a única forma de tornar alguém Fiscal ou Tesouraria era
+ * mexer direto no banco. São justamente os papéis que decidem sobre nota
+ * fiscal, pagamento, contrato e exceção orçamentária.
+ *
+ * Os dois grupos ficam separados de propósito: o primeiro decide o que a
+ * pessoa VÊ (o acesso ao quadro sai dele), o segundo decide em que etapa ela
+ * pode AGIR.
+ */
 export function RoleAccessToggles({ userId, initialRoles }: { userId: string; initialRoles: string[] }) {
   const router = useRouter();
   const [roles, setRoles] = useState<string[]>(initialRoles);
@@ -39,22 +45,35 @@ export function RoleAccessToggles({ userId, initialRoles }: { userId: string; in
     setEmAndamento(null);
   }
 
+  function Botao({ role, label, title }: { role: string; label: string; title?: string }) {
+    const ativo = roles.includes(role);
+    return (
+      <button
+        className={`btn ${ativo ? "btn-primary" : "btn-secondary"}`}
+        style={{ padding: "4px 9px", fontSize: 11 }}
+        disabled={emAndamento === role}
+        onClick={() => toggle(role)}
+        title={title}
+      >
+        {label}
+      </button>
+    );
+  }
+
   return (
-    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-      {TIERS.map((t) => {
-        const active = roles.includes(t.role);
-        return (
-          <button
-            key={t.role}
-            className={`btn ${active ? "btn-primary" : "btn-secondary"}`}
-            style={{ padding: "4px 9px", fontSize: 11 }}
-            disabled={emAndamento === t.role}
-            onClick={() => toggle(t.role)}
-          >
-            {t.label}
-          </button>
-        );
-      })}
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 10, color: "var(--ink-muted)", width: 42 }}>Acesso</span>
+        {ACCESS_ROLES.map((t) => (
+          <Botao key={t.role} role={t.role} label={t.label} />
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 10, color: "var(--ink-muted)", width: 42 }}>Etapa</span>
+        {STAGE_ROLES.map((t) => (
+          <Botao key={t.role} role={t.role} label={t.label} title={`Pode agir na ${t.etapa}`} />
+        ))}
+      </div>
       <StatusDaAcao estado={estado} />
     </div>
   );
