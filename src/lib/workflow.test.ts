@@ -10,6 +10,7 @@ import {
   nextAfterAguardandoEntrega,
   nextAfterTesouraria,
   slaDaysForDiretoria,
+  expectativaDaEtapa,
   isValidTransition,
   canPersonifyApprover,
   checkFragmentationRisk,
@@ -304,5 +305,25 @@ describe("somarDiasUteis", () => {
     const origem = new Date("2026-08-20T12:00:00");
     somarDiasUteis(origem, 5);
     expect(origem.getDate()).toBe(20);
+  });
+});
+
+describe("expectativaDaEtapa", () => {
+  it("usa a referência de Corporativo para a diretoria Corporativo", () => {
+    expect(expectativaDaEtapa("COTACAO", "CORPORATIVO")).toBe(5);
+  });
+
+  it("usa a referência de Tecnologia/Revenue para as duas diretorias", () => {
+    expect(expectativaDaEtapa("COTACAO", "TECNOLOGIA")).toBe(7);
+    expect(expectativaDaEtapa("COTACAO", "REVENUE")).toBe(7);
+  });
+
+  it("sem diretoria, cai na referência mais conservadora (Corporativo)", () => {
+    expect(expectativaDaEtapa("JURIDICO", null)).toBe(20);
+  });
+
+  it("devolve null nas etapas que ainda não têm tempo definido, sem inventar número", () => {
+    expect(expectativaDaEtapa("PEDIDO_COMPRA", "CORPORATIVO")).toBeNull();
+    expect(expectativaDaEtapa("TESOURARIA", "TECNOLOGIA")).toBeNull();
   });
 });

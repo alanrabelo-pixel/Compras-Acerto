@@ -10,14 +10,18 @@
  * Isso mantém a lógica de negócio separada da mecânica de integração.
  */
 
-import { Stage, DemandType, RoleName } from "@prisma/client";
+import { Stage, DemandType, RoleName, Diretoria } from "@prisma/client";
 
 export type StageDefinition = {
   stage: Stage;
   label: string;
   // Para onde essa etapa pode avançar (a decisão de qual delas é feita pelo guard)
   nextStages: Stage[];
-  // SLA médio em dias (documentado no fluxo original, por diretoria)
+  // Tempo esperado na etapa, em dias, por diretoria. É referência de
+  // expectativa, não prazo aplicado: o único prazo que o sistema cobra é o da
+  // solicitação inteira (slaDeadline, ver slaDaysForDiretoria abaixo). Etapas
+  // sem valor definido ficam sem os dois campos, e a tela simplesmente não
+  // mostra expectativa nenhuma, em vez de inventar um número.
   slaDaysCorporativo?: number;
   slaDaysTecnologiaRevenue?: number;
 };
@@ -136,6 +140,27 @@ export const STAGES: Record<Stage, StageDefinition> = {
     nextStages: [],
   },
 };
+
+/**
+ * Tempo esperado na etapa atual, em dias, para a diretoria da solicitação.
+ *
+ * Os números de STAGES existiam desde o começo e nunca eram lidos por
+ * ninguém: ficavam no código como documentação que a tela não mostrava. Aqui
+ * eles viram o que sempre foram na prática, uma expectativa de quanto a etapa
+ * costuma levar, exibida para quem está esperando. Nada é bloqueado nem
+ * marcado como atrasado a partir daqui.
+ *
+ * Sem diretoria definida, usa a referência de Corporativo, que é a mais
+ * apertada das duas: melhor uma expectativa conservadora do que otimista.
+ */
+export function expectativaDaEtapa(stage: Stage, diretoria: Diretoria | null | undefined): number | null {
+  const definicao = STAGES[stage];
+  const dias =
+    diretoria === "TECNOLOGIA" || diretoria === "REVENUE"
+      ? definicao.slaDaysTecnologiaRevenue
+      : definicao.slaDaysCorporativo;
+  return dias ?? null;
+}
 
 /**
  * Regras de roteamento condicional: a "inteligência" que decide o próximo

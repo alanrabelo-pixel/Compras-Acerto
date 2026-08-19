@@ -186,7 +186,7 @@ function Stage({ n, label, desc, sla }: { n: number; label: string; desc: string
       <View style={styles.stageBody}>
         <Text style={styles.stageLabel}>{label}</Text>
         <Text style={styles.stageDesc}>{desc}</Text>
-        {sla && <Text style={styles.stageSla}>Prazo esperado: {sla}</Text>}
+        {sla && <Text style={styles.stageSla}>Tempo esperado: {sla}</Text>}
       </View>
     </View>
   );
@@ -302,7 +302,7 @@ export function ManualProcessoDocument() {
           <Text style={{ fontWeight: 700, color: BLACK }}> + Nova Solicitação</Text>. O formulário pede:
         </P>
         <Bullet><Text style={{ fontWeight: 700 }}>Solicitante</Text>: quem está pedindo a compra.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Centro de custo</Text> e <Text style={{ fontWeight: 700 }}>diretoria</Text>: Corporativo, Revenue ou Tecnologia (define os prazos de SLA de cada etapa).</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Centro de custo</Text> e <Text style={{ fontWeight: 700 }}>diretoria</Text>: Corporativo, Revenue ou Tecnologia (define o prazo total da solicitação e os tempos esperados de cada etapa).</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Tipo de demanda</Text>: Compra de Produtos, Compra de Serviço, Compra de Nova Ferramenta, inclusão/remoção de usuários em ferramenta já existente, upgrade ou downgrade de versão, renovação de contrato existente, ou cancelamento de contrato/serviço/ferramenta.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Descrição curta e detalhada</Text> do que está sendo solicitado. Um assistente de IA pode sugerir o tipo de demanda e a prioridade a partir do texto digitado.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text>: Baixa (rotineira), Média (importante), Alta (urgente) ou Crítica (urgência máxima). Ao marcar Alta ou Crítica, o sistema pede para confirmar que a urgência é real, já que prioridades altas furam fila e pressionam prazo de outras solicitações.</Bullet>
@@ -435,9 +435,20 @@ export function ManualProcessoDocument() {
 
         <H2 icon={ASSETS.relogio}>Prazos e escalonamento</H2>
         <P>
-          Cada etapa tem um prazo esperado (mostrado na seção 2). Se um aprovador não decidir dentro de 3
-          dias úteis, o sistema notifica automaticamente o próximo nível hierárquico e a Controladoria,
-          para que a solicitação nunca fique parada sem ninguém saber.
+          Os tempos por etapa da seção 2 são referência de expectativa: dizem quanto a etapa costuma
+          levar, e aparecem na tela da solicitação para quem está esperando. Eles não travam nada e não
+          marcam a etapa como atrasada. Nem toda etapa tem um tempo de referência definido; quando não
+          tem, a tela não mostra nenhum.
+        </P>
+        <P>
+          O prazo que o sistema de fato acompanha é o da solicitação inteira, calculado na criação a
+          partir da diretoria (30 dias corridos em Corporativo, 45 em Tecnologia e Revenue, pela metade
+          quando a prioridade é Crítica). É esse prazo que alimenta os alertas de atraso nos painéis.
+        </P>
+        <P>
+          Independente disso, se um aprovador não decidir dentro de 3 dias úteis, o sistema notifica
+          automaticamente o próximo nível hierárquico e a Controladoria, para que a solicitação nunca
+          fique parada sem ninguém saber.
         </P>
 
         {/* 5. PC, Contratos, Dashboards */}

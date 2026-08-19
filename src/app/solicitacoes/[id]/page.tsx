@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { STAGES } from "@/lib/workflow";
+import { STAGES, expectativaDaEtapa } from "@/lib/workflow";
 import { RequestActions } from "@/components/RequestActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { RequestChatWidget } from "@/components/RequestChatWidget";
@@ -81,6 +81,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   // triar: da negociação em diante, ou assim que alguém já anexou a evidência
   // (caso a solicitação tenha voltado de etapa). Separamos os anexos para o
   // mesmo arquivo não aparecer duas vezes na tela.
+  const expectativaDaEtapaAtual = expectativaDaEtapa(request.currentStage, request.diretoria);
+
   const anexosDeTriagem = request.attachments.filter((a) => a.category === "TRIAGEM_FORNECEDOR");
   const outrosAnexos = request.attachments.filter((a) => a.category !== "TRIAGEM_FORNECEDOR");
   const ETAPAS_COM_FORNECEDOR_DEFINIDO: string[] = [
@@ -127,6 +129,24 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             <Badge variant="green">{STAGES[request.currentStage].label}</Badge>
           </div>
         </div>
+
+        {/* Expectativa de tempo da etapa e prazo da solicitação inteira. O
+            prazo total já era calculado na criação e só aparecia nos painéis
+            gerenciais: quem estava esperando a própria compra não via nem um
+            nem outro. */}
+        <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 10, marginBottom: 0 }}>
+          {expectativaDaEtapaAtual !== null && (
+            <>
+              Esta etapa costuma levar {expectativaDaEtapaAtual}{" "}
+              {expectativaDaEtapaAtual === 1 ? "dia" : "dias"}
+              {request.slaDeadline ? " · " : ""}
+            </>
+          )}
+          {request.slaDeadline && <>Previsão de conclusão da solicitação: {formatDateOnly(request.slaDeadline)}</>}
+          {(expectativaDaEtapaAtual !== null || request.slaDeadline) && (
+            <> · tempos de referência, não travam nada</>
+          )}
+        </p>
 
         <div style={{ marginTop: 10 }}>
           <StageOverrideControls

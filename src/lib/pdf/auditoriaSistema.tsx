@@ -905,7 +905,7 @@ export function AuditoriaSistemaDocument() {
           </Text>
         </View>
 
-        <Finding n={1} severity="doc" title="SLA por etapa é só cosmético">
+        <Finding n={1} severity="doc" situacao="parcial" comoFoiResolvido="por decisão do time, esses tempos são referência de expectativa, não prazo cobrado. Deixaram de ser dado morto: a tela da solicitação passou a mostrar o tempo esperado da etapa atual e a previsão de conclusão, com o aviso de que não travam nada, e o manual foi corrigido. Falta o time definir os tempos das etapas que ainda não têm um." title="SLA por etapa é só cosmético">
           Os campos de prazo por etapa (Corporativo, Tecnologia e Revenue) só existem em 8 das 16 etapas e nunca são lidos em código. O único prazo de fato aplicado é o prazo geral, calculado uma vez na criação da solicitação.
         </Finding>
         <Finding n={2} severity="doc" situacao="resolvido" comoFoiResolvido="as 15 rotas de etapa passaram a usar um helper transacional que consulta o grafo antes de gravar." title="Grafo de transições válidas não é reforçado em produção">
