@@ -308,7 +308,7 @@ export function ManualProcessoDocument() {
         <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text> — Baixa (rotineira), Média (importante), Alta (urgente) ou Crítica (urgência máxima). Ao marcar Alta ou Crítica, o sistema pede para confirmar que a urgência é real, já que prioridades altas furam fila e pressionam prazo de outras solicitações.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text> para conclusão — se a data for menor que 7 dias úteis, um alerta lembra que cotação, aprovação e emissão do pedido levam tempo.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Linha do Orçamento</Text> — escolha <Text style={{ fontWeight: 700 }}>Orçamento Extra</Text> quando não há linha prevista (exige anexar o print da validação do orçamento pelo time de FP&A) ou <Text style={{ fontWeight: 700 }}>Outros</Text> para digitar o nome da linha manualmente.</Bullet>
-        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não) — marcar "Não" mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
+        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não) — marcar &quot;Não&quot; mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
         <Bullet>Anexos de apoio (proposta, briefing, etc.), quando fizer sentido.</Bullet>
         <P>
           Depois de enviada, a solicitação passa primeiro pelo gestor do centro de custo escolhido (etapa
