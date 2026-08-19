@@ -28,6 +28,14 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // O padrão do Vitest é 5s, curto demais aqui. Estes são testes de
+    // integração de verdade: batem no Postgres, e os arquivos rodam em
+    // paralelo disputando o mesmo banco de desenvolvimento. Num arranque frio
+    // (logo após prisma generate, por exemplo) o tempo de import passou de 50s
+    // para 118s e uma corrida inteira falhou por timeout, sem nada de errado no
+    // comportamento testado. Falha por timeout aqui é ruído que esconde
+    // regressão de verdade, que é o que a suíte precisa apontar.
+    testTimeout: 15_000,
   },
   resolve: {
     alias: {
