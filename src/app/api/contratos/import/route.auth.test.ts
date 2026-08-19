@@ -107,6 +107,42 @@ describe("POST /api/contratos/import: autorização", () => {
     expect(body.created).toBeGreaterThan(0);
   });
 
+  it("não duplica a carteira quando a mesma planilha é importada duas vezes", async () => {
+    const gestor = await createTestUser(["COMPRADOR"]);
+    session.current = { user: { roles: ["ADMIN"] } };
+    // Nome próprio: os testes deste arquivo compartilham o banco, e o do
+    // caminho feliz acima já cadastrou o fornecedor padrão. Sem isto, a
+    // "primeira" importação daqui já seria a duplicata.
+    const planilhaUnica = () =>
+      planilha([{ ...linhaValida(gestor.email), "Razão Social": `${TEST_PREFIX}Duplicata LTDA` }]);
+
+    const primeira = await POST(uploadRequest(planilhaUnica()));
+    expect((await primeira.json()).created).toBe(1);
+    const depoisDaPrimeira = await prisma.contract.count({ where: { supplierName: { contains: TEST_PREFIX } } });
+
+    const segunda = await POST(uploadRequest(planilhaUnica()));
+    const corpo = await segunda.json();
+
+    // Antes, subir a mesma planilha de novo duplicava tudo: o cron de
+    // renovação passava a mandar dois avisos por contrato e o dashboard
+    // contava em dobro.
+    expect(corpo.created).toBe(0);
+    expect(corpo.failed).toBe(1);
+    expect(await prisma.contract.count({ where: { supplierName: { contains: TEST_PREFIX } } })).toBe(depoisDaPrimeira);
+    expect(corpo.results[0].detail).toContain("já está cadastrado");
+  });
+
+  it("grava o CNPJ só com os dígitos, para o anti-fracionamento conseguir somar", async () => {
+    const gestor = await createTestUser(["COMPRADOR"]);
+    session.current = { user: { roles: ["ADMIN"] } };
+    const linha = { ...linhaValida(gestor.email), CNPJ: "11.222.333/0001-81", "Razão Social": `${TEST_PREFIX}Formatado LTDA` };
+
+    await POST(uploadRequest(planilha([linha])));
+
+    const criado = await prisma.contract.findFirst({ where: { supplierName: `${TEST_PREFIX}Formatado LTDA` } });
+    expect(criado?.supplierCnpj).toBe("11222333000181");
+  });
+
   it("recusa planilha acima do limite de linhas", async () => {
     const gestor = await createTestUser(["COMPRADOR"]);
     session.current = { user: { roles: ["ADMIN"] } };

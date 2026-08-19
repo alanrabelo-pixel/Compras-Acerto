@@ -5,6 +5,7 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { avancarEtapa } from "@/lib/etapa";
 import { type PedidoCompraItem } from "@/lib/pdf/pedidoCompra";
 import { campo } from "@/lib/rotulos";
+import { normalizarCnpj } from "@/lib/cnpj";
 
 /**
  * POST /api/requests/[id]/pedido-compra
@@ -44,14 +45,28 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const roleError = await requireRole(actorId, ["COMPRADOR"]);
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
+  // Guardado só com os dígitos. O Pedido de Compra é a tabela que o controle
+  // anti-fracionamento soma por CNPJ, e ele compara por igualdade exata: se
+  // esta gravação usar um formato e o cadastro do fornecedor usar outro, a
+  // soma dá zero e o risco nunca é sinalizado.
+  const cnpjNormalizado = normalizarCnpj(supplierCnpj);
+
   const required = {
-    supplierLegalName, supplierCnpj, contactName, contactPhone, contactEmail,
+    supplierLegalName, supplierCnpj: cnpjNormalizado, contactName, contactPhone, contactEmail,
     initialValue, negotiatedValue, paymentCondition, installments, prazoEntrega, localEntrega,
   };
   for (const [key, value] of Object.entries(required)) {
     if (value === undefined || value === null || value === "") {
       return NextResponse.json({ error: `Preencha o campo ${campo(key)} para gerar o Pedido de Compra.` }, { status: 400 });
     }
+  }
+
+  // O laço acima já garante que o CNPJ veio, mas o TypeScript não consegue
+  // deduzir isso de uma checagem feita dentro de Object.entries. A guarda
+  // explícita serve para estreitar o tipo, e não é redundante do ponto de
+  // vista do compilador.
+  if (!cnpjNormalizado) {
+    return NextResponse.json({ error: `Preencha o campo ${campo("supplierCnpj")} para gerar o Pedido de Compra.` }, { status: 400 });
   }
 
   // Sem limite de itens: o PDF (ver src/lib/pdf/pedidoCompra.tsx) pagina
@@ -69,12 +84,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const purchaseOrder = await prisma.purchaseOrder.upsert({
     where: { requestId: request.id },
     update: {
-      supplierId: supplierId || undefined, supplierLegalName, supplierCnpj, contactName, contactPhone, contactEmail,
+      supplierId: supplierId || undefined, supplierLegalName, supplierCnpj: cnpjNormalizado, contactName, contactPhone, contactEmail,
       initialValue, negotiatedValue, paymentCondition, installments, installmentValue, currency: currency ?? "BRL",
       needsMeasurement: Boolean(needsMeasurement), prazoEntrega, localEntrega, frete: frete ?? "CIF",
     },
     create: {
-      requestId: request.id, supplierId: supplierId || undefined, supplierLegalName, supplierCnpj,
+      requestId: request.id, supplierId: supplierId || undefined, supplierLegalName, supplierCnpj: cnpjNormalizado,
       contactName, contactPhone, contactEmail, initialValue, negotiatedValue, paymentCondition,
       installments, installmentValue, currency: currency ?? "BRL", needsMeasurement: Boolean(needsMeasurement),
       prazoEntrega, localEntrega, frete: frete ?? "CIF",

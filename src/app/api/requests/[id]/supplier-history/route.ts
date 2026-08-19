@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { normalizarCnpj } from "@/lib/cnpj";
 
 /**
  * GET /api/requests/[id]/supplier-history
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   if (catalogMatch) {
     const orders = await prisma.purchaseOrder.findMany({
-      where: { supplierCnpj: catalogMatch.cnpj, createdAt: { gte: twelveMonthsAgo } },
+      where: { supplierCnpj: normalizarCnpj(catalogMatch.cnpj) ?? catalogMatch.cnpj, createdAt: { gte: twelveMonthsAgo } },
       select: { negotiatedValue: true },
     });
     const sum = orders.reduce((acc, o) => acc + Number(o.negotiatedValue), 0);

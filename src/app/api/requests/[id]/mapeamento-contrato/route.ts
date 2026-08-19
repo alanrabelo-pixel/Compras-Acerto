@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { campo } from "@/lib/rotulos";
+import { normalizarCnpj } from "@/lib/cnpj";
 
 /**
  * POST /api/requests/[id]/mapeamento-contrato
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       supplierId: supplierId || undefined,
       supplierName,
       supplierTradeName: supplierTradeName || undefined,
-      supplierCnpj: supplierCnpj || undefined,
+      supplierCnpj: normalizarCnpj(supplierCnpj) ?? undefined,
       documentType: documentType || undefined,
       contractObject: contractObject || undefined,
       prazo: prazo || undefined,

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { bypassAuthAtivo } from "@/lib/bypass";
 import type { Diretoria } from "@prisma/client";
+import { normalizarCnpj } from "@/lib/cnpj";
 
 export const dynamic = "force-dynamic";
 
@@ -173,12 +174,42 @@ export async function POST(req: NextRequest) {
     const diretoria = diretoriaRaw && VALID_DIRETORIA.includes(diretoriaRaw) ? (diretoriaRaw as Diretoria) : undefined;
     const renewalDate = parseDate(row, "Renovação Prevista") ?? endDate!;
 
+    const cnpjDaLinha = normalizarCnpj(str(row, "CNPJ"));
+
     try {
+      // Não havia nada impedindo duplicata: Contract só tem id e requestId
+      // como únicos, e contrato importado não tem solicitação de origem, então
+      // subir a mesma planilha duas vezes duplicava a carteira inteira. Isso
+      // se propaga: o cron de renovação passa a mandar dois avisos por
+      // contrato e o dashboard conta em dobro.
+      //
+      // A checagem fica aqui, e não numa constraint do banco, porque
+      // supplierCnpj é anulável e o Postgres trata nulos como distintos: a
+      // constraint deixaria passar justamente as linhas sem CNPJ, que são as
+      // mais prováveis numa planilha legada.
+      const jaExiste = await prisma.contract.findFirst({
+        where: {
+          supplierName: supplierName!,
+          startDate: startDate!,
+          endDate: endDate!,
+          ...(cnpjDaLinha ? { supplierCnpj: cnpjDaLinha } : {}),
+        },
+        select: { id: true },
+      });
+      if (jaExiste) {
+        results.push({
+          row: rowNum,
+          status: "erro",
+          detail: `Contrato de ${supplierName} com esta vigência já está cadastrado. Linha ignorada para não duplicar.`,
+        });
+        continue;
+      }
+
       await prisma.contract.create({
         data: {
           supplierName: supplierName!,
           supplierTradeName: str(row, "Nome Fantasia"),
-          supplierCnpj: str(row, "CNPJ"),
+          supplierCnpj: cnpjDaLinha,
           documentType: str(row, "Tipo de Documento"),
           contractObject: str(row, "Objeto do Contrato"),
           prazo: str(row, "Prazo"),
