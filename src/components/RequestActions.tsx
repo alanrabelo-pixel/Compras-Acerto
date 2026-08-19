@@ -6,7 +6,7 @@ import type { RoleName } from "@prisma/client";
 import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { AiInsightPanel } from "@/components/AiInsightPanel";
-import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel, approvalsRequiredForLevel } from "@/lib/workflow";
+import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel, approvalsRequiredForLevel, STAGES } from "@/lib/workflow";
 import { Button, Card } from "@/components/ui";
 
 // Identidade de quem está logado (server session, ver src/lib/auth.ts),
@@ -155,22 +155,30 @@ export function RequestActions({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sucesso, setSucesso] = useState<string | null>(null);
 
   async function call(url: string, method: string, body: unknown) {
+    const etapaAnterior = request.currentStage;
     setLoading(true);
     setError(null);
+    setSucesso(null);
     try {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erro ao processar ação.");
+      if (!res.ok) throw new Error(data.error ?? "Não foi possível concluir esta ação.");
+      // Nenhuma das 14 ações de etapa dava retorno: só recarregavam a página.
+      // Quem aprovava meio milhão de reais via o formulário sumir e precisava
+      // deduzir que tinha funcionado.
+      setSucesso(mensagemDeSucesso(etapaAnterior, data));
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro inesperado.");
+      setError(e instanceof Error ? e.message : "Não foi possível concluir esta ação. Tente de novo em instantes.");
     } finally {
       setLoading(false);
     }
   }
 
+  const formularioDaEtapa = (() => {
   switch (request.currentStage) {
     case "APROVACAO_GESTOR":
       return <AprovacaoGestorForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
@@ -205,10 +213,19 @@ export function RequestActions({
     default:
       return (
         <section className="card section-gap" style={{ background: "var(--surface-muted)", fontSize: 12.5, color: "var(--ink-muted)" }}>
-          Sem ação disponível nesta tela para a etapa atual ({request.currentStage}).
+          Não há ação a fazer nesta tela enquanto a solicitação está em{" "}
+          {STAGES[request.currentStage as keyof typeof STAGES]?.label ?? request.currentStage}.
         </section>
       );
   }
+  })();
+
+  return (
+    <>
+      <SuccessBox mensagem={sucesso} />
+      {formularioDaEtapa}
+    </>
+  );
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -221,7 +238,77 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 
 function ErrorBox({ error }: { error: string | null }) {
   if (!error) return null;
-  return <p style={{ fontSize: 12, color: "var(--danger)", marginTop: 8 }}>{error}</p>;
+  return (
+    <p style={{ fontSize: 12, color: "var(--danger)", marginTop: 8 }} role="alert">
+      {error}
+    </p>
+  );
+}
+
+/**
+ * Confirmação do que acabou de acontecer.
+ *
+ * Fica no componente pai, e não em cada formulário, porque depois do
+ * router.refresh() o formulário da etapa ANTERIOR é desmontado e o da etapa
+ * nova entra no lugar. Só o pai sobrevive à troca, então é onde a mensagem
+ * consegue continuar visível junto com a tela seguinte.
+ */
+function SuccessBox({ mensagem }: { mensagem: string | null }) {
+  if (!mensagem) return null;
+  return (
+    <p
+      className="section-gap"
+      style={{
+        fontSize: 12.5,
+        color: "var(--acerto-green-dark)",
+        background: "rgba(37,211,102,0.08)",
+        border: "1px solid var(--acerto-green)",
+        borderRadius: 4,
+        padding: "9px 12px",
+        margin: 0,
+        fontWeight: 600,
+      }}
+      role="status"
+    >
+      {mensagem}
+    </p>
+  );
+}
+
+/** Monta a confirmação a partir do que a rota devolveu. */
+function mensagemDeSucesso(etapaAnterior: string, data: unknown): string {
+  const d = (data ?? {}) as Record<string, unknown>;
+  const requestDaResposta = (d.request ?? d) as Record<string, unknown>;
+  const novaEtapa = typeof requestDaResposta.currentStage === "string" ? requestDaResposta.currentStage : null;
+
+  if (d.waitingForOtherApprovers) {
+    return "Sua decisão foi registrada. A solicitação segue aguardando a decisão do outro aprovador.";
+  }
+  if (d.status === "REPROVADO" || requestDaResposta.status === "CANCELADO") {
+    return "Reprovação registrada. A solicitação foi cancelada e o solicitante foi avisado.";
+  }
+  if (d.status === "DOCUMENTO_REPROVADO") {
+    return "Documento reprovado. A solicitação continua nesta etapa, aguardando um novo envio.";
+  }
+  if (d.status === "PAGAMENTO_PROGRAMADO") {
+    return "Pagamento programado. A solicitação avança quando o ERP confirmar.";
+  }
+  if (d.status === "EXCECAO_PENDENTE") {
+    return "Exceção orçamentária registrada. Aguardando a decisão de quem tem alçada para aprová-la.";
+  }
+  if (d.status === "DEVOLVIDO") {
+    return "Solicitação devolvida ao solicitante, com o seu comentário registrado.";
+  }
+  if (d.status === "MINUTA_EM_ANDAMENTO") {
+    return "Minuta registrada. A solicitação continua no Jurídico até a assinatura.";
+  }
+
+  if (novaEtapa && novaEtapa !== etapaAnterior) {
+    const rotuloDaEtapa = STAGES[novaEtapa as keyof typeof STAGES]?.label ?? novaEtapa;
+    return `Pronto. A solicitação avançou para ${rotuloDaEtapa}, e o solicitante foi avisado.`;
+  }
+
+  return "Registrado com sucesso.";
 }
 
 function TriagemForm({
