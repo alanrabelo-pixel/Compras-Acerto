@@ -29,12 +29,44 @@ import { getToken } from "next-auth/jwt";
  * está configurado. A lógica de SSO abaixo continua intacta e é a que vale
  * assim que a flag voltar para "false".
  */
+/**
+ * Rotas de API que se autenticam sozinhas, por token de máquina ou assinatura,
+ * e portanto não podem exigir sessão de usuário:
+ * - /api/auth: o próprio NextAuth (exigir sessão aqui impediria o login).
+ * - /api/cron: Bearer CRON_SECRET, chamado por agendador externo.
+ * - /api/erp: Bearer ERP_API_KEY, chamado pelo ERP.
+ * - /api/slack: assinatura HMAC do Slack, chamado pelo webhook.
+ */
+const API_COM_AUTENTICACAO_PROPRIA = ["/api/auth", "/api/cron", "/api/erp", "/api/slack"];
+
 export async function middleware(req: NextRequest) {
   if (process.env.LOCAL_BYPASS_AUTH === "true") {
     return NextResponse.next();
   }
 
   const { pathname } = req.nextUrl;
+
+  // As rotas de API ficavam FORA do matcher, então nenhuma passava por aqui e
+  // cada uma precisava se defender sozinha. A maioria não se defendia: dava
+  // para baixar qualquer anexo, exportar a base inteira em Excel e criar
+  // solicitação sem autenticação nenhuma. Agora a sessão é exigida na porta.
+  //
+  // Exige apenas sessão, não canViewBoard: quem só tem o papel Solicitante
+  // precisa conseguir abrir solicitação e chamado. A autorização por papel
+  // continua sendo responsabilidade de cada rota.
+  if (pathname.startsWith("/api/")) {
+    if (API_COM_AUTENTICACAO_PROPRIA.some((prefixo) => pathname.startsWith(prefixo))) {
+      return NextResponse.next();
+    }
+    const token = await getToken({ req });
+    if (!token) {
+      // Rota de API responde 401 em JSON. Redirecionar para o login, como as
+      // páginas fazem, devolveria HTML para quem esperava JSON e quebraria o
+      // cliente com erro de parse em vez de uma mensagem clara.
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
 
   if (
     pathname === "/" ||
@@ -71,5 +103,13 @@ function signInRedirect(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/solicitacoes/:path*", "/chamados/:path*", "/contratos/:path*", "/dashboards/:path*", "/admin/:path*"],
+  matcher: [
+    "/",
+    "/solicitacoes/:path*",
+    "/chamados/:path*",
+    "/contratos/:path*",
+    "/dashboards/:path*",
+    "/admin/:path*",
+    "/api/:path*",
+  ],
 };
