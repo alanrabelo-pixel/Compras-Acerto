@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { encryptSecret } from "@/lib/crypto";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * GET /api/users/[id]/ai-keys: status das chaves pessoais de IA (Claude e
@@ -23,7 +24,7 @@ import { encryptSecret } from "@/lib/crypto";
  * enquanto o SSO real não está configurado.
  */
 async function requireSelfOrAdmin(userId: string): Promise<string | null> {
-  if (process.env.LOCAL_BYPASS_AUTH === "true") return null;
+  if (bypassAuthAtivo()) return null;
   const session = await getServerSession(authOptions);
   const sessionUser = session?.user as { id?: string; roles?: string[] } | undefined;
   if (!session || !sessionUser?.id) return "Não autenticado.";

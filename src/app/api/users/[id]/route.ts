@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { RoleName } from "@prisma/client";
 import { BOARD_ROLES } from "@/lib/roles";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * PATCH /api/users/[id]: gerencia os "5 tipos de acesso" (Admin, Compras,
@@ -28,7 +29,7 @@ import { BOARD_ROLES } from "@/lib/roles";
 const MANAGED_ROLES: RoleName[] = ["ADMIN", "COMPRADOR", "SOLICITANTE", "APROVADOR", "CONTROLADORIA"];
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  if (process.env.LOCAL_BYPASS_AUTH !== "true") {
+  if (!bypassAuthAtivo()) {
     const session = await getServerSession(authOptions);
     const roles = (session?.user as { roles?: string[] } | undefined)?.roles ?? [];
     if (!session || !roles.includes("ADMIN")) {

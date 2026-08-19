@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * PATCH /api/cost-centers/[id] (painel /admin/centros-de-custo): troca o(s)
@@ -18,7 +19,7 @@ import { prisma } from "@/lib/db";
  * Solicitações já decididas não são tocadas (preserva o histórico).
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  if (process.env.LOCAL_BYPASS_AUTH !== "true") {
+  if (!bypassAuthAtivo()) {
     const session = await getServerSession(authOptions);
     const roles = (session?.user as { roles?: string[] } | undefined)?.roles ?? [];
     if (!session || !roles.includes("ADMIN")) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 // GET /api/cost-centers: lista centros de custo ativos, para o formulário de
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
@@ -20,7 +21,7 @@ export async function GET() {
 // /admin/centros-de-custo, pedido do usuário). Mesmo padrão de autenticação
 // de /api/cost-centers/[id]/route.ts.
 export async function POST(req: NextRequest) {
-  if (process.env.LOCAL_BYPASS_AUTH !== "true") {
+  if (!bypassAuthAtivo()) {
     const session = await getServerSession(authOptions);
     const roles = (session?.user as { roles?: string[] } | undefined)?.roles ?? [];
     if (!session || !roles.includes("ADMIN")) {

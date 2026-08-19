@@ -1,6 +1,15 @@
 import { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
+import { assertBypassNaoEstaEmProducao } from "@/lib/bypass";
+
+// Falha alto se LOCAL_BYPASS_AUTH subir junto com NODE_ENV=production. Fica
+// aqui, e não no middleware, porque este módulo roda no runtime Node e é
+// importado por todo caminho autenticado; lançar no runtime edge derrubaria a
+// aplicação com um erro difícil de ler. A proteção efetiva é o bypassAuthAtivo()
+// devolver false em produção, isto é o alarme para ninguém operar achando que o
+// bypass está valendo.
+assertBypassNaoEstaEmProducao();
 
 /**
  * SSO via Google Workspace, restrito ao domínio @acerto.com.br.

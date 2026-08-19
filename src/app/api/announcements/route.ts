@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { loadCurrentUser } from "@/lib/current-user";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 // GET /api/announcements: lista os comunicados mais recentes (leitura
 // aberta a qualquer pessoa autenticada/bypass, sem alçada).
@@ -13,7 +14,7 @@ export async function GET() {
 // LOCAL_BYPASS_AUTH, ver .env, o "Modo local" sempre atua como ADMIN, mesma
 // regra já usada em AppShell.tsx/rbac.ts).
 export async function POST(req: NextRequest) {
-  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  const bypass = bypassAuthAtivo();
   if (!bypass) {
     const currentUser = await loadCurrentUser();
     if (!currentUser?.isAdmin) {

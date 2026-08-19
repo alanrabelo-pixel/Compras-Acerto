@@ -28,7 +28,7 @@ ALTER TABLE "CostCenter" DROP COLUMN "managerId";
 -- AlterTable
 ALTER TABLE "PurchaseRequest" ADD COLUMN "managerApprovalPersonifiedBy" TEXT;
 
--- DropForeignKey (ApprovalLevelManager nunca teve linhas gravadas nesta base — sem dado a preservar)
+-- DropForeignKey (ApprovalLevelManager nunca teve linhas gravadas nesta base, sem dado a preservar)
 ALTER TABLE "ApprovalLevelManager" DROP CONSTRAINT "ApprovalLevelManager_approverId_fkey";
 
 -- DropTable

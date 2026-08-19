@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canViewBoard } from "@/lib/roles";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * Identidade de quem está vendo os chamados (Viagens/Facilities/NDA), mesmo
@@ -22,7 +23,7 @@ export type ChamadoViewer = { showFullBoard: true } | { showFullBoard: false; em
  * nunca em produção (fora do bypass a sessão real manda, sem exceção).
  */
 export async function resolveChamadoViewer(devUserId?: string): Promise<ChamadoViewer> {
-  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  const bypass = bypassAuthAtivo();
 
   if (bypass) {
     if (devUserId) {

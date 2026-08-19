@@ -8,6 +8,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { UserMenu } from "@/components/UserMenu";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 // Compras é o único serviço com fluxo completo (triagem, cotação, aprovação,
 // contrato). Os outros 3 são canais de chamado mais simples. Tratá-los como
@@ -48,7 +49,7 @@ const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.c
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  const bypass = bypassAuthAtivo();
   const session = bypass ? null : await getServerSession(authOptions);
   const user = bypass
     ? LOCAL_BYPASS_USER

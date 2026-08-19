@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * Controle de acesso às telas internas.
@@ -40,7 +41,7 @@ import { getToken } from "next-auth/jwt";
 const API_COM_AUTENTICACAO_PROPRIA = ["/api/auth", "/api/cron", "/api/erp", "/api/slack"];
 
 export async function middleware(req: NextRequest) {
-  if (process.env.LOCAL_BYPASS_AUTH === "true") {
+  if (bypassAuthAtivo()) {
     return NextResponse.next();
   }
 

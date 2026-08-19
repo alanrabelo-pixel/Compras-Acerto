@@ -9,6 +9,7 @@ import { WhoAmIPicker } from "@/components/WhoAmIPicker";
 import { Badge } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { formatCurrency } from "@/lib/format";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function PendenciasPage({
 }: {
   searchParams: { userId?: string };
 }) {
-  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  const bypass = bypassAuthAtivo();
   const session = bypass ? null : await getServerSession(authOptions);
   const sessionUserId = (session?.user as { id?: string } | undefined)?.id;
   const userId = sessionUserId || searchParams.userId || "";

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * PATCH /api/approval-levels/[level]: troca o(s) aprovador(es) padrão de
@@ -20,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { level: str
     return NextResponse.json({ error: "Nível inválido (esperado 1, 2 ou 3)" }, { status: 400 });
   }
 
-  if (process.env.LOCAL_BYPASS_AUTH !== "true") {
+  if (!bypassAuthAtivo()) {
     const session = await getServerSession(authOptions);
     const roles = (session?.user as { roles?: string[] } | undefined)?.roles ?? [];
     if (!session || !roles.includes("ADMIN")) {

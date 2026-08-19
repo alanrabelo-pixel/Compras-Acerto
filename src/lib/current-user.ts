@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 export type CurrentUser = {
   id: string;
@@ -19,7 +20,7 @@ export type CurrentUser = {
  * rótulo "Modo local (sem SSO)" nesse caso, só sem avatar editável.
  */
 export async function loadCurrentUser(): Promise<CurrentUser | null> {
-  if (process.env.LOCAL_BYPASS_AUTH === "true") return null;
+  if (bypassAuthAtivo()) return null;
 
   const session = await getServerSession(authOptions);
   const user = session?.user as

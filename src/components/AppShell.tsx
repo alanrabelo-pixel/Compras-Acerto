@@ -9,6 +9,7 @@ import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { canViewBoard } from "@/lib/roles";
 import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, Building2, type LucideIcon } from "lucide-react";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -43,7 +44,7 @@ const SOLICITANTE_NAV_ITEMS: NavItem[] = [
  * página passa o seu explicitamente, mesmo padrão que o TopNav já usava.
  */
 export async function AppShell({ active, children }: { active?: string; children: React.ReactNode }) {
-  const bypass = process.env.LOCAL_BYPASS_AUTH === "true";
+  const bypass = bypassAuthAtivo();
   const session = bypass ? null : await getServerSession(authOptions);
   const user = bypass
     ? LOCAL_BYPASS_USER

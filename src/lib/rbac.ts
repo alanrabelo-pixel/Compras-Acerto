@@ -2,6 +2,7 @@ import { RoleName } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { bypassAuthAtivo } from "@/lib/bypass";
 
 /**
  * RBAC: a identidade de quem age em cada rota vem do próprio corpo da
@@ -34,7 +35,7 @@ export async function requireRole(
   const { requireSelf = true } = options;
   if (!userId) return "Usuário responsável pela ação não informado.";
 
-  if (requireSelf && process.env.LOCAL_BYPASS_AUTH !== "true") {
+  if (requireSelf && !bypassAuthAtivo()) {
     const session = await getServerSession(authOptions);
     const sessionUserId = (session?.user as { id?: string } | undefined)?.id;
     if (!sessionUserId) return "Não autenticado.";
