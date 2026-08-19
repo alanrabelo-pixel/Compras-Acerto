@@ -94,6 +94,11 @@ export async function POST(req: NextRequest) {
       leadershipPreApproved,
       approverManagerId,
       budgetLineText,
+      // Era lido da requisição e descartado: a solicitação ficava sem linha de
+      // orçamento e sem nenhum registro de que era extra-orçamentária, e a
+      // Validação Orçamentária perdia como saber que precisa exigir o
+      // comprovante de aprovação do FP&A.
+      extraBudget: Boolean(extraBudget),
       priority,
       demandType,
       shortDescription,

@@ -63,6 +63,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       orderBy: { createdAt: "desc" },
     });
 
+    // O comprovante era exigido apenas no formulário: a API criava a exceção
+    // com attachmentId undefined e seguia. Uma chamada direta, ou um upload que
+    // falhasse depois da criação da solicitação, produzia exceção orçamentária
+    // sem documento que a sustentasse.
+    //
+    // A checagem fica aqui, e não na criação da solicitação, por uma restrição
+    // real do fluxo: o anexo só pode ser enviado DEPOIS que a solicitação
+    // existe, porque a rota de upload precisa do id dela. Exigir na criação
+    // quebraria o próprio formulário. Aqui é o primeiro momento em que o
+    // documento pode existir e onde ele de fato importa.
+    if (request.extraBudget && !extraBudgetAttachment) {
+      return NextResponse.json(
+        {
+          error:
+            "Esta solicitação foi aberta como Orçamento Extra e ainda não tem o comprovante de aprovação do FP&A anexado. " +
+            "Anexe o documento na solicitação antes de registrar a exceção orçamentária.",
+        },
+        { status: 422 }
+      );
+    }
+
     // Primeira chamada: apenas registra a exceção como pendente, na alçada certa.
     const exception = await prisma.budgetException.upsert({
       where: { requestId: request.id },

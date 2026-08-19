@@ -303,6 +303,12 @@ model PurchaseRequest {
   // esse campo é manual (sem integração com a base de orçamento), então não
   // referencia BudgetLine; budgetLineId/budgetLine seguem só pra registros
   // antigos que já tinham uma linha real vinculada.
+  /// Solicitação aberta como Orçamento Extra, sem linha de orçamento.
+  /// Era enviado pelo formulário e DESCARTADO: a rota lia o campo e não
+  /// gravava, então a solicitação ficava sem linha de orçamento e sem
+  /// registro de que era extra-orçamentária. Sem isso, a Validação
+  /// Orçamentária não tem como exigir o comprovante do FP&A.
+  extraBudget    Boolean  @default(false)
   budgetLineText String?
 
   priority         Priority
