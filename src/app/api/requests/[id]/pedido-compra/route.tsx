@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
-import { PedidoCompraDocument, type PedidoCompraItem } from "@/lib/pdf/pedidoCompra";
+import { type PedidoCompraItem } from "@/lib/pdf/pedidoCompra";
 
 /**
  * POST /api/requests/[id]/pedido-compra
@@ -96,23 +93,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     })),
   });
 
-  const buffer = await renderToBuffer(
-    <PedidoCompraDocument
-      data={{
-        code: request.code,
-        createdAt: purchaseOrder.createdAt.toISOString(),
-        supplierLegalName, supplierCnpj, contactName, contactPhone, contactEmail,
-        paymentCondition, installments, installmentValue, currency: currency ?? "BRL",
-        prazoEntrega, localEntrega, frete: (frete ?? "CIF") as "CIF" | "FOB",
-        items: itemList,
-      }}
-    />
-  );
-
-  const publicDir = path.join(process.cwd(), "public", "pedidos-compra");
-  await mkdir(publicDir, { recursive: true });
-  await writeFile(path.join(publicDir, `${request.code}.pdf`), buffer);
-  const pdfUrl = `/pedidos-compra/${request.code}.pdf`;
+  // O PDF era renderizado aqui e gravado em public/pedidos-compra/{código}.pdf,
+  // servido como arquivo estático. Dois problemas nisso:
+  //
+  // 1. O nome é previsível (PC-2026-0001, 0002, ...) e arquivo em public/ é
+  //    servido pelo Next sem passar por rota nenhuma, então dava para enumerar
+  //    todos os pedidos de compra da empresa: fornecedor, CNPJ, valor
+  //    negociado, condição de pagamento.
+  // 2. A pasta está no .gitignore e o disco é efêmero na Vercel, então os
+  //    arquivos sumiam no deploy seguinte e o link gravado no banco quebrava.
+  //
+  // A rota GET .../pedido-compra/pdf já regenera o documento a partir dos mesmos
+  // dados a cada chamada, então renderizar aqui era trabalho jogado fora. Isso
+  // também tira a geração de PDF (segundos, três fontes TTF) do caminho de quem
+  // está esperando a resposta.
+  //
+  // Contrapartida assumida: antes, um erro de geração derrubaria este POST e a
+  // etapa não avançaria. Agora ele só apareceria no download. O risco é baixo
+  // porque os dados são os mesmos que acabaram de ser validados e gravados.
+  const pdfUrl = `/api/requests/${request.id}/pedido-compra/pdf`;
 
   await prisma.purchaseOrder.update({ where: { id: purchaseOrder.id }, data: { pdfUrl } });
 

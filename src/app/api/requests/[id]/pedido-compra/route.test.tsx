@@ -91,14 +91,17 @@ describe("POST /api/requests/[id]/pedido-compra", () => {
 
     expect(res.status).toBe(201);
     expect(data.request.currentStage).toBe("AGUARDANDO_ENTREGA");
-    expect(data.purchaseOrder.pdfUrl).toBe(`/pedidos-compra/${request.code}.pdf`);
+    // O PDF deixou de ser gravado em public/ com nome previsível, onde era
+    // enumerável e sumia a cada deploy. Agora o link aponta para a rota que
+    // regenera o documento a partir do banco e exige sessão.
+    expect(data.purchaseOrder.pdfUrl).toBe(`/api/requests/${request.id}/pedido-compra/pdf`);
 
     const items = await prisma.purchaseOrderItem.findMany({ where: { purchaseOrderId: data.purchaseOrder.id } });
     expect(items).toHaveLength(1);
     expect(Number(items[0].valorTotal)).toBe(9000);
 
     const pdfPath = path.join(process.cwd(), "public", "pedidos-compra", `${request.code}.pdf`);
-    expect(fs.existsSync(pdfPath)).toBe(true);
+    expect(fs.existsSync(pdfPath), "não deve mais gravar arquivo estático em public/").toBe(false);
     // Prazo maior só aqui: este teste gera um PDF de verdade, registrando três
     // fontes TTF. Sozinho leva ~3s, mas sob a concorrência da suíte cheia
     // passava dos 5s padrão e falhava por timeout, sem nada de errado no

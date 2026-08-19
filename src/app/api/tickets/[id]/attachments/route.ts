@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { saveFile } from "@/lib/storage";
+import { validarAnexo } from "@/lib/upload";
 
 export const runtime = "nodejs";
 
@@ -22,20 +23,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const file = form.get("file");
   const uploadedBy = form.get("uploadedBy");
 
-  if (!(file instanceof Blob) || !("name" in file)) {
-    return NextResponse.json({ error: "Arquivo ausente no campo 'file'." }, { status: 400 });
+  const validacao = validarAnexo(file);
+  if (!validacao.ok) {
+    return NextResponse.json({ error: validacao.erro }, { status: validacao.status });
   }
   if (!uploadedBy || typeof uploadedBy !== "string") {
-    return NextResponse.json({ error: "Campo obrigatório ausente: uploadedBy" }, { status: 400 });
+    return NextResponse.json({ error: "Informe quem está anexando o arquivo." }, { status: 400 });
   }
 
-  const fileName = (file as File).name;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileName = validacao.nomeDoArquivo;
+  const buffer = Buffer.from(await (file as Blob).arrayBuffer());
   const storageUrl = await saveFile(ticket.id, fileName, buffer);
 
   const attachment = await prisma.attachment.create({
     data: { ticketId: ticket.id, fileName, storageUrl, uploadedBy },
   });
 
-  return NextResponse.json(attachment, { status: 201 });
+  // Ver comentário equivalente na rota de anexo de solicitação.
+  const { storageUrl: _omitido, ...semUrlInterna } = attachment;
+  return NextResponse.json(semUrlInterna, { status: 201 });
 }
