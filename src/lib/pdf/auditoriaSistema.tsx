@@ -190,16 +190,41 @@ const SEVERITY = {
   seg: { label: "S", color: BLACK },
 } as const;
 
+/** Situação de cada achado depois da rodada de correções de 19/08/2026. */
+const SITUACAO = {
+  resolvido: { rotulo: "RESOLVIDO", cor: GREEN_DARK },
+  parcial: { rotulo: "PARCIAL", cor: AMBER },
+  aberto: { rotulo: "EM ABERTO", cor: MUTED },
+} as const;
+
 function Finding({
-  n, severity, title, children,
-}: { n: number; severity: keyof typeof SEVERITY; title: string; children: React.ReactNode }) {
+  n, severity, title, situacao = "aberto", children, comoFoiResolvido,
+}: {
+  n: number;
+  severity: keyof typeof SEVERITY;
+  title: string;
+  situacao?: keyof typeof SITUACAO;
+  children: React.ReactNode;
+  comoFoiResolvido?: string;
+}) {
   const s = SEVERITY[severity];
+  const st = SITUACAO[situacao];
   return (
     <View style={styles.finding} wrap={false}>
-      <Text style={[styles.findingBadge, { backgroundColor: s.color }]}>{n}</Text>
+      <Text style={[styles.findingBadge, { backgroundColor: situacao === "resolvido" ? MUTED : s.color }]}>{n}</Text>
       <View style={styles.findingBody}>
-        <Text style={styles.findingTitle}>{title}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 1.5 }}>
+          <Text style={[styles.findingTitle, { marginBottom: 0 }]}>{title}</Text>
+          <Text style={{ fontSize: 6.5, fontWeight: 700, color: st.cor, borderRadius: 2, borderWidth: 0.5, borderColor: st.cor, paddingVertical: 1, paddingHorizontal: 3 }}>
+            {st.rotulo}
+          </Text>
+        </View>
         <Text style={styles.findingText}>{children}</Text>
+        {comoFoiResolvido && (
+          <Text style={[styles.findingText, { color: GREEN_DARK, marginTop: 2 }]}>
+            Correção: {comoFoiResolvido}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -841,12 +866,49 @@ export function AuditoriaSistemaDocument() {
         <RunningHeader label="Achados para auditoria" />
         <Footer />
         <H1 bookmark="13. Achados para auditoria (16 pontos de atenção)">13. Achados para auditoria (16 pontos de atenção)</H1>
-        <P>Consolidação de tudo que este levantamento encontrou como inconsistência, lacuna ou regra não aplicada. Ver legenda de severidade na página 2.</P>
+        <P>
+          Consolidação do que este levantamento encontrou como inconsistência, lacuna ou regra não aplicada. Cada
+          achado traz agora a situação depois da rodada de correções de 19/08/2026. Ver legenda de severidade na
+          página 2.
+        </P>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>O que foi corrigido além desta lista</Text>
+          <Text style={styles.cardLine}>
+            A maior parte do trabalho de correção não saiu destes 16 pontos: veio da revisão de segurança, que
+            corria em paralelo e não estava neste documento. Registrado aqui para o número de achados resolvidos
+            abaixo não dar a impressão errada de que pouco mudou.
+          </Text>
+          <Text style={[styles.cardLine, styles.cardLabel, { marginTop: 4 }]}>Segurança</Text>
+          <Text style={styles.cardLine}>
+            A decisão de aprovação passou a exigir que quem chama seja o aprovador designado: antes, omitir um campo
+            do corpo pulava toda a checagem e permitia aprovar qualquer valor sem papel e sem rastro. As rotas de API
+            passaram a ficar sob o middleware, que não as cobria: 30 de 57 não tinham checagem própria. A flag de
+            bypass de autenticação passou a ser ignorada em produção e documentada. O webhook do Slack deixou de
+            aceitar evento quando o segredo falta. A importação de contratos passou a exigir sessão de administrador.
+            Desativar uma pessoa passou a encerrar a sessão dela.
+          </Text>
+          <Text style={[styles.cardLine, styles.cardLabel, { marginTop: 4 }]}>Integridade de dados</Text>
+          <Text style={styles.cardLine}>
+            O código sequencial das solicitações era gerado contando linhas, o que colidia sob concorrência: medido,
+            20 criações simultâneas produziam 20 códigos e 1 valor distinto. As 15 rotas de etapa passaram a gravar
+            a mudança e o registro de auditoria na mesma transação. O CNPJ passou a ser normalizado, o que fazia o
+            controle anti-fracionamento somar zero e nunca sinalizar. A importação de contratos deixou de duplicar a
+            carteira. Foram criados 45 índices, onde não havia nenhum.
+          </Text>
+          <Text style={[styles.cardLine, styles.cardLabel, { marginTop: 4 }]}>Operação e uso</Text>
+          <Text style={styles.cardLine}>
+            Passaram a existir telas de erro, log estruturado e conferência de variáveis de ambiente na
+            inicialização. Os tokens de máquina deixaram de aceitar a string literal que a ausência da variável
+            produzia. Uploads ganharam limite de tipo e tamanho. Os PDFs de Pedido de Compra saíram da pasta pública,
+            onde eram enumeráveis. As ações de etapa e os painéis administrativos passaram a dar retorno visível, no
+            sucesso e na falha.
+          </Text>
+        </View>
 
         <Finding n={1} severity="doc" title="SLA por etapa é só cosmético">
           Os campos de prazo por etapa (Corporativo, Tecnologia e Revenue) só existem em 8 das 16 etapas e nunca são lidos em código. O único prazo de fato aplicado é o prazo geral, calculado uma vez na criação da solicitação.
         </Finding>
-        <Finding n={2} severity="doc" title="Grafo de transições válidas não é reforçado em produção">
+        <Finding n={2} severity="doc" situacao="resolvido" comoFoiResolvido="as 15 rotas de etapa passaram a usar um helper transacional que consulta o grafo antes de gravar." title="Grafo de transições válidas não é reforçado em produção">
           A função que valida se uma transição de etapa é permitida existe só para os testes automatizados. Cada rota de API faz sua própria checagem isolada da etapa atual, sem consultar esse grafo.
         </Finding>
         <Finding n={3} severity="regra" title="Alerta de fracionamento não avisa ninguém de verdade">
@@ -873,7 +935,7 @@ export function AuditoriaSistemaDocument() {
         <Finding n={10} severity="doc" title="Alerta de renovação de contrato não garante cadência semanal">
           O comentário no código diz que o alerta de renovação dispara toda segunda-feira. O código em si não verifica o dia da semana. A cadência depende inteiramente de como o agendador externo está configurado.
         </Finding>
-        <Finding n={11} severity="doc" title="Registro de alerta de contrato subestima o canal usado">
+        <Finding n={11} severity="doc" situacao="resolvido" comoFoiResolvido="o canal gravado passou a refletir os dois meios, e a tela do contrato traduz o valor." title="Registro de alerta de contrato subestima o canal usado">
           O log de alerta de renovação sempre grava o canal como e-mail, mesmo nas execuções em que um Slack também foi enviado. O registro não reflete os dois canais reais usados.
         </Finding>
         <Finding n={12} severity="regra" title="Link de pré-preenchimento a partir de contrato não funciona">
@@ -882,10 +944,10 @@ export function AuditoriaSistemaDocument() {
         <Finding n={13} severity="admin" title="6 dos 11 papéis não têm tela de gestão">
           A página de Acessos só concede ou revoga 5 papéis. Os outros 6 (Tesouraria, Fiscal, Jurídico, Privacidade, Coordenação, Gerente F&amp;NC) têm poder real sobre dinheiro ou aspectos jurídicos, mas só aparecem como filtro. Não existe caminho pela interface pra tornar alguém, por exemplo, Fiscal ou Tesouraria. Só via banco de dados diretamente.
         </Finding>
-        <Finding n={14} severity="seg" title="Anexo de chamado sem checagem de quem está anexando">
+        <Finding n={14} severity="seg" situacao="parcial" comoFoiResolvido="a rota passou a exigir sessão, pelo middleware, e a validar tipo e tamanho do arquivo. Falta a checagem de vínculo com o chamado." title="Anexo de chamado sem checagem de quem está anexando">
           Ao contrário do endpoint de mensagens, que confere se quem está agindo é o solicitante ou tem acesso ao quadro, o endpoint de anexar arquivo a um chamado aceita qualquer chamada que souber o identificador do chamado, sem checar identidade.
         </Finding>
-        <Finding n={15} severity="seg" title="Override administrativo pode reabrir o que já foi encerrado">
+        <Finding n={15} severity="seg" situacao="parcial" comoFoiResolvido="a mudança de etapa e o registro de auditoria passaram a ser atômicos. O recálculo simplificado de status segue como está." title="Override administrativo pode reabrir o que já foi encerrado">
           O mecanismo de exceção, mover uma solicitação pra qualquer etapa sem revalidar nada, recalcula o status de forma simplificada. Mover uma solicitação Cancelada ou Concluída de volta pra qualquer etapa intermediária a marca automaticamente como Aberta de novo, mesmo sem reverter de fato a razão original do cancelamento ou conclusão.
         </Finding>
         <Finding n={16} severity="seg" title="Chave de criptografia de IA é única e compartilhada">
