@@ -494,6 +494,10 @@ enum AttachmentCategory {
   // mesmo mecanismo de Attachment/storage.ts da solicitação de origem
   // (Contract.requestId), sem precisar de uma tabela própria.
   CONTRATO_ASSINADO
+  // Evidência da triagem básica do fornecedor (CNPJ ativo, listas restritivas).
+  // A verificação é feita fora do sistema, pelo comprador. Não é obrigatória:
+  // por ora a triagem apenas sinaliza, não bloqueia o Pedido de Compra.
+  TRIAGEM_FORNECEDOR
 }
 
 model Attachment {

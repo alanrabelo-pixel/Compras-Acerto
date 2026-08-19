@@ -10,6 +10,9 @@ export type SupplierOption = {
   contactName: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
+  screeningStatus: string;
+  approvedVendor: boolean;
+  riskTier: string;
 };
 
 /**

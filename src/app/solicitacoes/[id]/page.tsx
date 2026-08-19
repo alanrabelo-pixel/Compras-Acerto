@@ -77,6 +77,20 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     : [];
   const declaredByNames = Object.fromEntries(declaredByUsers.map((u) => [u.id, u.name]));
 
+  // O painel de triagem só faz sentido depois que existe um fornecedor a
+  // triar: da negociação em diante, ou assim que alguém já anexou a evidência
+  // (caso a solicitação tenha voltado de etapa). Separamos os anexos para o
+  // mesmo arquivo não aparecer duas vezes na tela.
+  const anexosDeTriagem = request.attachments.filter((a) => a.category === "TRIAGEM_FORNECEDOR");
+  const outrosAnexos = request.attachments.filter((a) => a.category !== "TRIAGEM_FORNECEDOR");
+  const ETAPAS_COM_FORNECEDOR_DEFINIDO: string[] = [
+    "COTACAO", "MAPA_COTACAO", "APROVACAO", "JURIDICO", "PEDIDO_COMPRA",
+    "AGUARDANDO_ENTREGA", "MEDICAO", "FISCAL", "TESOURARIA",
+    "MAPEAMENTO_CONTRATO", "CONCLUIDO",
+  ];
+  const mostrarTriagemDoFornecedor =
+    anexosDeTriagem.length > 0 || ETAPAS_COM_FORNECEDOR_DEFINIDO.includes(request.currentStage);
+
   // Prisma Decimal não serializa através da fronteira Server → Client Component;
   // convertendo para number antes de passar para <RequestActions>.
   const serializableRequest = {
@@ -162,9 +176,25 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
         <RequestActions request={serializableRequest} sessionActor={sessionActor} declaredByNames={declaredByNames} />
 
+        {/* Triagem do fornecedor: a verificação (CNPJ ativo, listas restritivas)
+            é feita fora do sistema pelo comprador. O painel serve só para a
+            evidência ficar junto da solicitação; não é obrigatório e não
+            bloqueia o Pedido de Compra. Aparece a partir da etapa em que o
+            fornecedor já foi escolhido, para não poluir as etapas iniciais. */}
+        {mostrarTriagemDoFornecedor && (
+          <AttachmentsPanel
+            requestId={request.id}
+            attachments={anexosDeTriagem.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+            uploaderId={request.buyerId ?? request.requesterId}
+            category="TRIAGEM_FORNECEDOR"
+            title="Triagem do fornecedor (opcional)"
+            emptyLabel="Nenhuma evidência anexada. Se você já verificou CNPJ e listas restritivas, anexe o comprovante aqui. O envio não é obrigatório."
+          />
+        )}
+
         <AttachmentsPanel
           requestId={request.id}
-          attachments={request.attachments.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+          attachments={outrosAnexos.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
           uploaderId={request.buyerId ?? request.requesterId}
         />
 

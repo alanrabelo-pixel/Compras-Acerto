@@ -914,7 +914,7 @@ export function AuditoriaSistemaDocument() {
         <Finding n={3} severity="regra" title="Alerta de fracionamento não avisa ninguém de verdade">
           Quando o sistema detecta risco de fracionamento na Triagem, ele grava um registro de notificação no banco. Diferente de todo outro alerta do sistema, não dispara e-mail nem Slack de fato. A Controladoria não é realmente avisada.
         </Finding>
-        <Finding n={4} severity="regra" title="Triagem básica de fornecedor é código morto">
+        <Finding n={4} severity="regra" situacao="parcial" comoFoiResolvido="por decisão do time, a triagem sinaliza mas não bloqueia: a solicitação avisa quando o fornecedor escolhido está pendente ou reprovado, e há um campo de anexo opcional para a evidência da verificação, que o comprador faz fora do sistema. O bloqueio antes do Pedido de Compra fica para depois." title="Triagem básica de fornecedor é código morto">
           Existe uma função pronta e testada para exigir triagem básica de fornecedor novo (CNPJ ativo, listas restritivas). Ela nunca é chamada por nenhuma rota real. A regra está escrita, mas não está em vigor.
         </Finding>
         <Finding n={5} severity="doc" title="Escalonamento de 3 dias é corrido, não útil">

@@ -7,7 +7,7 @@ import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { AiInsightPanel } from "@/components/AiInsightPanel";
 import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel, approvalsRequiredForLevel, STAGES } from "@/lib/workflow";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, WarningNotice } from "@/components/ui";
 
 // Identidade de quem está logado (server session, ver src/lib/auth.ts),
 // repassada de solicitacoes/[id]/page.tsx. Com SSO real ligado, o servidor
@@ -1107,6 +1107,8 @@ function PedidoCompraForm({
   const winningQuote = request.quotes.find((q) => q.selected);
   const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [supplierId, setSupplierId] = useState("");
+  // Estado da triagem básica do fornecedor selecionado, só para sinalizar.
+  const [triagemDoFornecedor, setTriagemDoFornecedor] = useState<string | null>(null);
   const [supplierLegalName, setSupplierLegalName] = useState(winningQuote?.supplierName ?? "");
   const [supplierCnpj, setSupplierCnpj] = useState("");
   const [contactName, setContactName] = useState("");
@@ -1158,9 +1160,30 @@ function PedidoCompraForm({
                 setContactName(s.contactName ?? "");
                 setContactPhone(s.contactPhone ?? "");
                 setContactEmail(s.contactEmail ?? "");
+                setTriagemDoFornecedor(s.screeningStatus);
               }}
             />
           </div>
+
+          {/* Triagem básica do fornecedor: por decisão do time, hoje apenas
+              SINALIZA, não bloqueia. A verificação (CNPJ ativo, listas
+              restritivas) é análise externa feita pelo comprador, e a evidência
+              pode ser anexada na solicitação, sem obrigatoriedade. Antes não
+              havia nem o aviso: existia uma função escrita e testada para isso
+              que nunca era chamada por rota nenhuma. */}
+          {triagemDoFornecedor === "PENDENTE" && (
+            <WarningNotice>
+              Este fornecedor ainda não passou pela triagem básica (CNPJ ativo e listas restritivas). Isso não
+              impede emitir o Pedido de Compra. Se você já verificou, anexe a evidência na solicitação para o
+              registro ficar completo.
+            </WarningNotice>
+          )}
+          {triagemDoFornecedor === "REPROVADO" && (
+            <WarningNotice>
+              Este fornecedor foi <strong>reprovado</strong> na triagem básica. Confirme com Compras antes de
+              emitir o Pedido de Compra.
+            </WarningNotice>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>

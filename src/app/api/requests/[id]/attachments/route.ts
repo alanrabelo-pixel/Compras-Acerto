@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { saveFile } from "@/lib/storage";
 import { validarAnexo } from "@/lib/upload";
-import type { AttachmentCategory, Stage } from "@prisma/client";
+import { AttachmentCategory, Stage } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -23,8 +23,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const form = await req.formData();
   const file = form.get("file");
   const uploadedBy = form.get("uploadedBy");
-  const stage = (form.get("stage") as string) || request.currentStage;
-  const category = (form.get("category") as AttachmentCategory) || "GERAL";
+  // stage e category vinham do cliente com cast direto para o enum, sem
+  // conferência: um valor fora da lista só estourava lá no Prisma, virando 500
+  // sem explicação. Valor desconhecido agora cai no padrão.
+  const stageInformada = form.get("stage");
+  const stage: Stage =
+    typeof stageInformada === "string" && stageInformada in Stage
+      ? (stageInformada as Stage)
+      : request.currentStage;
+  const categoriaInformada = form.get("category");
+  const category: AttachmentCategory =
+    typeof categoriaInformada === "string" && categoriaInformada in AttachmentCategory
+      ? (categoriaInformada as AttachmentCategory)
+      : "GERAL";
 
   const validacao = validarAnexo(file);
   if (!validacao.ok) {
@@ -39,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const storageUrl = await saveFile(request.id, fileName, buffer);
 
   const attachment = await prisma.attachment.create({
-    data: { requestId: request.id, fileName, storageUrl, uploadedBy, stage: stage as Stage, category },
+    data: { requestId: request.id, fileName, storageUrl, uploadedBy, stage, category },
   });
 
   // Sem storageUrl na resposta: em produção ela é a URL pública do Vercel Blob,
