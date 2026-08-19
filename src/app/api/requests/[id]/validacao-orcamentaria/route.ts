@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { budgetExceptionLevel, budgetExceptionApproverRole, nextAfterValidacaoOrcamentaria } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
 
 /**
@@ -31,20 +32,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
     const nextStage = nextAfterValidacaoOrcamentaria({ budgetOk: true, demandType: request.demandType });
-    const updated = await prisma.purchaseRequest.update({
-      where: { id: request.id },
-      data: { currentStage: nextStage },
+
+    const avanco = await avancarEtapa({
+      requestId: request.id,
+      de: "VALIDACAO_ORCAMENTARIA",
+      para: nextStage,
+      actorId,
+      comentario: observation || null,
     });
-    await prisma.stageEvent.create({
-      data: { requestId: request.id, fromStage: "VALIDACAO_ORCAMENTARIA", toStage: nextStage, actorId, comment: observation || undefined },
-    });
-    const { subject, html } = templates.atualizacaoEtapa(
-      request.requester.name,
-      request.shortDescription,
-      nextStage === "DUE_DILIGENCE" ? "Due Diligence" : "Cotação"
-    );
-    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
-    return NextResponse.json(updated);
+    if (!avanco.ok) {
+      return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+    }
+    await notificarAvancoDeEtapa(avanco.solicitacao, nextStage);
+    return NextResponse.json(avanco.solicitacao);
   }
 
   // Caminho 2: sem orçamento, cria ou atualiza a exceção orçamentária.
@@ -85,25 +85,39 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   });
 
   if (decision === "REPROVADO") {
-    await prisma.purchaseRequest.update({
-      where: { id: request.id },
-      data: { currentStage: "CANCELADO", status: "CANCELADO", cancelReason: justification },
+    const cancelamento = await avancarEtapa({
+      requestId: request.id,
+      de: "VALIDACAO_ORCAMENTARIA",
+      para: "CANCELADO",
+      actorId: exceptionApproverId,
+      comentario: justification,
+      dadosExtras: { status: "CANCELADO", cancelReason: justification },
     });
-    await prisma.stageEvent.create({
-      data: { requestId: request.id, fromStage: "VALIDACAO_ORCAMENTARIA", toStage: "CANCELADO", actorId: exceptionApproverId, comment: justification },
-    });
+    if (!cancelamento.ok) {
+      return NextResponse.json({ error: cancelamento.erro }, { status: cancelamento.status });
+    }
+    // Template de reprovação, não o de avanço de etapa: aqui a solicitação
+    // termina, não segue adiante.
     const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification ?? "indisponibilidade de orçamento");
     await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
     return NextResponse.json({ status: "REPROVADO" });
   }
 
   const nextStage = nextAfterValidacaoOrcamentaria({ budgetOk: true, demandType: request.demandType });
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: nextStage },
+
+  // Nota: este caminho (exceção APROVADA) não envia aviso ao solicitante,
+  // diferente do caminho de orçamento OK acima. A assimetria é anterior a esta
+  // mudança e está registrada como achado da auditoria; não alterei aqui para
+  // não mudar quem recebe e-mail junto com um refactor de transação.
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "VALIDACAO_ORCAMENTARIA",
+    para: nextStage,
+    actorId: exceptionApproverId,
+    comentario: justification,
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "VALIDACAO_ORCAMENTARIA", toStage: nextStage, actorId: exceptionApproverId, comment: justification },
-  });
-  return NextResponse.json(updated);
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
+  return NextResponse.json(avanco.solicitacao);
 }
