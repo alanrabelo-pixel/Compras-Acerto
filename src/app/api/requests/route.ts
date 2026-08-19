@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { slaDaysForDiretoria } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
+import { proximoCodigo } from "@/lib/codigo";
 
 // GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
@@ -77,8 +78,7 @@ export async function POST(req: NextRequest) {
   // (ver PATCH /api/requests/[id]/aprovacao-gestor).
   const approverManagerId = costCenter.managers[0]?.id ?? null;
 
-  const count = await prisma.purchaseRequest.count();
-  const code = `PC-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+  const code = await proximoCodigo("PC");
 
   const slaDays = slaDaysForDiretoria(diretoria, priority);
   const slaDeadline = new Date();

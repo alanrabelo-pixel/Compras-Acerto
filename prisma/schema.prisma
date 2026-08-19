@@ -92,6 +92,8 @@ model UserRole {
   role   RoleName
 
   @@unique([userId, role])
+
+  @@index([role])
 }
 
 model CostCenter {
@@ -190,6 +192,8 @@ model ConflictOfInterestDeclaration {
   hasConflict Boolean
   details     String?
   createdAt   DateTime @default(now())
+
+  @@index([requestId])
 }
 
 
@@ -370,6 +374,19 @@ model PurchaseRequest {
   notifications    Notification[]
   chatMessages     RequestChatMessage[]
   aiInsights       AiInsight[]
+
+  // Filtros de toda navegação: quadro, home, dashboards e export.
+  @@index([currentStage])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([requesterId])
+  @@index([buyerId])
+  @@index([costCenterId])
+  @@index([status])
+  @@index([demandType])
+  @@index([diretoria])
+  // Polling do ERP, que busca por sincronização pendente.
+  @@index([erpSyncedAt])
 }
 
 // Assistentes de IA (pedido do usuário): gera, sob demanda de quem está na
@@ -399,6 +416,8 @@ model AiInsight {
   geminiError      String? @db.Text
 
   createdAt     DateTime @default(now())
+
+  @@index([requestId])
 }
 
 // Chat flutuante (widget "nuvem") entre comprador e solicitante, por
@@ -420,6 +439,11 @@ model RequestChatMessage {
   slackTs        String?
   slackThreadTs  String?
   createdAt      DateTime @default(now())
+
+  // Buscado a cada evento recebido do webhook do Slack.
+  @@index([slackThreadTs])
+  @@index([slackChannelId, createdAt])
+  @@index([requestId])
 }
 
 // Registro de auditoria: toda transição de etapa fica gravada (imutável).
@@ -433,6 +457,10 @@ model StageEvent {
   actor       User?    @relation(fields: [actorId], references: [id])
   comment     String?
   createdAt   DateTime @default(now())
+
+  // Maior tabela do sistema (~16 linhas por solicitação). O composto cobre
+  // tanto a leitura do histórico quanto os recortes por etapa do dashboard.
+  @@index([requestId, toStage])
 }
 
 model Comment {
@@ -444,6 +472,8 @@ model Comment {
   body      String   @db.Text
   stage     Stage
   createdAt DateTime @default(now())
+
+  @@index([requestId])
 }
 
 // Categorias de anexo do formulário Pipefy (ver Nova Solicitação). GERAL
@@ -477,6 +507,9 @@ model Attachment {
   createdAt  DateTime @default(now())
 
   budgetExceptions BudgetException[]
+
+  @@index([requestId, category])
+  @@index([ticketId])
 }
 
 // Comunicados gerais (botão de foguete na Home/AppShell): avisos simples de
@@ -490,6 +523,25 @@ model Announcement {
   body       String   @db.Text
   authorName String
   createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// Contador dos códigos sequenciais (PC-2026-0001, VIA-2026-0001, ...).
+///
+/// Antes o número saía de `count() + 1` sobre a própria tabela, fora de
+/// transação, o que tinha três defeitos: duas criações simultâneas liam o mesmo
+/// contador e a segunda violava a unicidade do código (virava erro 500 e o
+/// formulário preenchido se perdia); o contador era global e não por ano, então
+/// o prefixo de ano mentia a partir de janeiro; e apagar qualquer registro fazia
+/// o contador regredir e colidir de forma permanente.
+///
+/// Aqui a chave já embute o ano, então a sequência reinicia sozinha, e o
+/// incremento é feito numa única instrução atômica (ver src/lib/codigo.ts).
+model CodeCounter {
+  /// Escopo da sequência: "PC-2026", "VIA-2026", "FAC-2026", "NDA-2026".
+  prefix String @id
+  value  Int    @default(0)
 }
 
 // ----------------------------------------------------------------------------
@@ -516,6 +568,8 @@ model BudgetException {
   // automaticamente quando esta exceção é criada, se existir.
   attachmentId String?
   attachment   Attachment? @relation(fields: [attachmentId], references: [id])
+
+  @@index([requestId])
 }
 
 // ----------------------------------------------------------------------------
@@ -529,6 +583,8 @@ model DueDiligenceReview {
   approved      Boolean?
   justification String?
   decidedAt     DateTime?
+
+  @@index([requestId])
 }
 
 // ----------------------------------------------------------------------------
@@ -550,6 +606,9 @@ model Quote {
   createdAt        DateTime @default(now())
 
   // savingPercent / savingValue calculados: (initial - negotiated) / initial
+
+  @@index([requestId])
+  @@index([supplierId])
 }
 
 // ----------------------------------------------------------------------------
@@ -569,6 +628,10 @@ model Approval {
   dueAt         DateTime? // revisão: prazo para decisão; disparo de escalonamento se ultrapassado
   escalatedAt   DateTime? // revisão: quando o escalonamento por SLA foi disparado
   decidedAt     DateTime?
+
+  @@index([requestId, level])
+  // Recorte exato do cron de escalonamento.
+  @@index([decision, dueAt, escalatedAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -584,6 +647,8 @@ model LegalReview {
   signed        Boolean?
   observations  String?
   decidedAt     DateTime?
+
+  @@index([requestId])
 }
 
 // ----------------------------------------------------------------------------
@@ -627,6 +692,11 @@ model PurchaseOrder {
   createdAt         DateTime @default(now())
 
   items PurchaseOrderItem[]
+
+  @@index([createdAt])
+  @@index([supplierId])
+  // Consulta do anti-fracionamento (histórico de 12 meses do fornecedor).
+  @@index([supplierCnpj])
 }
 
 // Itens do Pedido de Compra, sem limite de linhas. O PDF (ver
@@ -694,6 +764,11 @@ model Contract {
   treasuryNotifiedOnCancel Boolean @default(false)
 
   alerts ContractAlert[]
+
+  // Recorte exato do cron de alerta de renovação.
+  @@index([status, renewalDate])
+  @@index([contractManagerId])
+  @@index([supplierId])
 }
 
 model ContractAlert {
@@ -703,6 +778,8 @@ model ContractAlert {
   sentAt     DateTime @default(now())
   channel    String   // EMAIL | SLACK | EMAIL_E_SLACK
   newRequestOpened Boolean @default(false)
+
+  @@index([contractId])
 }
 
 // ----------------------------------------------------------------------------
@@ -719,6 +796,8 @@ model Measurement {
   technicalApproval ApprovalDecision @default(PENDENTE)
   reviewComment    String?
   decidedAt        DateTime?
+
+  @@index([requestId])
 }
 
 model FiscalDocument {
@@ -729,6 +808,8 @@ model FiscalDocument {
   approved      Boolean?
   reviewComment String?
   decidedAt     DateTime?
+
+  @@index([requestId])
 }
 
 model Payment {
@@ -739,6 +820,8 @@ model Payment {
   paidDate      DateTime?
   status        String   @default("PROGRAMADO") // PROGRAMADO | PAGO
   erpConfirmed  Boolean  @default(false)
+
+  @@index([requestId])
 }
 
 // ----------------------------------------------------------------------------
@@ -752,6 +835,8 @@ model SupplierEvaluation {
   score     Int?
   feedback  String?
   createdAt DateTime @default(now())
+
+  @@index([requestId])
 }
 
 // ----------------------------------------------------------------------------
@@ -767,6 +852,9 @@ model Notification {
   subject   String?
   status    String   @default("ENVIADO") // ENVIADO | FALHA
   createdAt DateTime @default(now())
+
+  @@index([requestId])
+  @@index([createdAt])
 }
 
 // ----------------------------------------------------------------------------
@@ -823,6 +911,10 @@ model SimpleTicket {
 
   messages    TicketMessage[]
   attachments Attachment[]
+
+  @@index([category, status])
+  @@index([requesterEmail])
+  @@index([updatedAt])
 }
 
 model TicketMessage {
@@ -832,4 +924,6 @@ model TicketMessage {
   authorName String
   body       String       @db.Text
   createdAt  DateTime     @default(now())
+
+  @@index([ticketId])
 }

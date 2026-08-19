@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { proximoCodigo } from "@/lib/codigo";
 
 // GET /api/tickets?category=viagens|facilities: lista chamados de uma categoria.
 export async function GET(req: NextRequest) {
@@ -38,8 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   const config = TICKET_CATEGORIES[categorySlug];
-  const count = await prisma.simpleTicket.count({ where: { category: config.enumValue } });
-  const code = `${config.prefix}-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+  const code = await proximoCodigo(config.prefix);
 
   const ticket = await prisma.simpleTicket.create({
     data: {
