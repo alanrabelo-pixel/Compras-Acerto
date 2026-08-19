@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
+import { registrarMudancaDePermissao, comoTexto } from "@/lib/auditoria-permissao";
 
 /**
  * PATCH /api/approval-levels/[level]: troca o(s) aprovador(es) padrão de
@@ -35,10 +36,32 @@ export async function PATCH(req: NextRequest, { params }: { params: { level: str
   }
   const approverIds: string[] = body.approverIds;
 
+  // Lido ANTES: o deleteMany abaixo apaga quem estava configurado nesta
+  // alçada, e essa era a informação que se perdia sem deixar rastro.
+  const antes = await prisma.approvalLevelApprover.findMany({
+    where: { level },
+    include: { user: { select: { name: true } } },
+  });
+
   await prisma.$transaction([
     prisma.approvalLevelApprover.deleteMany({ where: { level } }),
     prisma.approvalLevelApprover.createMany({ data: approverIds.map((userId) => ({ level, userId })) }),
   ]);
+
+  const depois = await prisma.user.findMany({ where: { id: { in: approverIds } }, select: { id: true, name: true } });
+  // Um registro por pessoa afetada, tanto quem saiu quanto quem entrou, para a
+  // consulta "o que mudou para esta pessoa" encontrar os dois lados.
+  const afetados = new Set([...antes.map((a) => a.userId), ...approverIds]);
+  const textoAntes = comoTexto(antes.map((a) => a.user.name));
+  const textoDepois = comoTexto(depois.map((d) => d.name));
+  for (const userId of afetados) {
+    await registrarMudancaDePermissao({
+      targetUserId: userId,
+      kind: "ALCADA",
+      antes: `Nível ${level}: ${textoAntes}`,
+      depois: `Nível ${level}: ${textoDepois}`,
+    });
+  }
 
   // Approval.approverId não aceita null: só migra as pendentes quando o
   // novo conjunto tem pelo menos um aprovador; limpar tudo não mexe nas já

@@ -83,6 +83,7 @@ model User {
   approvalDecisions Approval[]
   stageEvents       StageEvent[]
   aiInsightsRequested AiInsight[]
+  permissionChanges   PermissionChange[] @relation("PermissionChangeTarget")
 }
 
 model UserRole {
@@ -538,6 +539,34 @@ model Announcement {
 ///
 /// Aqui a chave já embute o ano, então a sequência reinicia sozinha, e o
 /// incremento é feito numa única instrução atômica (ver src/lib/codigo.ts).
+/// Trilha de auditoria das mudanças de permissão.
+///
+/// UserRole e ApprovalLevelApprover eram apagados com deleteMany, sem registro
+/// nenhum. São exatamente as duas tabelas que definem quem aprova dinheiro, e
+/// "quem tirou o acesso de fulano, quando e por quê" era irrespondível. Numa
+/// auditoria de sistema financeiro essa é a primeira pergunta.
+///
+/// Append-only de propósito: nenhuma rota atualiza nem apaga linha daqui.
+model PermissionChange {
+  id           String   @id @default(cuid())
+  /// Quem teve a permissão alterada.
+  targetUserId String
+  targetUser   User     @relation("PermissionChangeTarget", fields: [targetUserId], references: [id])
+  /// Quem fez a alteração. Nulo quando não há sessão real (bypass local).
+  actorId      String?
+  actorEmail   String?
+  /// PAPEL | ACESSO_ATIVO | ALCADA | GESTOR_DE_CENTRO_DE_CUSTO
+  kind         String
+  /// Estado antes e depois, em texto legível, para o registro ser auditável
+  /// sem depender de reconstruir o significado de ids.
+  antes        String
+  depois       String
+  createdAt    DateTime @default(now())
+
+  @@index([targetUserId])
+  @@index([createdAt])
+}
+
 model CodeCounter {
   /// Escopo da sequência: "PC-2026", "VIA-2026", "FAC-2026", "NDA-2026".
   prefix String @id

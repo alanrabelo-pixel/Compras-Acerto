@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { RoleName } from "@prisma/client";
 import { BOARD_ROLES } from "@/lib/roles";
 import { bypassAuthAtivo } from "@/lib/bypass";
+import { registrarMudancaDePermissao, comoTexto } from "@/lib/auditoria-permissao";
 
 /**
  * PATCH /api/users/[id]: gerencia os "5 tipos de acesso" (Admin, Compras,
@@ -44,7 +45,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // nenhum histórico, pois nenhuma FK aponta para este campo. Então
   // PurchaseRequest/Contract/Approval etc. continuam intactos.
   if (typeof body.active === "boolean") {
+    const antes = await prisma.user.findUnique({ where: { id: params.id }, select: { active: true } });
     const user = await prisma.user.update({ where: { id: params.id }, data: { active: body.active }, include: { roles: true } });
+    await registrarMudancaDePermissao({
+      targetUserId: params.id,
+      kind: "ACESSO_ATIVO",
+      antes: antes?.active ? "ativo" : "inativo",
+      depois: user.active ? "ativo" : "inativo",
+    });
     return NextResponse.json({ id: user.id, email: user.email, active: user.active, roles: user.roles.map((r) => r.role) });
   }
 
@@ -58,6 +66,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   const nextManagedRoles = requested as RoleName[];
 
+  // Lido ANTES do deleteMany: é a única chance de saber o que havia, já que a
+  // remoção não deixava rastro nenhum.
+  const papeisAntes = await prisma.userRole.findMany({
+    where: { userId: params.id, role: { in: MANAGED_ROLES } },
+    select: { role: true },
+  });
+
   await prisma.userRole.deleteMany({ where: { userId: params.id, role: { in: MANAGED_ROLES } } });
   if (nextManagedRoles.length > 0) {
     await prisma.userRole.createMany({
@@ -65,6 +80,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       skipDuplicates: true,
     });
   }
+
+  await registrarMudancaDePermissao({
+    targetUserId: params.id,
+    kind: "PAPEL",
+    antes: comoTexto(papeisAntes.map((p) => p.role)),
+    depois: comoTexto(nextManagedRoles),
+  });
 
   const allRoles = await prisma.userRole.findMany({ where: { userId: params.id } });
   const canViewBoard = allRoles.some((r) => BOARD_ROLES.includes(r.role));
