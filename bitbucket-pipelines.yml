@@ -1,0 +1,12 @@
+pipelines:
+  tags:
+    "*":
+      # Mesmo nome de import usado pelo acerto-metrics-backend (.NET) e pelo
+      # acerto-metrics-frontend (Node) — quem decide o comportamento real da
+      # pipeline é o `stack:` do .forge-config.yml, não o nome do import
+      # aqui (confirmado lendo o código do acerto-golden-pipeline: essa
+      # string não é lida em nenhum lugar do Dynamic Pipelines Provider).
+      import: acerto-pipelines:main:dotnet-api-tag
+  pull-requests:
+    "**":
+      import: acerto-pipelines:main:dotnet-api-pr
