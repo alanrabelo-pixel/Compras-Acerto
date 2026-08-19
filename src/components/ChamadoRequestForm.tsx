@@ -69,7 +69,7 @@ export function ChamadoRequestForm({ categorySlug }: { categorySlug: TicketCateg
           style={{ minHeight: 120, resize: "vertical" }}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descreva sua solicitação com o máximo de detalhes possível."
+          placeholder="Descreva seu chamado com o máximo de detalhes possível."
         />
       </div>
       <div className="field">

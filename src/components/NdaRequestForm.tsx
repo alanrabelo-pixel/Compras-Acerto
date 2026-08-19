@@ -57,7 +57,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Não foi possível enviar a solicitação.");
+      if (!res.ok) throw new Error(data.error ?? "Não foi possível abrir o chamado.");
 
       // Anexo é opcional. Se o upload falhar, a solicitação já foi aberta
       // normalmente (pode anexar depois na própria tela da solicitação).
@@ -92,14 +92,14 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
             ✓
           </span>
           <div>
-            <h2 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700 }}>Solicitação enviada com sucesso!</h2>
+            <h2 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700 }}>Chamado aberto com sucesso!</h2>
             <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-muted)", lineHeight: 1.5 }}>
-              Sua solicitação <strong style={{ color: "var(--acerto-green-dark)" }}>{result.code}</strong> foi
+              Seu chamado <strong style={{ color: "var(--acerto-green-dark)" }}>{result.code}</strong> foi
               registrada e já está disponível para acompanhamento. Você receberá um e-mail de confirmação em breve.
             </p>
             <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
               <Button variant="primary" onClick={() => (window.location.href = `/chamados/nda/${result.id}`)}>
-                Acompanhar solicitação →
+                Acompanhar chamado →
               </Button>
               <Button variant="secondary" onClick={() => (window.location.href = "/")}>Voltar ao início</Button>
             </div>
@@ -118,7 +118,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
             {sessionRequester.name} <span style={{ color: "var(--ink-muted)" }}>({sessionRequester.email})</span>
           </p>
         ) : (
-          <Field label="Quem está solicitando" required help="Sessão local sem SSO ativo. Selecione quem está abrindo esta solicitação.">
+          <Field label="Quem está solicitando" required help="Sessão local sem SSO ativo. Selecione quem está abrindo este chamado.">
             <UserPicker
               value={manualRequester?.id ?? ""}
               onChange={() => {}}
@@ -130,7 +130,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
       </div>
 
       <div className="form-section">
-        <p className="form-section-label">Tipo de solicitação</p>
+        <p className="form-section-label">Tipo de chamado</p>
         <div style={{ display: "flex", gap: 8 }}>
           <Button type="button" variant={requestKind === "NDA" ? "primary" : "secondary"} onClick={() => setRequestKind("NDA")}>
             Envio de NDA
@@ -237,7 +237,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
 
       <div>
         <Button variant="primary" disabled={loading || !canSubmit} onClick={submit}>
-          {loading ? "Enviando…" : "Enviar solicitação"}
+          {loading ? "Enviando…" : "Abrir chamado"}
         </Button>
         {!canSubmit && description.length > 0 && description.trim().length < 10 && (
           <p className="help" style={{ marginTop: 6 }}>A descrição precisa ter pelo menos 10 caracteres.</p>

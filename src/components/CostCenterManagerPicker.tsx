@@ -34,7 +34,7 @@ export function CostCenterManagerPicker({ costCenterId, initialManagerIds }: { c
 
   return (
     <div style={{ opacity: loading ? 0.6 : 1 }}>
-      <MultiUserPicker selectedIds={managerIds} onChange={save} role="APROVADOR" emptyLabel="Sem gestor definido" />
+      <MultiUserPicker selectedIds={managerIds} onChange={save} role="APROVADOR" emptyLabel="Sem gestor do centro de custo definido" />
     </div>
   );
 }

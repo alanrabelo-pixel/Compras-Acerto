@@ -253,7 +253,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             </select>
           </Field>
 
-          <Field label="Solicitação de Compras alinhado com a liderança?" required>
+          <Field label="Solicitação de Compra alinhada com a liderança?" required>
             <div style={{ display: "flex", gap: 20 }}>
               <label className="checkbox-row"><input type="radio" name="leadership" checked={leadershipPreApproved === "SIM"} onChange={() => setLeadershipPreApproved("SIM")} /> Sim</label>
               <label className="checkbox-row"><input type="radio" name="leadership" checked={leadershipPreApproved === "NAO"} onChange={() => setLeadershipPreApproved("NAO")} /> Não</label>

@@ -140,7 +140,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             <p style={{ margin: 0 }}><span className="text-muted">Tipo de demanda:</span> {rotulo(DEMAND_TYPE_LABEL, request.demandType)}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Quantidade:</span> {request.quantity}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Lane:</span> {request.lane ?? "não definida"}</p>
-            <p style={{ margin: 0 }}><span className="text-muted">Gestor aprovador:</span> {request.approverManager?.name ?? "sem gestor definido"}</p>
+            <p style={{ margin: 0 }}><span className="text-muted">Gestor do centro de custo:</span> {request.approverManager?.name ?? "sem gestor definido"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Comprador:</span> {request.buyer?.name ?? "não atribuído"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Aprovado pela liderança na abertura:</span> {request.leadershipPreApproved ? "Sim" : "Não"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Data limite sugerida (solicitante):</span> {formatDateOnly(request.suggestedDeadline)}</p>

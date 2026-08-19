@@ -61,7 +61,7 @@ export default async function CentrosDeCustoPage({
           tabs={[
             { id: "centros", label: "Centros de Custo" },
             { id: "alcadas", label: "Alçadas de Aprovação" },
-            { id: "aprovador", label: "Por Aprovador" },
+            { id: "aprovador", label: "Por Gestor" },
           ]}
         >
           <div className="section-gap">
@@ -85,7 +85,7 @@ export default async function CentrosDeCustoPage({
             <TableWrap>
               <TableHeadRow columns="1.8fr 2fr 0.8fr 1.1fr">
                 <span>Centro de Custo</span>
-                <span>Gestor(es) aprovador(es)</span>
+                <span>Gestor(es) do centro de custo</span>
                 <span>Solicitações</span>
                 <span>Status</span>
               </TableHeadRow>
@@ -130,8 +130,8 @@ export default async function CentrosDeCustoPage({
             </p>
             <TableWrap>
               <TableHeadRow columns="1.6fr 2.4fr">
-                <span>Aprovador</span>
-                <span>Centros de custo que pode aprovar</span>
+                <span>Gestor</span>
+                <span>Centros de custo que gerencia</span>
               </TableHeadRow>
               {approvers.map((u) => (
                 <TableRow key={u.id} columns="1.6fr 2.4fr" style={{ alignItems: "center" }}>
