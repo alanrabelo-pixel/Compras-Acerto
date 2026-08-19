@@ -12,6 +12,7 @@ import { formatDateOnly, formatCurrency } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
+import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Badge variant={PRIORITY_BADGE_VARIANT[request.priority] ?? "neutral"}>{request.priority}</Badge>
+            <Badge variant={PRIORITY_BADGE_VARIANT[request.priority] ?? "neutral"}>{rotulo(PRIORITY_LABEL, request.priority)}</Badge>
             <Badge variant="green">{STAGES[request.currentStage].label}</Badge>
           </div>
         </div>
@@ -136,7 +137,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               <span className="text-muted">Valor estimado:</span>{" "}
               {request.estimatedValue !== null ? formatCurrency(Number(request.estimatedValue)) : "ainda não informado"}
             </p>
-            <p style={{ margin: 0 }}><span className="text-muted">Tipo de demanda:</span> {request.demandType}</p>
+            <p style={{ margin: 0 }}><span className="text-muted">Tipo de demanda:</span> {rotulo(DEMAND_TYPE_LABEL, request.demandType)}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Quantidade:</span> {request.quantity}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Lane:</span> {request.lane ?? "não definida"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Gestor aprovador:</span> {request.approverManager?.name ?? "sem gestor definido"}</p>

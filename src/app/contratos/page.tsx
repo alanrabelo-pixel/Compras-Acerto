@@ -6,6 +6,7 @@ import { ContractImportUpload } from "@/components/ContractImportUpload";
 import { TableWrap, TableHeadRow, TableRow, TableEmpty, Badge } from "@/components/ui";
 import type { Prisma, Diretoria } from "@prisma/client";
 import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
+import { CONTRACT_STATUS_LABEL, rotulo } from "@/lib/rotulos";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export default async function ContratosPage({
                 <span className="text-soft">{c.request?.diretoria ?? c.diretoria ?? "-"}</span>
                 <span className="text-soft">{formatDateOnly(c.startDate)} → {formatDateOnly(c.endDate)}</span>
                 <span style={{ fontWeight: 700, color: daysColor }}>{days < 0 ? `${Math.abs(days)}d vencido` : `${days}d`}</span>
-                <span><Badge variant={CONTRACT_STATUS_BADGE_VARIANT[c.status] ?? "neutral"}>{c.status}</Badge></span>
+                <span><Badge variant={CONTRACT_STATUS_BADGE_VARIANT[c.status] ?? "neutral"}>{rotulo(CONTRACT_STATUS_LABEL, c.status)}</Badge></span>
               </TableRow>
             );
           })}

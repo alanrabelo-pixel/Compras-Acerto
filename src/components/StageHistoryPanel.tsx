@@ -1,5 +1,6 @@
 import { formatDateOnly, formatDateTime, formatCurrency as money } from "@/lib/format";
 import type { Stage } from "@prisma/client";
+import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, PAYMENT_STATUS_LABEL, CONTRACT_STATUS_LABEL, rotulo } from "@/lib/rotulos";
 
 function dateTime(d: Date | string | null | undefined) {
   if (!d) return null;
@@ -110,8 +111,8 @@ export function stageDataFields(
           <Field label="Solicitante">{request.requester.name} · {request.requester.email}</Field>
           <Field label="Diretoria">{request.diretoria}</Field>
           <Field label="Centro de Custo">{request.costCenter.name}</Field>
-          <Field label="Prioridade">{request.priority}</Field>
-          <Field label="Tipo de demanda">{request.demandType}</Field>
+          <Field label="Prioridade">{rotulo(PRIORITY_LABEL, request.priority)}</Field>
+          <Field label="Tipo de demanda">{rotulo(DEMAND_TYPE_LABEL, request.demandType)}</Field>
           <Field label="Quantidade">{request.quantity}</Field>
           <Field label="Valor estimado">{request.estimatedValue !== null ? money(request.estimatedValue) : "ainda não informado"}</Field>
           <Field label="Gestor aprovador">{request.approverManager ? `${request.approverManager.name} · ${request.approverManager.email}` : "sem gestor definido para este centro de custo"}</Field>
@@ -326,7 +327,7 @@ export function stageDataFields(
       if (!request.payment) return null;
       return grid(
         <>
-          <Field label="Status">{request.payment.status}</Field>
+          <Field label="Status">{rotulo(PAYMENT_STATUS_LABEL, request.payment.status)}</Field>
           <Field label="Confirmado no ERP">{request.payment.erpConfirmed ? "Sim" : "Não"}</Field>
           <Field label="Data programada">{request.payment.scheduledDate ? formatDateOnly(request.payment.scheduledDate) : "-"}</Field>
           <Field label="Data de pagamento">{request.payment.paidDate ? formatDateOnly(request.payment.paidDate) : "-"}</Field>
@@ -338,7 +339,7 @@ export function stageDataFields(
       return grid(
         <>
           <Field label="Fornecedor">{request.contract.supplierName}</Field>
-          <Field label="Status">{request.contract.status}</Field>
+          <Field label="Status">{rotulo(CONTRACT_STATUS_LABEL, request.contract.status)}</Field>
           <Full><a href={`/contratos/${request.contract.id}`} style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Ver contrato completo (19 campos) →</a></Full>
         </>
       );

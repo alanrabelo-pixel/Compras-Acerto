@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { formatCurrency } from "@/lib/format";
 import { bypassAuthAtivo } from "@/lib/bypass";
+import { PRIORITY_LABEL, rotulo } from "@/lib/rotulos";
 
 export const dynamic = "force-dynamic";
 
@@ -116,7 +117,7 @@ export default async function PendenciasPage({
                         <div style={{ minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-1)" }}>
                             <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
-                            <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge>
+                            <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{rotulo(PRIORITY_LABEL, r.priority)}</Badge>
                           </div>
                           <p style={{ margin: 0, fontSize: 13, color: "var(--ink)", lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {r.shortDescription}

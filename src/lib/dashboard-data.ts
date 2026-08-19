@@ -21,19 +21,11 @@ import type { Prisma, Stage } from "@prisma/client";
 // Rótulos compartilhados
 // ----------------------------------------------------------------------------
 
-export const PRIORITY_LABEL: Record<string, string> = { CRITICA: "Crítica", ALTA: "Alta", MEDIA: "Média", BAIXA: "Baixa" };
-
-export const DEMAND_TYPE_LABEL: Record<string, string> = {
-  COMPRA_PRODUTO: "Compra de Produtos",
-  COMPRA_SERVICO: "Compra de Serviço",
-  FERRAMENTA_NOVA: "Compra de Nova Ferramenta",
-  FERRAMENTA_USUARIOS: "Ferramentas: Inclusão/remoção de usuários",
-  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas: Upgrade/Downgrade",
-  RENOVACAO_CONTRATO: "Renovação de Contrato",
-  CANCELAMENTO: "Cancelamento de Contrato/Serviço/Ferramenta",
-};
-
-export const STATUS_LABEL: Record<string, string> = { ABERTO: "Aberto", CONCLUIDO: "Concluído", CANCELADO: "Cancelado" };
+// Os rótulos vivem em src/lib/rotulos.ts. Reexportados aqui só para não
+// quebrar quem já importava deste módulo. Eles estavam definidos neste arquivo
+// e também copiados em solicitacoes/page.tsx, o que garantia divergência com o
+// tempo, e o PRIORITY_LABEL daqui nunca chegou a ser usado em tela nenhuma.
+export { PRIORITY_LABEL, DEMAND_TYPE_LABEL, STATUS_LABEL } from "@/lib/rotulos";
 
 // ----------------------------------------------------------------------------
 // Filtros (todos vêm da URL, ver DashboardFilters.tsx)

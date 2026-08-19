@@ -6,18 +6,9 @@ import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { Badge, TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { LayoutGrid, List } from "lucide-react";
+import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
 
 export const dynamic = "force-dynamic";
-
-const DEMAND_TYPE_LABEL: Record<string, string> = {
-  COMPRA_PRODUTO: "Compra de Produtos",
-  COMPRA_SERVICO: "Compra de Serviço",
-  FERRAMENTA_NOVA: "Compra de Nova Ferramenta",
-  FERRAMENTA_USUARIOS: "Ferramentas: Inclusão/remoção de usuários",
-  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas: Upgrade/Downgrade",
-  RENOVACAO_CONTRATO: "Renovação de Contrato",
-  CANCELAMENTO: "Cancelamento de Contrato/Serviço/Ferramenta",
-};
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -183,7 +174,7 @@ export default async function SolicitacoesPage({
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
                           <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
-                          <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge>
+                          <Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{rotulo(PRIORITY_LABEL, r.priority)}</Badge>
                         </div>
                         <p style={{ margin: "0 0 var(--space-2)", fontSize: 12.5, color: "var(--ink)", lineHeight: 1.35 }}>{r.shortDescription}</p>
                         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
@@ -226,7 +217,7 @@ export default async function SolicitacoesPage({
               <span style={{ fontWeight: 700, color: "var(--acerto-green-dark)" }}>{r.code}</span>
               <span className="text-soft">{r.shortDescription}</span>
               <span><Badge variant="neutral">{STAGES[r.currentStage].label}</Badge></span>
-              <span><Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{r.priority}</Badge></span>
+              <span><Badge variant={PRIORITY_BADGE_VARIANT[r.priority] ?? "neutral"}>{rotulo(PRIORITY_LABEL, r.priority)}</Badge></span>
               <span className="text-soft">{r.requester.name} · {r.costCenter.name}</span>
             </TableRow>
           ))}

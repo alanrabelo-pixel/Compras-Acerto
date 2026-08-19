@@ -6,6 +6,7 @@ import { formatDateOnly, formatDateTime } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge } from "@/components/ui";
 import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
+import { CONTRACT_STATUS_LABEL, rotulo } from "@/lib/rotulos";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             <h1 className="contract-hero-title">{contract.supplierName}</h1>
             <p className="contract-hero-subtitle">{contract.supplierTradeName ?? "Nome fantasia não informado"}</p>
           </div>
-          <Badge variant={CONTRACT_STATUS_BADGE_VARIANT[contract.status] ?? "neutral"}>{contract.status}</Badge>
+          <Badge variant={CONTRACT_STATUS_BADGE_VARIANT[contract.status] ?? "neutral"}>{rotulo(CONTRACT_STATUS_LABEL, contract.status)}</Badge>
         </div>
 
         {/* O que mais importa num contrato ativo (quanto tempo falta e desde
@@ -160,7 +161,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           </div>
         </section>
 
-        <ContractActions contractId={contract.id} status={contract.status} />
+        <ContractActions contractId={contract.id} status={rotulo(CONTRACT_STATUS_LABEL, contract.status)} />
 
         <section className="card section-gap">
           <h2 className="card-title">Alertas de renovação enviados</h2>
