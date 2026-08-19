@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { nextAfterAguardandoEntrega } from "@/lib/workflow";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
-
-const STAGE_LABEL: Record<string, string> = {
-  MEDICAO: "Medição e Aprovação Financeira",
-  MAPEAMENTO_CONTRATO: "Mapeamento de Contrato",
-  CONCLUIDO: "Concluído",
-};
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/aguardando-entrega
@@ -19,11 +13,14 @@ const STAGE_LABEL: Record<string, string> = {
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true, purchaseOrder: true },
+    include: { purchaseOrder: true },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "AGUARDANDO_ENTREGA") {
-    return NextResponse.json({ error: "Solicitação não está na etapa de Aguardando Entrega/Conclusão" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Esta solicitação não está na etapa de Aguardando Entrega/Conclusão. Recarregue a página para ver o estado atual." },
+      { status: 409 }
+    );
   }
 
   const body = await req.json();
@@ -35,16 +32,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const nextStage = nextAfterAguardandoEntrega({ needsMeasurement, needsMapping });
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: nextStage, ...(nextStage === "CONCLUIDO" ? { status: "CONCLUIDO" } : {}) },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "AGUARDANDO_ENTREGA",
+    para: nextStage,
+    actorId: body.actorId,
+    // Só o caminho que termina em Concluído fecha o status da solicitação.
+    dadosExtras: nextStage === "CONCLUIDO" ? { status: "CONCLUIDO" } : undefined,
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "AGUARDANDO_ENTREGA", toStage: nextStage, actorId: body.actorId },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, STAGE_LABEL[nextStage]);
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  // O rótulo da etapa vem de STAGES em workflow.ts. Antes esta rota mantinha um
+  // mapa próprio com as três etapas de destino, que era mais um lugar para
+  // divergir quando um rótulo mudasse.
+  await notificarAvancoDeEtapa(avanco.solicitacao, nextStage);
 
-  return NextResponse.json(updated);
+  return NextResponse.json(avanco.solicitacao);
 }

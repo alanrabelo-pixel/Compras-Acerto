@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { nextAfterTesouraria } from "@/lib/workflow";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/tesouraria
@@ -11,13 +11,13 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
  * avança para Mapeamento de Contrato (se needsMapping) ou Concluído.
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const request = await prisma.purchaseRequest.findUnique({
-    where: { id: params.id },
-    include: { requester: true },
-  });
+  const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "TESOURARIA") {
-    return NextResponse.json({ error: "Solicitação não está na etapa de Tesouraria" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Esta solicitação não está na etapa de Tesouraria. Recarregue a página para ver o estado atual." },
+      { status: 409 }
+    );
   }
 
   const body = await req.json();
@@ -48,20 +48,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const nextStage = nextAfterTesouraria({ needsMapping: Boolean(request.needsMapping) });
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: nextStage, ...(nextStage === "CONCLUIDO" ? { status: "CONCLUIDO" } : {}) },
-  });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "TESOURARIA", toStage: nextStage, actorId },
-  });
 
-  const { subject, html } = templates.atualizacaoEtapa(
-    request.requester.name,
-    request.shortDescription,
-    nextStage === "CONCLUIDO" ? "Concluído" : "Mapeamento de Contrato"
-  );
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "TESOURARIA",
+    para: nextStage,
+    actorId,
+    dadosExtras: nextStage === "CONCLUIDO" ? { status: "CONCLUIDO" } : undefined,
+  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  return NextResponse.json(updated);
+  await notificarAvancoDeEtapa(avanco.solicitacao, nextStage);
+
+  return NextResponse.json(avanco.solicitacao);
 }
