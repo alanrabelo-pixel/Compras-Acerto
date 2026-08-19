@@ -45,8 +45,15 @@ export async function avancarEtapa(params: {
   para: Stage;
   actorId?: string | null;
   comentario?: string | null;
-  /** Outros campos da solicitação a gravar na MESMA transação (ex: status, cancelReason). */
-  dadosExtras?: Prisma.PurchaseRequestUpdateManyMutationInput;
+  /**
+   * Outros campos da solicitação a gravar na MESMA transação (ex: status,
+   * cancelReason, os campos calculados na Triagem).
+   *
+   * Unchecked, e não a variante normal, porque as rotas precisam gravar chave
+   * estrangeira crua (buyerId na Triagem). A variante checada só aceita a
+   * relação aninhada, que updateMany não suporta.
+   */
+  dadosExtras?: Prisma.PurchaseRequestUncheckedUpdateManyInput;
 }): Promise<ResultadoDeAvanco> {
   const { requestId, de, para, actorId, comentario, dadosExtras } = params;
 

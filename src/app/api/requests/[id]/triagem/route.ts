@@ -7,6 +7,7 @@ import {
   nextAfterValidacaoOrcamentaria,
 } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
 
 /**
@@ -43,7 +44,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "TRIAGEM") {
-    return NextResponse.json({ error: "Solicitação não está na etapa de Triagem" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Esta solicitação não está na etapa de Triagem. Recarregue a página para ver o estado atual." },
+      { status: 409 }
+    );
   }
 
   const roleError = await requireRole(buyerId, ["COMPRADOR"]);
@@ -64,22 +68,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // Orçamentária, Cotação, Aprovação e Pedido de Compra: vai direto para
   // Jurídico formalizar o distrato/termo de cancelamento.
   if (request.demandType === "CANCELAMENTO") {
-    const updated = await prisma.purchaseRequest.update({
-      where: { id: request.id },
-      data: { buyerId, currentStage: "JURIDICO" },
+    const atalho = await avancarEtapa({
+      requestId: request.id,
+      de: "TRIAGEM",
+      para: "JURIDICO",
+      actorId: buyerId,
+      comentario: "Cancelamento de Contrato/Serviço/Ferramenta: fluxo simplificado, direto para Jurídico.",
+      dadosExtras: { buyerId },
     });
-    await prisma.stageEvent.create({
-      data: {
-        requestId: request.id,
-        fromStage: "TRIAGEM",
-        toStage: "JURIDICO",
-        actorId: buyerId,
-        comment: "Cancelamento de Contrato/Serviço/Ferramenta: fluxo simplificado, direto para Jurídico.",
-      },
-    });
-    const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Jurídico");
-    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
-    return NextResponse.json({ ...updated, _meta: { skippedToJuridico: true } });
+    if (!atalho.ok) {
+      return NextResponse.json({ error: atalho.erro }, { status: atalho.status });
+    }
+    await notificarAvancoDeEtapa(atalho.solicitacao, "JURIDICO");
+    return NextResponse.json({ ...atalho.solicitacao, _meta: { skippedToJuridico: true } });
   }
 
   // Gate: Valor Estimado é opcional na Solicitação, mas o motor de alçadas (determineLane, checkFragmentationRisk,
@@ -109,9 +110,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     priorRequestsValueLast12Months: Number(priorRequestsValueLast12Months ?? 0),
   });
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: {
+  // Os campos calculados na Triagem (lane, fracionamento, valor resolvido) são
+  // gravados na MESMA transação do avanço: antes, uma falha entre o update e o
+  // evento deixava a solicitação já em Validação Orçamentária sem registro de
+  // como chegou lá.
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "TRIAGEM",
+    para: "VALIDACAO_ORCAMENTARIA",
+    actorId: buyerId,
+    dadosExtras: {
       buyerId,
       needsContract,
       needsMapping,
@@ -119,13 +127,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       lane,
       estimatedValue: resolvedEstimatedValue,
       fragmentationFlag: fragmentation.flagged,
-      currentStage: "VALIDACAO_ORCAMENTARIA",
     },
   });
-
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "TRIAGEM", toStage: "VALIDACAO_ORCAMENTARIA", actorId: buyerId },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
+  const updated = avanco.solicitacao;
 
   if (fragmentation.flagged) {
     await prisma.notification.create({
@@ -139,8 +146,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     });
   }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Validação Orçamentária");
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  await notificarAvancoDeEtapa(updated, "VALIDACAO_ORCAMENTARIA");
 
   return NextResponse.json({
     ...updated,

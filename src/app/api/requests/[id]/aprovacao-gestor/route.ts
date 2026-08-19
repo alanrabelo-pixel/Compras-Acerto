@@ -4,6 +4,7 @@ import { nextAfterAprovacaoGestor } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { requireRole } from "@/lib/rbac";
 import { logger } from "@/lib/logger";
+import { avancarEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/aprovacao-gestor
@@ -37,7 +38,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "APROVACAO_GESTOR") {
-    return NextResponse.json({ error: "Solicitação não está na etapa de Aprovação do Gestor" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Esta solicitação não está na etapa de Aprovação do Gestor. Recarregue a página para ver o estado atual." },
+      { status: 409 }
+    );
   }
 
   if (personifiedBy) {
@@ -63,10 +67,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const approved = decision === "APROVADO";
   const nextStage = nextAfterAprovacaoGestor({ approved });
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: {
-      currentStage: nextStage,
+  // Os cinco campos da decisão do gestor vão na MESMA transação do avanço.
+  // Antes eram um update solto seguido do evento: uma falha entre os dois
+  // deixava a decisão gravada sem registro de quem a tomou e quando.
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "APROVACAO_GESTOR",
+    para: nextStage,
+    actorId,
+    comentario: justification || null,
+    dadosExtras: {
       managerApprovalDecision: decision,
       managerApprovalActorId: actorId,
       managerApprovalJustification: justification ?? null,
@@ -75,9 +85,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(approved ? {} : { status: "CANCELADO", cancelReason: justification }),
     },
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "APROVACAO_GESTOR", toStage: nextStage, actorId, comment: justification || null },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
+  const updated = avanco.solicitacao;
 
   if (!approved) {
     const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification);
