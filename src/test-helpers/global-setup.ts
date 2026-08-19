@@ -25,6 +25,17 @@ export default async function setup() {
   // desenvolvimento local (que pode ter dados reais).
   process.env.DATABASE_URL = databaseUrl;
 
+  // node:20-alpine (imagem do step "Run Tests" na Golden Pipeline) não traz
+  // openssl por padrão — sem ele, o binário nativo do schema-engine do
+  // Prisma quebra em runtime ao carregar libssl (fica só o aviso "Prisma
+  // failed to detect the libssl/openssl version..." e o db push seguinte
+  // falha com uma resposta não-JSON). Fora do Alpine (dev local, outras
+  // imagens) isso é um no-op — sem `apk`, o if nem entra.
+  execSync(
+    "if command -v apk >/dev/null 2>&1; then apk add --no-cache openssl >/dev/null 2>&1 || true; fi",
+    { stdio: "inherit" },
+  );
+
   // `db push` (não `migrate deploy`): banco efêmero e descartável não
   // precisa de histórico de migration, só do schema atual aplicado direto —
   // é a abordagem recomendada pela própria documentação do Prisma pra
