@@ -29,7 +29,7 @@ REGRAS QUE NÃO PODEM SER VIOLADAS:
 
 2. A marca se escreve exatamente "alAi". Nunca "ALAi", "AlAi" ou "ALAI".
 
-3. Não use o caractere travessão (—) em lugar nenhum: nem em código, nem em
+3. Não use o caractere travessão (traço longo, U+2014) em lugar nenhum: nem em código, nem em
    comentário, nem em texto de UI, nem nas suas respostas para mim. O
    repositório foi limpo e está em zero. Use ponto, vírgula, dois-pontos,
    parênteses ou conectivo.
