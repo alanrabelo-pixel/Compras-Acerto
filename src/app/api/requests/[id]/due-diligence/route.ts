@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/due-diligence
@@ -33,21 +34,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   });
 
   const nextStage = approved ? "COTACAO" : "CANCELADO";
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: {
-      currentStage: nextStage,
-      ...(approved ? {} : { status: "CANCELADO", cancelReason: justification ?? "Reprovado em Due Diligence" }),
-    },
-  });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "DUE_DILIGENCE", toStage: nextStage, actorId: decidedBy, comment: justification },
-  });
 
-  const { subject, html } = approved
-    ? templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Cotação")
-    : templates.reprovado(request.requester.name, request.shortDescription, justification ?? "reprovado em Due Diligence");
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "DUE_DILIGENCE",
+    para: nextStage,
+    actorId: decidedBy,
+    comentario: justification,
+    dadosExtras: approved ? undefined : { status: "CANCELADO", cancelReason: justification ?? "Reprovado em Due Diligence" },
+  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  return NextResponse.json(updated);
+  if (approved) {
+    await notificarAvancoDeEtapa(avanco.solicitacao, nextStage);
+  } else {
+    // Reprovado encerra a solicitação, então usa o template de reprovação e
+    // não o de avanço de etapa.
+    const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification ?? "reprovado em Due Diligence");
+    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  }
+
+  return NextResponse.json(avanco.solicitacao);
 }

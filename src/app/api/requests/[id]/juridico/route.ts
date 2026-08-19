@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/juridico
@@ -42,18 +42,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // (ver /api/contracts/[id]), não faz parte deste fluxo de solicitação.
   const isCancelamento = request.demandType === "CANCELAMENTO";
   const nextStage = isCancelamento ? "CONCLUIDO" : "PEDIDO_COMPRA";
-  const nextLabel = isCancelamento ? "Concluído" : "Pedido de Compra";
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: nextStage, ...(isCancelamento ? { status: "CONCLUIDO" } : {}) },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "JURIDICO",
+    para: nextStage,
+    actorId,
+    dadosExtras: isCancelamento ? { status: "CONCLUIDO" } : undefined,
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "JURIDICO", toStage: nextStage, actorId },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, nextLabel);
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  await notificarAvancoDeEtapa(avanco.solicitacao, nextStage);
 
-  return NextResponse.json(updated);
+  return NextResponse.json(avanco.solicitacao);
 }

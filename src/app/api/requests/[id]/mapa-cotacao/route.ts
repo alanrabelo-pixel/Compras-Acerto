@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/mapa-cotacao
@@ -33,19 +33,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   await prisma.quote.updateMany({ where: { requestId: request.id }, data: { selected: false } });
   await prisma.quote.update({ where: { id: quote.id }, data: { selected: true } });
 
-  const updated = await prisma.purchaseRequest.update({ where: { id: request.id }, data: { currentStage: "APROVACAO" } });
-  await prisma.stageEvent.create({
-    data: {
-      requestId: request.id,
-      fromStage: "MAPA_COTACAO",
-      toStage: "APROVACAO",
-      actorId,
-      comment: `Fornecedor vencedor: ${quote.supplierName}`,
-    },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "MAPA_COTACAO",
+    para: "APROVACAO",
+    actorId,
+    comentario: `Fornecedor vencedor: ${quote.supplierName}`,
   });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Aprovação");
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  await notificarAvancoDeEtapa(avanco.solicitacao, "APROVACAO");
 
-  return NextResponse.json(updated);
+  return NextResponse.json(avanco.solicitacao);
 }

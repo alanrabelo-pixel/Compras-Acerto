@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/medicao
@@ -40,13 +40,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "MEDICAO_REGISTRADA", technicalApproval });
   }
 
-  const updated = await prisma.purchaseRequest.update({ where: { id: request.id }, data: { currentStage: "FISCAL" } });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "MEDICAO", toStage: "FISCAL", actorId },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "MEDICAO",
+    para: "FISCAL",
+    actorId,
   });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Validação Fiscal");
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  await notificarAvancoDeEtapa(avanco.solicitacao, "FISCAL");
 
-  return NextResponse.json(updated);
+  return NextResponse.json(avanco.solicitacao);
 }
