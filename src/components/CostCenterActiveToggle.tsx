@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 
 /**
  * Ativa/desativa um centro de custo (ver /admin/centros-de-custo). Preferir
- * desativar a renomear/excluir quando um centro de custo deixa de ser usado
- * — preserva o histórico de solicitações já vinculadas a ele, sem quebrar
+ * desativar a renomear/excluir quando um centro de custo deixa de ser usado:
+ * isso preserva o histórico de solicitações já vinculadas a ele, sem quebrar
  * nenhuma referência.
  */
 export function CostCenterActiveToggle({ costCenterId, active }: { costCenterId: string; active: boolean }) {

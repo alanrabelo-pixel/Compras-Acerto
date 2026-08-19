@@ -1,7 +1,7 @@
 import type { TicketCategory } from "@prisma/client";
 
 /**
- * Configuração dos chamados simples (Viagens Acerto / Facilities) — fluxo
+ * Configuração dos chamados simples (Viagens Acerto / Facilities): fluxo
  * enxuto por fora do processo de Compras: sem alçada, sem etapas, só um
  * status simples e um histórico de mensagens. O segmento de URL (chave deste
  * objeto) é o que aparece em /chamados/[category].
@@ -24,7 +24,7 @@ export const TICKET_STATUS_LABEL: Record<string, string> = {
   CONCLUIDO: "Concluído",
 };
 
-// Caminho inverso enumValue -> slug de URL — usado por qualquer tela que
+// Caminho inverso enumValue -> slug de URL: usado por qualquer tela que
 // precise montar um link /chamados/[slug]/[id] a partir de um SimpleTicket
 // (ver home-data.ts, dashboard-data.ts).
 export const CATEGORY_ENUM_TO_SLUG = Object.fromEntries(

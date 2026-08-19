@@ -6,7 +6,7 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 /**
  * PATCH /api/requests/[id]/due-diligence
  *
- * Due Diligence de Privacidade/Segurança — obrigatório para Ferramenta Nova
+ * Due Diligence de Privacidade/Segurança: obrigatório para Ferramenta Nova
  * (ou quando handlesPersonalData foi marcado na Triagem). Decisão exclusiva
  * do papel PRIVACIDADE. Se aprovado -> Cotação; se reprovado -> Cancelado.
  */

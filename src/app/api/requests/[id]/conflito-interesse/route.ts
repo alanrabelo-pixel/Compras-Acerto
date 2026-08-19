@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 /**
  * POST /api/requests/[id]/conflito-interesse
  *
- * Declaração de conflito de interesse (revisão v1.1) — solicitante ou
+ * Declaração de conflito de interesse (revisão v1.1): solicitante ou
  * comprador declaram se têm relação pessoal/familiar/financeira com o
  * fornecedor proposto. Exigida antes da criação da Aprovação (ver rota
  * /aprovacao). Pode ser declarada mais de uma vez (histórico); a mais

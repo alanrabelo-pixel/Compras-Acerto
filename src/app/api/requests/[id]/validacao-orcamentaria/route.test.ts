@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestData } from "@/test-helpers/fixtures";
 
 /**
- * Testes de integração — a rota decide se uma solicitação segue direto para
+ * Testes de integração: a rota decide se uma solicitação segue direto para
  * Cotação/Due Diligence ou entra no workflow de exceção orçamentária por
  * alçada. É dinheiro real sendo liberado ou bloqueado; até esta suite não
  * havia nenhuma verificação automatizada além das funções puras de

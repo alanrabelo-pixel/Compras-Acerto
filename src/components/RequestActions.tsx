@@ -9,10 +9,10 @@ import { AiInsightPanel } from "@/components/AiInsightPanel";
 import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel, approvalsRequiredForLevel } from "@/lib/workflow";
 import { Button, Card } from "@/components/ui";
 
-// Identidade de quem está logado (server session — ver src/lib/auth.ts),
+// Identidade de quem está logado (server session, ver src/lib/auth.ts),
 // repassada de solicitacoes/[id]/page.tsx. Com SSO real ligado, o servidor
 // (requireRole em src/lib/rbac.ts) exige que o "ator" de cada ação bata com
-// quem está de fato autenticado — então, quando sessionActor existe, os
+// quem está de fato autenticado. Então, quando sessionActor existe, os
 // campos de "responsável" abaixo são preenchidos com a própria pessoa
 // logada e o seletor manual é ocultado (não faz sentido deixar escolher
 // outra pessoa que o servidor vai rejeitar). Sem sessão real
@@ -57,12 +57,12 @@ function ActorField({
 }
 
 // Estado do campo de "aprovador pré-definido" (gestor do centro de custo,
-// aprovador da alçada) — pedido do usuário: o Administrador do sistema pode
+// aprovador da alçada), pedido do usuário: o Administrador do sistema pode
 // personificar essa figura sempre que julgar necessário, mesmo com sessão
 // real ligada. Diferente de ActorField/useActorId (que trava no próprio
 // usuário logado sem exceção): quando um ADMIN personifica, `actorId` passa
 // a ser o aprovador-alvo escolhido (a quem a decisão é atribuída) e
-// `personifiedBy` guarda o id do próprio admin que de fato clicou — mesmo
+// `personifiedBy` guarda o id do próprio admin que de fato clicou. Mesmo
 // padrão já usado pelo comprador em .../aprovacao (ver PATCH ali), só que sem
 // o teto de alçada (Nível 1) que existe para o comprador.
 function usePredefinedApproverId(sessionActor: SessionActor) {
@@ -240,7 +240,7 @@ function TriagemForm({
   const needsEstimatedValue = request.estimatedValue === null;
   const isCancelamento = request.demandType === "CANCELAMENTO";
 
-  // Antes, este número era digitado de memória pelo comprador — agora vem
+  // Antes, este número era digitado de memória pelo comprador. Agora vem
   // pré-calculado a partir do histórico real de Pedidos de Compra (ver
   // /api/requests/[id]/supplier-history), continuando editável porque a
   // correspondência por nome de fornecedor pode não ser exata.
@@ -264,10 +264,10 @@ function TriagemForm({
       <Panel title="Triagem">
         <div style={{ display: "grid", gap: 10 }}>
           <p className="hint-box hint-box-warning">
-            Cancelamento de Contrato, Serviços e Ferramentas — fluxo simplificado: pula Validação Orçamentária,
+            Cancelamento de Contrato, Serviços e Ferramentas, fluxo simplificado: pula Validação Orçamentária,
             Cotação, Aprovação e Pedido de Compra, e vai direto para Jurídico formalizar o distrato/termo de
             cancelamento. Depois de assinado, a solicitação é encerrada direto (o contrato já existe e já está
-            mapeado — cancelá-lo de fato é feito em Contratos).
+            mapeado; cancelá-lo de fato é feito em Contratos).
           </p>
           <div className="form-section">
             <ActorField
@@ -288,7 +288,7 @@ function TriagemForm({
             <Button
               variant="secondary"
               disabled={loading || !buyerId}
-              onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas — favor detalhar." })}
+              onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas, favor detalhar." })}
             >
               Devolver ao solicitante
             </Button>
@@ -321,7 +321,7 @@ function TriagemForm({
           {needsEstimatedValue && (
             <div className="hint-box hint-box-warning">
               <label className="label" htmlFor="triagem-estimated-value">
-                Esta solicitação foi aberta sem valor estimado — preencha antes de avançar (necessário para calcular alçada/lane)
+                Esta solicitação foi aberta sem valor estimado. Preencha antes de avançar (necessário para calcular alçada/lane)
               </label>
               <input id="triagem-estimated-value" className="input" type="number" value={estimatedValue} onChange={(e) => setEstimatedValue(Number(e.target.value))} />
             </div>
@@ -349,11 +349,11 @@ function TriagemForm({
             {priorValueSource && priorValueSource.matchType !== "none" && (
               <p className="help" style={{ marginTop: 4 }}>
                 Calculado automaticamente a partir de Pedidos de Compra de {priorValueSource.matchedSupplierName}
-                {priorValueSource.matchType === "approximate" ? " (correspondência aproximada pelo nome — confira antes de avançar)" : ""}.
+                {priorValueSource.matchType === "approximate" ? " (correspondência aproximada pelo nome, confira antes de avançar)" : ""}.
               </p>
             )}
             {priorValueSource && priorValueSource.matchType === "none" && (
-              <p className="help" style={{ marginTop: 4 }}>Nenhum histórico encontrado para este fornecedor — ajuste se souber de compras anteriores.</p>
+              <p className="help" style={{ marginTop: 4 }}>Nenhum histórico encontrado para este fornecedor. Ajuste se souber de compras anteriores.</p>
             )}
           </div>
         </div>
@@ -388,7 +388,7 @@ function TriagemForm({
           <Button
             variant="secondary"
             disabled={loading || !buyerId}
-            onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas — favor detalhar." })}
+            onClick={() => onSubmit(`/api/requests/${request.id}/triagem`, "PATCH", { buyerId, action: "DEVOLVER", returnReason: "Informações incompletas, favor detalhar." })}
           >
             Devolver ao solicitante
           </Button>
@@ -406,7 +406,7 @@ function ValidacaoForm({
   const [budgetActorId, setBudgetActorId] = useActorId(sessionActor, request.buyerId ?? "");
   const [budgetObservation, setBudgetObservation] = useState("");
 
-  // Alçada da exceção calculada pelo valor estimado — define qual papel pode
+  // Alçada da exceção calculada pelo valor estimado: define qual papel pode
   // decidir (Coordenação no Nível 1, Gerente F&NC nos Níveis 2 e 3).
   const exceptionLevel = budgetExceptionLevel(request.estimatedValue ?? 0);
   const exceptionApproverRole = budgetExceptionApproverRole(exceptionLevel);
@@ -442,14 +442,14 @@ function ValidacaoForm({
               disabled={loading}
               onClick={() => onSubmit(`/api/requests/${request.id}/validacao-orcamentaria`, "PATCH", { budgetOk: false })}
             >
-              Sem orçamento — abrir exceção
+              Sem orçamento: abrir exceção
             </Button>
           </div>
         </div>
         <div className="form-section">
           <p className="form-section-label">Exceção orçamentária</p>
           <p style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 8 }}>
-            Se uma exceção já foi aberta, decida abaixo — alçada calculada: <strong>{BUDGET_EXCEPTION_LEVEL_LABEL[exceptionLevel]}</strong>
+            Se uma exceção já foi aberta, decida abaixo. Alçada calculada: <strong>{BUDGET_EXCEPTION_LEVEL_LABEL[exceptionLevel]}</strong>
           </p>
           <ActorField
             label={`Aprovador da exceção (${exceptionApproverRole})`}
@@ -543,7 +543,7 @@ function CotacaoForm({
             <div style={{ fontSize: 12 }}>
               {request.quotes.map((q) => (
                 <div key={q.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border-soft)" }}>
-                  <strong>{q.supplierName}</strong> — R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
+                  <strong>{q.supplierName}</strong>: R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
                 </div>
               ))}
             </div>
@@ -612,7 +612,7 @@ function MapaCotacaoForm({
               <label key={q.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: 8, border: "1px solid var(--border-soft)", borderRadius: 8 }}>
                 <span>
                   <input type="radio" name="quote" checked={selectedQuoteId === q.id} onChange={() => setSelectedQuoteId(q.id)} />{" "}
-                  <strong>{q.supplierName}</strong> — R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
+                  <strong>{q.supplierName}</strong>: R$ {q.negotiatedValue.toLocaleString("pt-BR")} ({q.paymentCondition})
                 </span>
                 <span style={{ color: saving >= 0 ? "var(--acerto-green)" : "var(--danger)", fontWeight: 700 }}>saving {saving.toFixed(1)}%</span>
               </label>
@@ -645,7 +645,7 @@ function AprovacaoGestorForm({
         {request.costCenter.managers.length > 0 ? (
           <p className="hint-box hint-box-info">
             Esta solicitação aguarda a decisão de{" "}
-            <strong>{request.costCenter.managers.map((m) => m.name).join(", ")}</strong> — qualquer um dos gestores
+            <strong>{request.costCenter.managers.map((m) => m.name).join(", ")}</strong>, qualquer um dos gestores
             responsáveis pelo centro de custo escolhido pode decidir.
           </p>
         ) : (
@@ -684,14 +684,14 @@ function AprovacaoGestorForm({
 function AprovacaoForm({
   request, onSubmit, loading, error, sessionActor, declaredByNames,
 }: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor; declaredByNames: Record<string, string> }) {
-  // approverId: NÃO é o ator — é uma atribuição (o comprador roteia a
+  // approverId: NÃO é o ator, é uma atribuição (o comprador roteia a
   // solicitação para um aprovador específico da alçada), ver requireSelf:
   // false em POST /api/requests/[id]/aprovacao. Continua manual mesmo com
   // sessão real.
   const [approverId, setApproverId] = useState("");
   const [approverId2, setApproverId2] = useState("");
   // Aprovador(es) padrão desta alçada de valor (ApprovalLevelApprover, ver
-  // /admin/centros-de-custo) — quando o pool tem gente suficiente, a criação
+  // /admin/centros-de-custo); quando o pool tem gente suficiente, a criação
   // da Aprovação não exige mais escolha manual (pedido do usuário:
   // "obrigatório como o gate do centro de custo"). Nível 1 exige 1
   // aprovador; Níveis 2/3 exigem 2 distintos decidindo em conjunto (ver
@@ -707,14 +707,14 @@ function AprovacaoForm({
   const poolHasEnough = Boolean(levelApprovers && levelApprovers.approvers.length >= requiredApprovers);
   const [approvalId, setApprovalId] = useState("");
   const [justification, setJustification] = useState("");
-  // personifiedBy é opcional (normalmente vazio — o aprovador real decide);
+  // personifiedBy é opcional (normalmente vazio, o aprovador real decide);
   // só quando marcado é que a pessoa logada está personificando, então usa
   // checkbox em vez do padrão ActorField (que sempre preencheria).
   const [personifying, setPersonifying] = useState(false);
   const [manualPersonifiedBy, setManualPersonifiedBy] = useState("");
   const personifiedBy = sessionActor ? (personifying ? sessionActor.id : "") : manualPersonifiedBy;
   // declaredBy: rota /conflito-interesse não valida identidade (pode ser o
-  // solicitante ou o comprador declarando) — mantém manual.
+  // solicitante ou o comprador declarando), mantém manual.
   const [declaredBy, setDeclaredBy] = useState(request.buyerId ?? "");
   const [hasConflict, setHasConflict] = useState(false);
   const [conflictDetails, setConflictDetails] = useState("");
@@ -724,7 +724,7 @@ function AprovacaoForm({
   const latestHasConflict = Boolean(latestDeclaration?.hasConflict);
 
   // Cada declaração nova (inclusive uma que confirma conflito) some da tela
-  // e vira uma caixa de aviso idêntica à anterior — sem isto, o checkbox
+  // e vira uma caixa de aviso idêntica à anterior. Sem isto, o checkbox
   // "tenho conflito" continuava marcado e cada novo clique em "Registrar"
   // só recriava o mesmo bloqueio, parecendo que o botão não fazia nada.
   useEffect(() => {
@@ -738,7 +738,7 @@ function AprovacaoForm({
         {latestHasConflict && (
           <div className="hint-box hint-box-danger">
             <p style={{ fontSize: 11, fontWeight: 700 }}>
-              Conflito de interesse já registrado — a aprovação não pode ser criada enquanto isso não mudar.
+              Conflito de interesse já registrado. A aprovação não pode ser criada enquanto isso não mudar.
             </p>
             <p style={{ fontSize: 11, marginTop: 4 }}>
               Declarado por {declaredByNames[latestDeclaration!.declaredBy] ?? "alguém"} em{" "}
@@ -781,7 +781,7 @@ function AprovacaoForm({
                   <p className="hint-box hint-box-info">
                     Aprovador{requiredApprovers > 1 ? "es" : ""} padrão do Nível {levelApprovers!.level}:{" "}
                     <strong>{levelApprovers!.approvers.slice(0, requiredApprovers).map((a) => a.name).join(", ")}</strong>
-                    {requiredApprovers > 1 ? " — os dois precisam aprovar." : " — atribuído automaticamente ao criar."}
+                    {requiredApprovers > 1 ? ". Os dois precisam aprovar." : ". Atribuído automaticamente ao criar."}
                   </p>
                   <Button variant="secondary" style={{ marginTop: 8 }} disabled={loading} onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao`, "POST", {})}>
                     Criar
@@ -792,7 +792,7 @@ function AprovacaoForm({
                   {levelApprovers && (
                     <p className="hint-box hint-box-warning">
                       O Nível {levelApprovers.level} exige 2 aprovadores distintos decidindo em conjunto, e não há gente
-                      suficiente configurada — configure em Administração → Centros de Custo, ou selecione manualmente
+                      suficiente configurada. Configure em Administração → Centros de Custo, ou selecione manualmente
                       abaixo (não pode ser a mesma pessoa duas vezes).
                     </p>
                   )}
@@ -817,7 +817,7 @@ function AprovacaoForm({
                 <>
                   {levelApprovers && (
                     <p className="hint-box hint-box-warning">
-                      Nenhum aprovador configurado para o Nível {levelApprovers.level} — configure em Administração → Centros
+                      Nenhum aprovador configurado para o Nível {levelApprovers.level}. Configure em Administração → Centros
                       de Custo, ou selecione manualmente abaixo.
                     </p>
                   )}
@@ -847,12 +847,12 @@ function AprovacaoForm({
               <input id="aprovacao-justification" className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
               <fieldset style={{ border: "none", margin: "8px 0 0", padding: 0 }}>
                 <legend className="label" style={{ marginBottom: 5 }}>
-                  Personificado por (comprador) — só permitido até R$ 50 mil
+                  Personificado por (comprador): só permitido até R$ 50 mil
                 </legend>
                 {sessionActor ? (
                   <label style={{ fontSize: 12 }}>
                     <input type="checkbox" checked={personifying} onChange={(e) => setPersonifying(e.target.checked)} />
-                    {" "}Estou personificando o aprovador real (urgência/ausência) — {sessionActor.name}
+                    {" "}Estou personificando o aprovador real (urgência/ausência): {sessionActor.name}
                   </label>
                 ) : (
                   <UserPicker value={manualPersonifiedBy} onChange={setManualPersonifiedBy} role="COMPRADOR" placeholder="Nenhum (aprovador real decide)" />
@@ -905,7 +905,7 @@ function JuridicoForm({
       <div style={{ display: "grid", gap: 10 }}>
         {isCancelamento && (
           <p className="hint-box hint-box-warning">
-            Cancelamento de Contrato, Serviços e Ferramentas — ao assinar, a solicitação é encerrada direto
+            Cancelamento de Contrato, Serviços e Ferramentas: ao assinar, a solicitação é encerrada direto
             (sem Pedido de Compra nem Mapeamento de Contrato, já que o contrato já existe e já está mapeado).
             Lembre-se de cancelar o contrato correspondente em Contratos (ação Cancelar) para notificar a Tesouraria.
           </p>
@@ -983,7 +983,7 @@ function PedidoCompraForm({
   const totalValue = validItems.reduce((sum, it) => sum + it.quantidade * it.valorUnitario * (1 + it.impostosPercent / 100), 0);
   const negotiatedValue = winningQuote?.negotiatedValue ?? totalValue;
 
-  // Valor da parcela sugerido automaticamente (negotiatedValue / parcelas) —
+  // Valor da parcela sugerido automaticamente (negotiatedValue / parcelas),
   // ajuda a preencher fluxo de caixa depois. Só recalcula sozinho enquanto o
   // comprador não editar manualmente (ex: para acertar arredondamento).
   useEffect(() => {
@@ -1101,7 +1101,7 @@ function PedidoCompraForm({
                 onChange={(e) => { setInstallmentValueTouched(true); setInstallmentValue(Number(e.target.value)); }}
               />
               <span id="pedido-installment-value-hint" className="help" style={{ margin: "2px 0 0" }}>
-                Sugerido: {(negotiatedValue / (installments || 1)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} — ajuda a alimentar o fluxo de caixa
+                Sugerido: {(negotiatedValue / (installments || 1)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} (ajuda a alimentar o fluxo de caixa)
               </span>
             </div>
           </div>
@@ -1341,7 +1341,7 @@ function MapeamentoContratoForm({
   const po = request.purchaseOrder;
   const [actorId, setActorId] = useActorId(sessionActor, request.buyerId ?? "");
   // Por esta etapa, o Pedido de Compra (etapa anterior) já garante fornecedor
-  // e CNPJ reais — usar esses valores em vez de deixar em branco evita
+  // e CNPJ reais. Usar esses valores em vez de deixar em branco evita
   // repetir manualmente o que já foi capturado no processo (pedido do
   // usuário: poucos campos com preenchimento manual obrigatório).
   const [supplierId, setSupplierId] = useState(po?.supplierId ?? "");
@@ -1351,12 +1351,12 @@ function MapeamentoContratoForm({
   const [documentType, setDocumentType] = useState("");
   const [contractObject, setContractObject] = useState(request.shortDescription ?? "");
   const [paymentCondition, setPaymentCondition] = useState(po?.paymentCondition ?? winningQuote?.paymentCondition ?? "");
-  // Início sugerido = data de emissão do Pedido de Compra (quando existe) —
+  // Início sugerido = data de emissão do Pedido de Compra (quando existe),
   // ponto de partida razoável, sempre editável se a assinatura real do
   // contrato ocorrer em outra data.
   const [startDate, setStartDate] = useState(po?.createdAt ? toDateInputValue(po.createdAt) : toDateInputValue(new Date()));
   // Fim/renovação/prazo não têm nenhuma fonte anterior no processo (nenhuma
-  // etapa captura "duração do contrato") — 12 meses é só um ponto de partida
+  // etapa captura "duração do contrato"), 12 meses é só um ponto de partida
   // comum, recalculado automaticamente a partir daqui enquanto a pessoa não
   // editar esses campos manualmente (ver useEffect abaixo).
   const [endDate, setEndDate] = useState(toDateInputValue(addMonths(startDate, 12)));

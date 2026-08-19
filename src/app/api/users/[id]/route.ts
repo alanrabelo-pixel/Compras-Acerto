@@ -6,21 +6,21 @@ import type { RoleName } from "@prisma/client";
 import { BOARD_ROLES } from "@/lib/roles";
 
 /**
- * PATCH /api/users/[id] — gerencia os "5 tipos de acesso" (Admin, Compras,
+ * PATCH /api/users/[id]: gerencia os "5 tipos de acesso" (Admin, Compras,
  * Solicitante, Aprovador, Controladoria) de uma pessoa, via
  * src/components/RoleAccessToggles.tsx. Reaproveita UserRole (a mesma tabela
  * usada por requireRole() nas ações de etapa do fluxo) em vez de um campo
- * separado — só mexe nos 5 valores gerenciados aqui, preservando papéis de
+ * separado: só mexe nos 5 valores gerenciados aqui, preservando papéis de
  * dono de etapa (TESOURARIA, FISCAL, JURIDICO, PRIVACIDADE) que não fazem
  * parte desses 5 tipos.
  *
  * canViewBoard (usado pelo middleware para liberar o quadro de Solicitações,
  * Contratos e Dashboards) é recalculado automaticamente a partir do conjunto
  * final de papéis: verdadeiro se a pessoa tiver ADMIN, COMPRADOR, APROVADOR
- * ou CONTROLADORIA — Solicitante sozinho não dá acesso ao quadro.
+ * ou CONTROLADORIA. Solicitante sozinho não dá acesso ao quadro.
  *
  * Autenticação por sessão real (não pelo padrão actorId-no-corpo usado no
- * resto da API) porque é o próprio mecanismo de controle de acesso — confiar
+ * resto da API) porque é o próprio mecanismo de controle de acesso: confiar
  * num id enviado no corpo anularia a proteção. Respeita LOCAL_BYPASS_AUTH
  * (ver .env e middleware.ts) para continuar utilizável localmente enquanto o
  * SSO real não está configurado.
@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // active: liga/desliga o acesso da pessoa (desativação estilo "soft delete"
   // para refletir contas removidas no Google Workspace/SSO) sem apagar
-  // nenhum histórico — nenhuma FK aponta para este campo, então
+  // nenhum histórico, pois nenhuma FK aponta para este campo. Então
   // PurchaseRequest/Contract/Approval etc. continuam intactos.
   if (typeof body.active === "boolean") {
     const user = await prisma.user.update({ where: { id: params.id }, data: { active: body.active }, include: { roles: true } });

@@ -4,16 +4,16 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 /**
- * PATCH /api/cost-centers/[id] — painel /admin/centros-de-custo: troca o(s)
- * gestor(es) aprovador(es) (managerIds — mais de um permitido, pedido do
+ * PATCH /api/cost-centers/[id] (painel /admin/centros-de-custo): troca o(s)
+ * gestor(es) aprovador(es) (managerIds, mais de um permitido, pedido do
  * usuário) e/ou ativa/desativa o centro de custo. Autenticação por sessão
- * real (mesmo padrão de /api/users/[id]/route.ts) — não está sob o matcher
+ * real (mesmo padrão de /api/users/[id]/route.ts), pois não está sob o matcher
  * /admin/:path* do middleware (que só cobre páginas), então a checagem de
  * ADMIN precisa ser feita aqui.
  *
  * Ao trocar os gestores, solicitações já paradas na etapa APROVACAO_GESTOR
  * deste centro de custo (e ainda não decididas) são migradas para o
- * primeiro do novo conjunto — pedido do usuário: a atualização precisa
+ * primeiro do novo conjunto, pois a atualização precisa
  * refletir em todo o fluxo em andamento, não só nas solicitações futuras.
  * Solicitações já decididas não são tocadas (preserva o histórico).
  */

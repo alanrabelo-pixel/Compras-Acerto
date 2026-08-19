@@ -92,7 +92,7 @@ export default async function AcessosPage({
                 <span style={{ fontWeight: 600 }}>{u.name}</span>
                 <span className="text-soft">{u.email}</span>
                 <span><RoleAccessToggles userId={u.id} initialRoles={managed} /></span>
-                <span className="text-soft" style={{ fontSize: 11.5 }}>{other.join(", ") || "—"}</span>
+                <span className="text-soft" style={{ fontSize: 11.5 }}>{other.join(", ") || "-"}</span>
                 <span><UserActiveToggle userId={u.id} active={u.active} /></span>
                 <span className="badge badge-info" style={{ fontSize: 10.5 }}>{u.googleId ? "SSO" : "Manual"}</span>
               </TableRow>

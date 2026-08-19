@@ -12,9 +12,9 @@ import { TableWrap, TableHeadRow, TableRow, TableEmpty, Tabs } from "@/component
 export const dynamic = "force-dynamic";
 
 const LEVEL_LABEL: Record<number, string> = {
-  1: "Nível 1 — até R$ 50 mil",
-  2: "Nível 2 — até R$ 500 mil",
-  3: "Nível 3 — acima de R$ 500 mil",
+  1: "Nível 1: até R$ 50 mil",
+  2: "Nível 2: até R$ 500 mil",
+  3: "Nível 3: acima de R$ 500 mil",
 };
 
 export default async function CentrosDeCustoPage({
@@ -51,10 +51,10 @@ export default async function CentrosDeCustoPage({
         <h1 className="page-title">Centros de Custo</h1>
         <p className="page-subtitle">
           Cada centro de custo tem um ou mais gestores que aprovam automaticamente as solicitações de compra assim
-          que o formulário é enviado, antes do comprador atuar (etapa "Aprovação do Gestor") — qualquer um deles pode
+          que o formulário é enviado, antes do comprador atuar (etapa "Aprovação do Gestor"). Qualquer um deles pode
           decidir, reduzindo a necessidade de ajuste manual quando um titular está ausente. Trocar os gestores aqui
           também atualiza as solicitações que já estão paradas nessa etapa aguardando decisão. Prefira desativar um
-          centro de custo a renomeá-lo ou excluí-lo — preserva o histórico das solicitações já vinculadas a ele.
+          centro de custo a renomeá-lo ou excluí-lo, pois isso preserva o histórico das solicitações já vinculadas a ele.
         </p>
 
         <Tabs
@@ -104,7 +104,7 @@ export default async function CentrosDeCustoPage({
           <div className="section-gap">
             <p className="page-subtitle" style={{ marginBottom: 14 }}>
               Aprovador(es) padrão de cada alçada de valor, atribuído(s) automaticamente ao criar a Aprovação na etapa
-              "Aprovação" (depois de Cotação/Mapa de Cotação) — mais de um é permitido, qualquer um pode decidir.
+              "Aprovação" (depois de Cotação/Mapa de Cotação). Mais de um é permitido, e qualquer um pode decidir.
             </p>
             <TableWrap>
               <TableHeadRow columns="1.6fr 2fr">

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 const LEVELS = [1, 2, 3];
 
 /**
- * GET /api/approval-levels — os 3 níveis de alçada (ver approvalLevel() em
+ * GET /api/approval-levels: os 3 níveis de alçada (ver approvalLevel() em
  * src/lib/workflow.ts) e o(s) aprovador(es) configurado(s) para cada um (ver
  * /admin/centros-de-custo). Mais de um aprovador por nível é permitido
  * (pedido do usuário).

@@ -12,7 +12,7 @@ function applyTheme(choice: ThemeChoice) {
 
 /**
  * Duas caixinhas (sol/lua) em vez do botão único que ciclava Sistema → Claro
- * → Escuro — mais direto de usar, ao custo de não ter mais um terceiro
+ * → Escuro. Mais direto de usar, ao custo de não ter mais um terceiro
  * estado explícito "seguir o SO" depois do primeiro clique. Antes do
  * primeiro clique (nada salvo em localStorage ainda), a caixinha que aparece
  * marcada reflete o tema que já está sendo exibido (prefers-color-scheme),

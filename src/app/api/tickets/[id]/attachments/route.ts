@@ -4,7 +4,7 @@ import { saveFile } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
-// GET /api/tickets/[id]/attachments — lista anexos do chamado.
+// GET /api/tickets/[id]/attachments: lista anexos do chamado.
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const attachments = await prisma.attachment.findMany({
     where: { ticketId: params.id },
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(attachments);
 }
 
-// POST /api/tickets/[id]/attachments — upload (multipart/form-data: file, uploadedBy).
+// POST /api/tickets/[id]/attachments: upload (multipart/form-data: file, uploadedBy).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const ticket = await prisma.simpleTicket.findUnique({ where: { id: params.id } });
   if (!ticket) return NextResponse.json({ error: "Chamado não encontrado" }, { status: 404 });

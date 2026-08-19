@@ -9,7 +9,7 @@ import { requireRole } from "@/lib/rbac";
  *
  * Documento de referência: se há orçamento disponível, segue direto (Cotação ou
  * Due Diligence se Ferramenta Nova). Se não há, abre o workflow de exceção por
- * alçada (Nível 1/2/3 conforme valor) — só sai desta etapa quando a exceção for
+ * alçada (Nível 1/2/3 conforme valor); só sai desta etapa quando a exceção for
  * decidida.
  */
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Solicitação não está na etapa de Validação Orçamentária" }, { status: 409 });
   }
 
-  // Caminho 1: há orçamento — segue direto, sem passar pelo workflow de exceção.
+  // Caminho 1: há orçamento, segue direto, sem passar pelo workflow de exceção.
   if (budgetOk) {
     const roleError = await requireRole(actorId, ["COMPRADOR"]);
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
@@ -47,9 +47,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json(updated);
   }
 
-  // Caminho 2: sem orçamento — cria ou atualiza a exceção orçamentária.
+  // Caminho 2: sem orçamento, cria ou atualiza a exceção orçamentária.
   // A Triagem já exige estimatedValue preenchido antes de chegar aqui (ver
-  // rota de triagem) — este guard é só defesa em profundidade.
+  // rota de triagem); este guard é só defesa em profundidade.
   if (request.estimatedValue === null) {
     return NextResponse.json({ error: "Valor estimado ainda não foi preenchido nesta solicitação." }, { status: 409 });
   }
@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "EXCECAO_PENDENTE", exception });
   }
 
-  // Segunda chamada: decisão do aprovador da exceção — papel exigido varia
+  // Segunda chamada: decisão do aprovador da exceção. Papel exigido varia
   // pela alçada (ver budgetExceptionApproverRole em workflow.ts).
   const requiredRole = budgetExceptionApproverRole(level);
   const roleError = await requireRole(exceptionApproverId, [requiredRole]);

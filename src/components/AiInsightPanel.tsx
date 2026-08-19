@@ -47,7 +47,7 @@ const STAGE_CONFIG: Record<
 };
 
 /**
- * Painel de IA genérico (pedido do usuário) — usado em todas as etapas onde
+ * Painel de IA genérico (pedido do usuário), usado em todas as etapas onde
  * um assistente é aplicável: Triagem, Due Diligence, Cotação, Mapa de
  * Cotação, Jurídico e Mapeamento de Contrato. Roda Anthropic e Gemini em
  * paralelo e mostra as duas sugestões lado a lado.
@@ -168,7 +168,7 @@ function InsightCard({ insight, highlight }: { insight: Insight; highlight?: boo
     <div className={`ai-insight-card${highlight ? " latest" : ""}`}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--ink-muted)" }}>
         <span>
-          {config.label} · {insight.requestedBy?.name ?? "—"}
+          {config.label} · {insight.requestedBy?.name ?? "-"}
         </span>
         <span>{new Date(insight.createdAt).toLocaleString("pt-BR")}</span>
       </div>

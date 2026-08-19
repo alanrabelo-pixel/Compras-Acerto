@@ -1,13 +1,13 @@
 /**
  * Medição de largura de texto para fontes PDF padrão (Helvetica / Helvetica-Bold),
- * equivalente ao `stringWidth` do ReportLab — necessário porque @react-pdf/renderer
+ * equivalente ao `stringWidth` do ReportLab, necessário porque @react-pdf/renderer
  * não expõe medição de texto na camada de JSX, e o layout do Pedido de Compra
  * exige reduzir a fonte dinamicamente quando o texto não cabe na coluna (em vez
  * de usar autosize nativo do PDF).
  *
  * As tabelas abaixo são as métricas AFM padrão da Adobe para Helvetica/Helvetica-Bold
  * (unidades por em de 1000, ASCII 32-126). Caracteres acentuados (Latin-1/WinAnsi,
- * 192-255) usam a largura da letra base correspondente — aproximação padrão da
+ * 192-255) usam a largura da letra base correspondente: aproximação padrão da
  * indústria para essas fontes core, suficiente para decidir quando encolher a fonte.
  */
 
@@ -68,7 +68,7 @@ export function stringWidth(text: string, fontSize: number, bold = false): numbe
 
 /**
  * Reduz o tamanho da fonte (em passos de 0.5pt) até o texto caber em maxWidthPt,
- * sem descer abaixo de minFontSize. Não trunca o texto — apenas encolhe a fonte,
+ * sem descer abaixo de minFontSize. Não trunca o texto, apenas encolhe a fonte,
  * conforme a especificação (nada de autosize nativo do PDF).
  */
 export function fitFontSize(params: {

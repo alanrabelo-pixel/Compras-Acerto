@@ -6,11 +6,11 @@ import type { RoleName } from "@prisma/client";
 export type UserOption = { id: string; name: string; email: string; roles: RoleName[] };
 
 /**
- * Seletor de usuário — substitui os campos de "cole o id aqui" por um
+ * Seletor de usuário: substitui os campos de "cole o id aqui" por um
  * dropdown com nome/e-mail, filtrável por papel (RoleName). O value
  * continua sendo o id do usuário (o que as rotas de API esperam).
  *
- * onSelect (opcional): além de onChange(id), devolve o registro completo —
+ * onSelect (opcional): além de onChange(id), devolve o registro completo,
  * usado por telas que precisam do nome/e-mail junto (ex: NdaRequestForm,
  * onde o solicitante manual precisa virar requesterName/requesterEmail em
  * texto, não só um id).
@@ -43,7 +43,7 @@ export function UserPicker({
       <option value="">{placeholder}</option>
       {users.map((u) => (
         <option key={u.id} value={u.id}>
-          {u.name} ({u.email}){role ? "" : ` — ${u.roles.join(", ") || "sem papel"}`}
+          {u.name} ({u.email}){role ? "" : ` (${u.roles.join(", ") || "sem papel"})`}
         </option>
       ))}
     </select>

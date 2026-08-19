@@ -3,7 +3,7 @@
 /**
  * Componentes de gráfico (recharts) do Dashboard executivo. Isolados num só
  * arquivo "use client" para o resto do dashboard (painéis de tabela, riscos,
- * alertas) continuar como Server Components — só paga o custo de JS de
+ * alertas) continuar como Server Components. Só paga o custo de JS de
  * gráfico quem realmente precisa renderizar um gráfico.
  */
 
@@ -12,10 +12,10 @@ import {
   Legend, RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
 
-// Tokens (não hex cru) — para os gráficos reagirem ao dark mode como o resto
+// Tokens (não hex cru), para os gráficos reagirem ao dark mode como o resto
 // do app. Navegadores modernos resolvem var() em atributos de apresentação
 // SVG (fill/stroke), então isso funciona igual a passar a cor computada.
-// Sem azul em nenhum gráfico — não é cor da paleta oficial da Acerto (ver
+// Sem azul em nenhum gráfico: não é cor da paleta oficial da Acerto (ver
 // acerto-docs) e é a cor de um concorrente direto. "graphite" (var(--info),
 // grafite/neutro) substitui o que antes era um azul de "série neutra".
 export const CHART_COLORS = {
@@ -32,7 +32,7 @@ function money(v: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Sparkline — mini gráfico dentro de um KpiCard
+// Sparkline: mini gráfico dentro de um KpiCard
 // ---------------------------------------------------------------------------
 export function Sparkline({ data, color }: { data: number[]; color: string }) {
   const points = data.map((v, i) => ({ i, v }));
@@ -52,7 +52,7 @@ export function Sparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Evolução das Compras — valor (área) + saving (barra) por mês, 12 meses
+// Evolução das Compras: valor (área) + saving (barra) por mês, 12 meses
 // ---------------------------------------------------------------------------
 export function TrendChart({ data }: { data: { label: string; value: number; saving: number }[] }) {
   return (
@@ -81,7 +81,7 @@ export function TrendChart({ data }: { data: { label: string; value: number; sav
 }
 
 // ---------------------------------------------------------------------------
-// Compras por Centro de Custo — barra horizontal
+// Compras por Centro de Custo: barra horizontal
 // ---------------------------------------------------------------------------
 export function CostCenterBarHorizontal({ data }: { data: { label: string; value: number }[] }) {
   const height = Math.max(180, data.length * 32);
@@ -99,7 +99,7 @@ export function CostCenterBarHorizontal({ data }: { data: { label: string; value
 }
 
 // ---------------------------------------------------------------------------
-// SLA — gauge (radial)
+// SLA: gauge (radial)
 // ---------------------------------------------------------------------------
 export function SlaGauge({ pct }: { pct: number | null }) {
   const value = pct ?? 0;
@@ -114,7 +114,7 @@ export function SlaGauge({ pct }: { pct: number | null }) {
         </RadialBarChart>
       </ResponsiveContainer>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontSize: 28, fontWeight: 700, color, letterSpacing: "-0.02em" }}>{pct === null ? "—" : `${value.toFixed(0)}%`}</span>
+        <span style={{ fontSize: 28, fontWeight: 700, color, letterSpacing: "-0.02em" }}>{pct === null ? "-" : `${value.toFixed(0)}%`}</span>
         <span style={{ fontSize: 11, color: "var(--ink-muted)" }}>dentro do SLA</span>
       </div>
     </div>
@@ -122,7 +122,7 @@ export function SlaGauge({ pct }: { pct: number | null }) {
 }
 
 // ---------------------------------------------------------------------------
-// Tempo de Ciclo — histograma
+// Tempo de Ciclo: histograma
 // ---------------------------------------------------------------------------
 export function CycleHistogram({ data }: { data: { label: string; count: number }[] }) {
   return (

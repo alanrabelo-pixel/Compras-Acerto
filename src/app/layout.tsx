@@ -14,10 +14,10 @@ export const metadata: Metadata = {
   description: "Sistema de processo de compras da Acerto (Compras | F&NC)",
 };
 
-// Aplica o tema salvo ANTES da primeira pintura — sem isso, a página sempre
+// Aplica o tema salvo ANTES da primeira pintura. Sem isso, a página sempre
 // nasceria clara por uma fração de segundo mesmo com tema escuro escolhido
 // (o "flash" clássico de FOUC). Roda como script inline (não em um useEffect,
-// que só executa depois do primeiro paint) — ver src/components/ThemeToggle.tsx
+// que só executa depois do primeiro paint); ver src/components/ThemeToggle.tsx
 // para quem grava/lê a mesma chave de localStorage.
 const THEME_INIT_SCRIPT = `
 (function () {

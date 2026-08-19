@@ -10,8 +10,8 @@ import { Bell, Rocket, SunMoon, Settings, Users, Building2, LogOut, ChevronDown,
 type View = "menu" | "comunicados" | "acessos";
 
 /**
- * Menu único do usuário no topbar da Home — reúne Minhas Pendências,
- * Comunicados, Tema, Configuração (Administração — com os subitens Usuários
+ * Menu único do usuário no topbar da Home. Reúne Minhas Pendências,
+ * Comunicados, Tema, Configuração (Administração, com os subitens Usuários
  * e Centro de custos) e Sair num só lugar, disparado a partir do avatar/nome
  * ("Modo local (sem SSO)" em bypass), em vez de espalhar cada um como um
  * ícone separado no topbar.
@@ -39,7 +39,7 @@ export function UserMenu({
   return (
     <div className="user-menu-wrap">
       {/* Não é um <button> porque envolve o <button> do próprio UserAvatar
-          (upload de foto) — botão dentro de botão é HTML inválido e trava o
+          (upload de foto). Botão dentro de botão é HTML inválido e trava o
           clique. Div com role="button" mantém a semântica/teclado sem
           aninhar elementos interativos. */}
       <div

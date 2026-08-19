@@ -4,11 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 /**
- * PATCH /api/users/[id]/cost-centers — painel /admin/centros-de-custo, visão
+ * PATCH /api/users/[id]/cost-centers (painel /admin/centros-de-custo), visão
  * "Por Aprovador": define quais centros de custo esta pessoa pode aprovar
  * (substitui o conjunto inteiro). Mesma relação CostCenter.managers editada
- * em PATCH /api/cost-centers/[id], só que a partir do lado do usuário —
- * pedido do usuário: uma listagem para escolher, por aprovador, quais
+ * em PATCH /api/cost-centers/[id], só que a partir do lado do usuário.
+ * Pedido do usuário: uma listagem para escolher, por aprovador, quais
  * centros de custo ele enxerga (ver também src/lib/pendencias.ts, que já
  * filtra "Minhas Pendências" por este mesmo vínculo).
  */

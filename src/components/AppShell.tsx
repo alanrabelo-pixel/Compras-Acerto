@@ -13,7 +13,7 @@ import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, Building2,
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
 // Quadro geral, Minhas Pendências, Contratos e Dashboards são telas de
-// gestão — só fazem sentido para quem tem acesso ao quadro (ver
+// gestão, só fazem sentido para quem tem acesso ao quadro (ver
 // src/lib/roles.ts). Quem só tem o papel Solicitante nunca vê essas telas
 // (o middleware já bloqueia o acesso direto por URL); pra essa pessoa a nav
 // mostra só "Minhas Solicitações", o próprio recorte dela.
@@ -30,16 +30,16 @@ const SOLICITANTE_NAV_ITEMS: NavItem[] = [
 ];
 
 /**
- * Casca de navegação da Acerto Compras — barra lateral (pedido do usuário:
- * padrão mais comum em ferramentas internas com várias seções — Jira,
- * Linear, Notion, ServiceNow — e que escala melhor que uma barra de topo à
- * medida que o app ganha sub-seções, como Solicitações agora com Quadro e
- * Minhas Pendências). Substitui o antigo TopNav nas telas de Compras;
- * Chamados (Viagens/Facilities) e a página inicial continuam com seu
- * próprio cabeçalho simples (ChamadoHeader), por serem fluxos à parte.
+ * Casca de navegação da Acerto Compras: barra lateral (pedido do usuário,
+ * seguindo o padrão mais comum em ferramentas internas com várias seções,
+ * como Jira, Linear, Notion e ServiceNow, que escala melhor que uma barra
+ * de topo à medida que o app ganha sub-seções, como Solicitações agora com
+ * Quadro e Minhas Pendências). Substitui o antigo TopNav nas telas de
+ * Compras; Chamados (Viagens/Facilities) e a página inicial continuam com
+ * seu próprio cabeçalho simples (ChamadoHeader), por serem fluxos à parte.
  *
  * `active` identifica o item de nav atual (ver valores em BOARD_NAV_ITEMS /
- * SOLICITANTE_NAV_ITEMS) — cada
+ * SOLICITANTE_NAV_ITEMS). Cada
  * página passa o seu explicitamente, mesmo padrão que o TopNav já usava.
  */
 export async function AppShell({ active, children }: { active?: string; children: React.ReactNode }) {
@@ -51,7 +51,7 @@ export async function AppShell({ active, children }: { active?: string; children
   const isAdmin = user?.roles?.includes("ADMIN");
   const showBoard = canViewBoard(user?.roles ?? []);
   const navItems = showBoard ? BOARD_NAV_ITEMS : SOLICITANTE_NAV_ITEMS;
-  // Identidade real (id + avatar) — null em bypass/sem sessão, ver
+  // Identidade real (id + avatar): null em bypass/sem sessão, ver
   // src/lib/current-user.ts. UserAvatar só permite upload quando não-nulo.
   const [currentUser, recentAnnouncementsCount] = await Promise.all([
     loadCurrentUser(),

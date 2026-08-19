@@ -6,7 +6,7 @@ import { loadDashboardData, money } from "@/lib/dashboard-data";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET /api/dashboards/export-pdf — resumo executivo em PDF, com o MESMO
+// GET /api/dashboards/export-pdf: resumo executivo em PDF, com o MESMO
 // recorte de filtros da tela (ver DashboardHeader / dashboards/page.tsx).
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
       poCount={data.kpis.poCount.value}
       avgCycleDays={`${data.kpis.avgCycleDays.value.toFixed(1)} dias`}
       savingPct={`${data.kpis.savingPct.value.toFixed(1)}%`}
-      slaCompliancePct={data.current.slaCompliancePct === null ? "—" : `${data.current.slaCompliancePct.toFixed(0)}%`}
+      slaCompliancePct={data.current.slaCompliancePct === null ? "N/A" : `${data.current.slaCompliancePct.toFixed(0)}%`}
       topSuppliers={data.topSuppliers.map((s) => ({ name: s.name, value: money(s.value), count: s.count, avgSaving: `${s.avgSaving.toFixed(1)}%` }))}
-      buyerRanking={data.buyerRanking.map((b) => ({ name: b.name, count: b.count, value: money(b.value), slaPct: b.slaPct === null ? "—" : `${b.slaPct.toFixed(0)}%` }))}
+      buyerRanking={data.buyerRanking.map((b) => ({ name: b.name, count: b.count, value: money(b.value), slaPct: b.slaPct === null ? "N/A" : `${b.slaPct.toFixed(0)}%` }))}
       expiringContracts={data.contractsPanel.list.map((c) => ({ supplierName: c.supplierName, area: c.area, daysToRenewal: c.daysToRenewal }))}
       alerts={data.alerts}
     />

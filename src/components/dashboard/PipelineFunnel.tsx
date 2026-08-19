@@ -1,7 +1,7 @@
 export type PipelineStage = { stage: string; label: string; count: number };
 
 /**
- * Funil do pipeline — largura proporcional ao volume da etapa. Cada etapa
+ * Funil do pipeline: largura proporcional ao volume da etapa. Cada etapa
  * tem drill-through real para o Quadro já filtrado por aquela etapa (não é
  * só um enfeite visual).
  */

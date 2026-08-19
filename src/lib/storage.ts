@@ -3,16 +3,16 @@ import path from "path";
 import { put } from "@vercel/blob";
 
 /**
- * Armazenamento de anexos e fotos de perfil — dois modos, escolhidos
+ * Armazenamento de anexos e fotos de perfil: dois modos, escolhidos
  * automaticamente pela presença de BLOB_READ_WRITE_TOKEN (ver .env.example):
  *
  * - Sem o token (dev local, filesystem persistente): grava em disco, num
  *   diretório fora do controle de versão (`uploads/`), e guarda em
  *   Attachment.storageUrl/User.avatarUrl uma chave "local://<id>/<arquivo>"
  *   que readFile() resolve de volta para o caminho real.
- * - Com o token (produção na Vercel, onde o filesystem é efêmero — nada
+ * - Com o token (produção na Vercel, onde o filesystem é efêmero: nada
  *   escrito em disco sobrevive entre requisições): usa o Vercel Blob e
- *   guarda a própria URL pública que ele retorna — readFile() só precisa
+ *   guarda a própria URL pública que ele retorna. readFile() só precisa
  *   buscar essa URL, sem nada a resolver.
  */
 
@@ -42,7 +42,7 @@ export async function readFile(storageUrl: string): Promise<Buffer> {
     return fsReadFile(path.join(UPLOAD_ROOT, relative));
   }
 
-  // URL do Vercel Blob (ou qualquer outra já pública) — busca direto.
+  // URL do Vercel Blob (ou qualquer outra já pública): busca direto.
   const res = await fetch(storageUrl);
   if (!res.ok) throw new Error(`Não foi possível buscar o arquivo em ${storageUrl} (status ${res.status}).`);
   return Buffer.from(await res.arrayBuffer());

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * Exporta em Excel toda a base de dados movimentada no processo, recortada
  * pelos mesmos filtros da tela de Dashboards (ver src/app/dashboards/page.tsx
- * e DashboardFilters.tsx — os nomes dos parâmetros de URL são idênticos de
+ * e DashboardFilters.tsx): os nomes dos parâmetros de URL são idênticos de
  * propósito, para o recorte do relatório bater com o que está na tela).
  */
 export async function GET(req: NextRequest) {

@@ -63,14 +63,14 @@ export default async function DashboardsPage({
           <KpiCard icon={<Hourglass size={18} strokeWidth={1.75} />} label="Ciclo de Compra" formattedValue={`${data.kpis.avgCycleDays.value.toFixed(1)}d`} deltaPct={data.kpis.avgCycleDays.deltaPct} direction={data.kpis.avgCycleDays.direction} goodDirection="down" />
           <KpiCard
             icon={<Truck size={18} strokeWidth={1.75} />} label="Lead Time (PO → Entrega)"
-            formattedValue={data.avgLeadTimeDays === null ? "—" : `${data.avgLeadTimeDays.toFixed(1)}d`}
+            formattedValue={data.avgLeadTimeDays === null ? "-" : `${data.avgLeadTimeDays.toFixed(1)}d`}
             deltaPct={null} direction="flat" goodDirection="down"
           />
           <KpiCard icon={<Banknote size={18} strokeWidth={1.75} />} label="Saving Obtido" formattedValue={money(data.kpis.totalSaving.value)} deltaPct={data.kpis.totalSaving.deltaPct} direction={data.kpis.totalSaving.direction} />
           <KpiCard icon={<TrendingUp size={18} strokeWidth={1.75} />} label="Saving %" formattedValue={`${data.kpis.savingPct.value.toFixed(1)}%`} deltaPct={data.kpis.savingPct.deltaPct} direction={data.kpis.savingPct.direction} />
           <KpiCard
             icon={<CheckCircle2 size={18} strokeWidth={1.75} />} label="SLA Cumprido"
-            formattedValue={data.current.slaCompliancePct === null ? "—" : `${data.current.slaCompliancePct.toFixed(0)}%`}
+            formattedValue={data.current.slaCompliancePct === null ? "-" : `${data.current.slaCompliancePct.toFixed(0)}%`}
             deltaPct={data.kpis.slaCompliancePct.deltaPct} direction={data.kpis.slaCompliancePct.direction}
           />
           <KpiCard icon={<Users size={18} strokeWidth={1.75} />} label="Fornecedores Ativos" formattedValue={String(Math.round(data.kpis.activeSuppliers.value))} deltaPct={data.kpis.activeSuppliers.deltaPct} direction={data.kpis.activeSuppliers.direction} />
@@ -116,7 +116,7 @@ export default async function DashboardsPage({
         <Card titleSize="lg"
           title="Chamados (Viagens · Facilities · NDA)"
           icon={<Ticket size={16} strokeWidth={1.75} />}
-          subtitle="Fluxo simples fora do processo de Compras — mesmo período do filtro acima; demais filtros não se aplicam"
+          subtitle="Fluxo simples fora do processo de Compras, no mesmo período do filtro acima; demais filtros não se aplicam"
         >
           <div className="kpi-grid" style={{ marginBottom: 16 }}>
             <KpiCard
@@ -126,7 +126,7 @@ export default async function DashboardsPage({
             />
             <KpiCard
               icon={<Timer size={18} strokeWidth={1.75} />} label="Tempo médio de resolução"
-              formattedValue={data.ticketsPanel.avgResolutionDays === null ? "—" : `${data.ticketsPanel.avgResolutionDays.toFixed(1)}d`}
+              formattedValue={data.ticketsPanel.avgResolutionDays === null ? "-" : `${data.ticketsPanel.avgResolutionDays.toFixed(1)}d`}
               deltaPct={null} direction="flat" goodDirection="down"
             />
             <KpiCard icon={<Inbox size={18} strokeWidth={1.75} />} label="Chamados em aberto" formattedValue={String(data.ticketsPanel.openCount)} deltaPct={null} direction="flat" />
@@ -167,7 +167,7 @@ export default async function DashboardsPage({
         </Card>
 
         {/* ---- Sazonalidade ---- */}
-        <Card titleSize="lg" title="Sazonalidade" icon={<Calendar size={16} strokeWidth={1.75} />} subtitle="Quando as solicitações são abertas — ajuda a antecipar picos de demanda">
+        <Card titleSize="lg" title="Sazonalidade" icon={<Calendar size={16} strokeWidth={1.75} />} subtitle="Quando as solicitações são abertas, para ajudar a antecipar picos de demanda">
           <SeasonalityHeatmap matrix={data.heatmap} monthLabels={data.heatmapMonthLabels} weekdayLabels={data.weekdayLabels} max={data.heatmapMax} />
         </Card>
 

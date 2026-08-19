@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// GET /api/suppliers?q=texto — lista/busca fornecedores cadastrados (por razão social, nome fantasia ou CNPJ).
+// GET /api/suppliers?q=texto: lista/busca fornecedores cadastrados (por razão social, nome fantasia ou CNPJ).
 // Usado para pré-preencher o formulário de Pedido de Compra quando o fornecedor já tem cadastro.
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q");

@@ -11,7 +11,7 @@ import { PedidoCompraDocument, type PedidoCompraItem } from "@/lib/pdf/pedidoCom
  * POST /api/requests/[id]/pedido-compra
  *
  * Gera o Pedido de Compra (dados do fornecedor, itens, condições comerciais)
- * e o PDF correspondente — layout portado do gerador Python/ReportLab já
+ * e o PDF correspondente. Layout portado do gerador Python/ReportLab já
  * validado pela Acerto (ver src/lib/pdf/pedidoCompra.tsx). Avança para
  * Aguardando Entrega/Conclusão.
  */
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
   }
 
-  // Sem limite de itens — o PDF (ver src/lib/pdf/pedidoCompra.tsx) pagina
+  // Sem limite de itens: o PDF (ver src/lib/pdf/pedidoCompra.tsx) pagina
   // automaticamente quando ultrapassa a primeira página.
   const itemList: PedidoCompraItem[] = Array.isArray(items) ? items : [];
   if (itemList.length === 0) {

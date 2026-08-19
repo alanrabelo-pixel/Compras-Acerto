@@ -5,12 +5,12 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { formatDateOnly } from "@/lib/format";
 
 /**
- * Alerta semanal de renovação de contrato — dispara toda segunda-feira, 3 meses
+ * Alerta semanal de renovação de contrato: dispara toda segunda-feira, 3 meses
  * antes da data de renovação prevista, conforme seção "Mapeamento do contrato"
  * do documento de referência.
  *
  * Configurar como job agendado (Railway Cron / Vercel Cron) chamando esta rota
- * com um header de autenticação simples (CRON_SECRET) — não expor publicamente.
+ * com um header de autenticação simples (CRON_SECRET); não expor publicamente.
  */
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization");

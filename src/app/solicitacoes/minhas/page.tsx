@@ -11,12 +11,12 @@ import { formatDateTime } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 /**
- * Recorte de quem só tem o papel Solicitante (sem acesso ao quadro geral —
- * ver src/lib/roles.ts) — mostra só as solicitações que a própria pessoa
+ * Recorte de quem só tem o papel Solicitante (sem acesso ao quadro geral;
+ * ver src/lib/roles.ts). Mostra só as solicitações que a própria pessoa
  * abriu, sem as 15 colunas/campos de gestão do quadro completo. Sem link
  * para o detalhe (/solicitacoes/[id]): aquela tela mistura os formulários de
  * ação de cada etapa (Triagem, Validação Orçamentária, etc.), pensados para
- * quem compra/aprova/controla, não para quem só solicitou — em vez de expor
+ * quem compra/aprova/controla, não para quem só solicitou. Em vez de expor
  * uma tela de gestão incompleta pra esse público, o status já aparece aqui.
  */
 export default async function MinhasSolicitacoesPage({

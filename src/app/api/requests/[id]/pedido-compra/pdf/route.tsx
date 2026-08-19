@@ -5,7 +5,7 @@ import { PedidoCompraDocument } from "@/lib/pdf/pedidoCompra";
 
 export const runtime = "nodejs";
 
-// GET /api/requests/[id]/pedido-compra/pdf — gera o PDF do Pedido de Compra sob demanda.
+// GET /api/requests/[id]/pedido-compra/pdf: gera o PDF do Pedido de Compra sob demanda.
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },

@@ -3,7 +3,7 @@ import Link from "next/link";
 export type BreadcrumbItem = { label: string; href?: string };
 
 /**
- * Trilha de navegação — substitui o link solto "← voltar ao X" nas telas de
+ * Trilha de navegação. Substitui o link solto "← voltar ao X" nas telas de
  * detalhe (Solicitação, Contrato) por um rastro completo (Quadro / CÓDIGO),
  * deixando claro onde a pessoa está e permitindo voltar a qualquer nível.
  */

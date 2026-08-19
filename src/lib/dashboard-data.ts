@@ -1,5 +1,5 @@
 /**
- * Serviço de dados do Dashboard executivo — toda a lógica de agregação
+ * Serviço de dados do Dashboard executivo: toda a lógica de agregação
  * (Prisma) fica aqui, separada da renderização (ver src/app/dashboards/).
  * Reaproveitado também pelas exportações (Excel/PDF), para que o recorte
  * exportado seja sempre idêntico ao que está na tela.
@@ -8,7 +8,7 @@
  * Quando um indicador pedido não tem dado de origem (ex: meta de saving,
  * orçamento por categoria, score de mercado de fornecedor), ou computamos a
  * partir de campos reais com uma fórmula transparente e documentada, ou
- * deixamos o indicador de fora — nunca inventamos um número para preencher
+ * deixamos o indicador de fora. Nunca inventamos um número para preencher
  * espaço visual.
  */
 
@@ -27,8 +27,8 @@ export const DEMAND_TYPE_LABEL: Record<string, string> = {
   COMPRA_PRODUTO: "Compra de Produtos",
   COMPRA_SERVICO: "Compra de Serviço",
   FERRAMENTA_NOVA: "Compra de Nova Ferramenta",
-  FERRAMENTA_USUARIOS: "Ferramentas — Inclusão/remoção de usuários",
-  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas — Upgrade/Downgrade",
+  FERRAMENTA_USUARIOS: "Ferramentas: Inclusão/remoção de usuários",
+  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas: Upgrade/Downgrade",
   RENOVACAO_CONTRATO: "Renovação de Contrato",
   CANCELAMENTO: "Cancelamento de Contrato/Serviço/Ferramenta",
 };
@@ -36,7 +36,7 @@ export const DEMAND_TYPE_LABEL: Record<string, string> = {
 export const STATUS_LABEL: Record<string, string> = { ABERTO: "Aberto", CONCLUIDO: "Concluído", CANCELADO: "Cancelado" };
 
 // ----------------------------------------------------------------------------
-// Filtros (todos vêm da URL — ver DashboardFilters.tsx)
+// Filtros (todos vêm da URL, ver DashboardFilters.tsx)
 // ----------------------------------------------------------------------------
 
 export type DashboardRawFilters = {
@@ -60,7 +60,7 @@ export function buildDashboardWhere(f: DashboardRawFilters): Prisma.PurchaseRequ
   if (f.status) where.status = f.status;
   if (f.buyerId) where.buyerId = f.buyerId;
   // Fornecedor: só solicitações com Pedido de Compra já emitido para esse
-  // fornecedor têm gasto realizado atribuível — é a mesma limitação de
+  // fornecedor têm gasto realizado atribuível. É a mesma limitação de
   // qualquer relatório de "gasto por fornecedor" baseado em PO.
   if (f.supplierId) where.purchaseOrder = { supplierId: f.supplierId };
   return where;
@@ -91,7 +91,7 @@ function trend(current: number, previous: number): Trend {
 }
 
 // ----------------------------------------------------------------------------
-// Núcleo de métricas — aplicado tanto ao período atual quanto ao anterior
+// Núcleo de métricas: aplicado tanto ao período atual quanto ao anterior
 // ----------------------------------------------------------------------------
 
 type RequestForMetrics = {
@@ -220,7 +220,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     activeSuppliers: trend(activeSuppliersThisPeriod, 0),
   };
 
-  // ---- Evolução mensal (últimos 12 meses, independente do período de KPI —
+  // ---- Evolução mensal (últimos 12 meses, independente do período de KPI;
   // respeita os demais filtros categóricos) ----
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
   const monthlyPOs = await prisma.purchaseOrder.findMany({
@@ -257,7 +257,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     .slice(0, 10);
 
   // ---- Lead time por solicitação (emissão do PO -> saída de "Aguardando
-  // Entrega") — métrica real via StageEvent, não fabricada ----
+  // Entrega"): métrica real via StageEvent, não fabricada ----
   const leadTimeExitEvents = allStageEvents.filter((e) => e.fromStage === "AGUARDANDO_ENTREGA");
   const leadTimeDaysByRequestId = new Map<string, number>();
   for (const e of leadTimeExitEvents) {
@@ -271,7 +271,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   // ---- Top Fornecedores ----
   // avgSaving é ponderado pelo valor de cada compra (soma do R$ economizado
   // dividida pela soma do valor inicial), não uma média simples do % de cada
-  // PO — senão uma PO pequena com desconto alto pesaria igual a uma PO grande,
+  // PO, senão uma PO pequena com desconto alto pesaria igual a uma PO grande,
   // distorcendo o número (pedido do usuário).
   type SupplierAgg = { name: string; value: number; count: number; savingAmountSum: number; initialValueSum: number; leadTimeSum: number; leadTimeCount: number; riskTier?: string; approvedVendor?: boolean };
   const bySupplier = new Map<string, SupplierAgg>();
@@ -301,10 +301,10 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     .map((s) => {
       const avgSaving = s.initialValueSum > 0 ? (s.savingAmountSum / s.initialValueSum) * 100 : 0;
       const avgLeadTime = s.leadTimeCount > 0 ? s.leadTimeSum / s.leadTimeCount : null;
-      // Score de confiabilidade — fórmula transparente a partir de dados reais:
+      // Score de confiabilidade: fórmula transparente a partir de dados reais:
       // 40% risco cadastral (Supplier.riskTier), 20% homologação (approvedVendor),
       // 40% saving médio entregue (capado em 25% = nota máxima). NÃO é uma nota de
-      // mercado/compliance externa — é só uma leitura interna e auditável.
+      // mercado/compliance externa, é só uma leitura interna e auditável.
       const riskScore = s.riskTier ? RISK_SCORE[s.riskTier] ?? 60 : 60;
       const vendorScore = s.approvedVendor ? 100 : 50;
       const savingScore = Math.min(100, Math.max(0, avgSaving * 4));
@@ -444,7 +444,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     personifiedApprovals: approvals.filter((a) => a.personifiedBy).length,
   };
 
-  // ---- Alertas inteligentes — só dispara com dado real ou limiar relativo
+  // ---- Alertas inteligentes: só dispara com dado real ou limiar relativo
   // (nunca com meta inventada) ----
   type Alert = { severity: "danger" | "warning"; text: string; href?: string };
   const alerts: Alert[] = [];
@@ -469,13 +469,13 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
     alerts.push({ severity: "warning", text: `${suppliersWithoutEvaluation.size} fornecedor(es) com Pedido de Compra emitido mas sem avaliação (NPS) registrada` });
   }
   if (riskMap.singleSupplierConcentrationPct > 40 && riskMap.topSupplierName) {
-    alerts.push({ severity: "danger", text: `${riskMap.topSupplierName} concentra ${riskMap.singleSupplierConcentrationPct.toFixed(0)}% do gasto do período — dependência de fornecedor único` });
+    alerts.push({ severity: "danger", text: `${riskMap.topSupplierName} concentra ${riskMap.singleSupplierConcentrationPct.toFixed(0)}% do gasto do período, sinal de dependência de fornecedor único` });
   }
   if (riskMap.noContractCount > 0) {
     alerts.push({ severity: "warning", text: `${riskMap.noContractCount} solicitação(ões) que precisam de contrato ainda não têm contrato mapeado` });
   }
 
-  // ---- Chamados simples (Viagens Acerto / Facilities / NDA) — fluxo à parte
+  // ---- Chamados simples (Viagens Acerto / Facilities / NDA): fluxo à parte
   // do processo de Compras (SimpleTicket, sem alçada/etapas), mas o pedido é
   // que o Dashboard também mostre esse recorte. Só o filtro de período
   // (de/ate) se aplica aqui: os demais filtros do dashboard (diretoria,
@@ -507,7 +507,7 @@ export async function loadDashboardData(filters: DashboardRawFilters) {
   });
 
   // updatedAt só muda quando o status do chamado é alterado (POST de mensagem
-  // não toca o registro do ticket — ver /api/tickets/[id]/messages), então é
+  // não toca o registro do ticket (ver /api/tickets/[id]/messages), então é
   // uma medida confiável de "quando foi concluído" para o cálculo abaixo.
   const concludedTickets = currentTickets.filter((t) => t.status === "CONCLUIDO");
   const ticketResolutionDays = concludedTickets.map((t) => (t.updatedAt.getTime() - t.createdAt.getTime()) / 86_400_000);

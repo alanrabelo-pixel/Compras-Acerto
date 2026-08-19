@@ -8,17 +8,17 @@ import { requireRole } from "@/lib/rbac";
  * PATCH /api/requests/[id]/aprovacao-gestor
  *
  * Decisão do gestor do centro de custo (CostCenter.managers, ver
- * /admin/centros-de-custo) logo após o envio do formulário — pedido do
+ * /admin/centros-de-custo) logo após o envio do formulário. Pedido do
  * usuário: aprovação automática direcionada ao(s) gestor(es) de cada centro
  * de custo, antes de qualquer ação do comprador. Se aprovado, segue
  * normalmente para Homologação e Triagem; se reprovado, cancela.
  *
  * Autorização: quando o centro de custo tem gestor(es) configurado(s),
- * qualquer um deles pode decidir (mais de um é permitido, pedido do usuário
- * — reduz a necessidade de reajuste manual quando o titular está ausente).
+ * qualquer um deles pode decidir (mais de um é permitido, pedido do usuário,
+ * o que reduz a necessidade de reajuste manual quando o titular está ausente).
  * Sem gestor configurado, cai no fallback antigo (qualquer APROVADOR).
  * `personifiedBy`: um ADMIN pode decidir em nome do gestor pré-definido "a
- * qualquer momento, sempre que julgar necessário" (pedido do usuário) — sem
+ * qualquer momento, sempre que julgar necessário" (pedido do usuário), sem
  * o teto de alçada que existe para a personificação do comprador em
  * .../aprovacao.
  */

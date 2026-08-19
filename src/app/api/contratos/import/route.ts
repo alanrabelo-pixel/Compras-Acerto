@@ -25,7 +25,7 @@ const TEMPLATE_EXAMPLE = {
   "Centro de Custo": "Data Intelligence", "E-mail do Gestor": "nome.sobrenome@acerto.com.br",
 };
 
-/** GET /api/contratos/import — planilha modelo para importação em massa. */
+/** GET /api/contratos/import: planilha modelo para importação em massa. */
 export async function GET() {
   const wb = XLSX.utils.book_new();
   const sheet = XLSX.utils.json_to_sheet([TEMPLATE_EXAMPLE], { header: TEMPLATE_COLUMNS });
@@ -47,7 +47,7 @@ function str(row: Row, key: string): string | undefined {
   return String(v).trim();
 }
 
-// Datas em planilha chegam como serial number (Excel) ou string "dd/mm/aaaa" —
+// Datas em planilha chegam como serial number (Excel) ou string "dd/mm/aaaa".
 // XLSX.utils.sheet_to_json com { raw: false, dateNF } já normaliza a maioria,
 // mas cobrimos os dois formatos por segurança.
 function parseDate(row: Row, key: string): Date | undefined {
@@ -67,8 +67,8 @@ function parseDate(row: Row, key: string): Date | undefined {
 }
 
 /**
- * POST /api/contratos/import — importação em massa de contratos já
- * existentes (pré-datam este sistema, sem PurchaseRequest de origem — ver
+ * POST /api/contratos/import: importação em massa de contratos já
+ * existentes (pré-datam este sistema, sem PurchaseRequest de origem, ver
  * Contract.requestId opcional no schema). Cada linha é validada
  * independentemente; linhas inválidas são reportadas sem interromper as
  * demais. Reaproveitável como padrão para outras importações em massa
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
 
     const manager = managerByEmail.get(managerEmail!);
     if (!manager) {
-      results.push({ row: rowNum, status: "erro", detail: `Gestor não encontrado para o e-mail "${managerEmail}" — a pessoa precisa ter feito login ao menos uma vez no sistema.` });
+      results.push({ row: rowNum, status: "erro", detail: `Gestor não encontrado para o e-mail "${managerEmail}": a pessoa precisa ter feito login ao menos uma vez no sistema.` });
       continue;
     }
 

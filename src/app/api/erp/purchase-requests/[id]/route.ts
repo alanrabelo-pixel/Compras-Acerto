@@ -6,7 +6,7 @@ import { requireErpAuth } from "@/lib/erpAuth";
  * GET /api/erp/purchase-requests/[id]
  *
  * Payload completo de uma solicitação CONCLUIDA para o futuro ERP criar seu
- * próprio lançamento (nota/pedido/doc contábil) — fornecedor, valores,
+ * próprio lançamento (nota/pedido/doc contábil): fornecedor, valores,
  * centro de custo, linha de orçamento, itens do Pedido de Compra, dados
  * fiscais e de pagamento, e o PDF do Pedido de Compra.
  *
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "CONCLUIDO") {
     return NextResponse.json(
-      { error: `Solicitação ainda não está Concluída (etapa atual: ${request.currentStage}) — só é exposta ao ERP após a conclusão do fluxo.` },
+      { error: `Solicitação ainda não está Concluída (etapa atual: ${request.currentStage}). Só é exposta ao ERP após a conclusão do fluxo.` },
       { status: 409 }
     );
   }

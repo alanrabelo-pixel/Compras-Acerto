@@ -8,13 +8,13 @@ import { Stage } from "@prisma/client";
  *
  * Ajuste administrativo de etapa: move a solicitação para qualquer outra
  * etapa (não só a etapa anterior registrada ou os destinos "válidos" do
- * grafo de workflow.ts) — decisão do usuário: o admin quis a lista completa
+ * grafo de workflow.ts). Decisão do usuário: o admin quis a lista completa
  * de etapas disponível tanto para retroceder quanto para avançar, não só as
  * transições estruturalmente esperadas. Não re-executa nenhuma
  * validação/efeito da etapa (ex: não recalcula alçada, não reenvia e-mail).
  * Fica registrado no Histórico como uma transição normal (mesma tabela
  * StageEvent), com actorId e comentário identificando que foi manual, então
- * o rastro de auditoria continua completo. Restrito a ADMIN — bypassa as
+ * o rastro de auditoria continua completo. Restrito a ADMIN, pois bypassa as
  * regras de negócio de cada etapa, então não pode ficar disponível para
  * qualquer papel.
  */

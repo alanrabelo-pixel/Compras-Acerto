@@ -25,7 +25,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const EMPTY = <span style={{ color: "var(--ink-muted)", fontStyle: "italic" }}>— preencher manualmente</span>;
+const EMPTY = <span style={{ color: "var(--ink-muted)", fontStyle: "italic" }}>Preencher manualmente</span>;
 
 export default async function ContractDetailPage({ params }: { params: { id: string } }) {
   const contract = await prisma.contract.findUnique({
@@ -34,7 +34,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
   });
   if (!contract) notFound();
 
-  // Contrato assinado — reaproveita o mecanismo de Attachment da solicitação
+  // Contrato assinado: reaproveita o mecanismo de Attachment da solicitação
   // de origem (ver AttachmentCategory.CONTRATO_ASSINADO no schema), em vez de
   // uma tabela/armazenamento próprio. Attachment exige requestId, então
   // contratos legados importados via planilha (sem solicitação de origem)
@@ -63,8 +63,8 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           <Badge variant={CONTRACT_STATUS_BADGE_VARIANT[contract.status] ?? "neutral"}>{contract.status}</Badge>
         </div>
 
-        {/* O que mais importa num contrato ativo — quanto tempo falta e desde
-            quando — merece destaque logo abaixo do cabeçalho, não enterrado
+        {/* O que mais importa num contrato ativo (quanto tempo falta e desde
+            quando) merece destaque logo abaixo do cabeçalho, não enterrado
             como só mais um campo entre 6 cards de identidade/financeiro. */}
         <div className="contract-renewal-strip">
           <div className="contract-renewal-cell">
@@ -90,13 +90,13 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             uploaderId={contract.contractManagerId}
             category="CONTRATO_ASSINADO"
             title="Contrato Assinado"
-            emptyLabel="Nenhum contrato assinado anexado ainda — anexe o PDF assinado abaixo."
+            emptyLabel="Nenhum contrato assinado anexado ainda. Anexe o PDF assinado abaixo."
           />
         ) : (
           <section className="card section-gap">
             <h2 className="card-title">Contrato Assinado</h2>
             <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>
-              Contrato importado de planilha (sem solicitação de origem) — anexo de contrato assinado ainda não
+              Contrato importado de planilha (sem solicitação de origem): anexo de contrato assinado ainda não
               disponível para este tipo de registro.
             </p>
           </section>
@@ -147,7 +147,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             <Field label="Gestor Responsável">{contract.contractManager.name}</Field>
             <Field label="E-mail do Gestor">{contract.contractManager.email}</Field>
             <Field label="Solicitação de origem">
-              {contract.request ? <a href={`/solicitacoes/${contract.request.id}`} style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>{contract.request.code}</a> : "—"}
+              {contract.request ? <a href={`/solicitacoes/${contract.request.id}`} style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>{contract.request.code}</a> : "-"}
             </Field>
             <Field label="Alerta Enviado">{contract.alerts.length > 0 ? `Sim (${formatDateOnly(contract.alerts[0].sentAt)})` : "Não"}</Field>
           </div>

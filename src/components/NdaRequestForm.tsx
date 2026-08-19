@@ -11,7 +11,7 @@ type SessionRequester = { id: string; name: string; email: string } | null;
 type RequestKind = "NDA" | "CONTRATO";
 
 /**
- * Tela de Jurídico — cobre dois pedidos distintos dentro do mesmo trilho
+ * Tela de Jurídico. Cobre dois pedidos distintos dentro do mesmo trilho
  * simples (SimpleTicket, sem alçada/etapas): Solicitação de Envio de NDA (só
  * o que o jurídico/comprador precisa pra redigir e enviar o termo) e Dúvida
  * sobre contrato ativo com fornecedor (referencia um Contract real, sem
@@ -59,7 +59,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Não foi possível enviar a solicitação.");
 
-      // Anexo é opcional — se o upload falhar, a solicitação já foi aberta
+      // Anexo é opcional. Se o upload falhar, a solicitação já foi aberta
       // normalmente (pode anexar depois na própria tela da solicitação).
       const file = fileRef.current?.files?.[0];
       if (file) {
@@ -71,7 +71,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
 
       setResult({ id: data.id, code: data.code });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro inesperado — tente novamente em instantes.");
+      setError(e instanceof Error ? e.message : "Erro inesperado. Tente novamente em instantes.");
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
             {sessionRequester.name} <span style={{ color: "var(--ink-muted)" }}>({sessionRequester.email})</span>
           </p>
         ) : (
-          <Field label="Quem está solicitando" required help="Sessão local sem SSO ativo — selecione quem está abrindo esta solicitação.">
+          <Field label="Quem está solicitando" required help="Sessão local sem SSO ativo. Selecione quem está abrindo esta solicitação.">
             <UserPicker
               value={manualRequester?.id ?? ""}
               onChange={() => {}}
@@ -148,7 +148,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
           help={
             requestKind === "NDA"
               ? "Descreva o motivo do envio do NDA, o contexto da negociação, o objetivo do compartilhamento de informações e qualquer detalhe relevante."
-              : "Descreva sua dúvida sobre o contrato — o que precisa esclarecer, prazo, cláusula específica etc."
+              : "Descreva sua dúvida sobre o contrato: o que precisa esclarecer, prazo, cláusula específica etc."
           }
         >
           <Textarea
@@ -171,7 +171,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
         <div className="form-section">
           <p className="form-section-label">Contatos do fornecedor <span style={{ fontWeight: 400, color: "var(--ink-muted)" }}>(opcional)</span></p>
           <p className="help" style={{ marginTop: -4 }}>
-            Preencha se já souber com quem o NDA será compartilhado — ajuda o jurídico a agilizar o envio. Pode deixar em branco e completar depois.
+            Preencha se já souber com quem o NDA será compartilhado. Isso ajuda o jurídico a agilizar o envio. Pode deixar em branco e completar depois.
           </p>
 
           <Field label="Fornecedor cadastrado (opcional)" help="Se o fornecedor já tiver cadastro, selecione para preencher automaticamente.">
@@ -223,7 +223,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
           </Field>
           {contractSupplierName && (
             <p className="help" style={{ marginTop: -2 }}>
-              Selecionado: <strong>{contractSupplierName}</strong>{contractObject ? ` — ${contractObject}` : ""}
+              Selecionado: <strong>{contractSupplierName}</strong>{contractObject ? ` (${contractObject})` : ""}
             </p>
           )}
         </div>

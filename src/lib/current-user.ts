@@ -10,11 +10,11 @@ export type CurrentUser = {
 };
 
 /**
- * Identidade real de quem está logado — usada por qualquer recurso "pessoal"
+ * Identidade real de quem está logado, usada por qualquer recurso "pessoal"
  * de UI (avatar editável, badges de notificação) que precisa de um id de
  * User de verdade. Retorna null em bypass local (LOCAL_BYPASS_AUTH, ver
  * .env) ou sem sessão: sem isso não há um User real pra atrelar nada
- * pessoal — mesma filosofia de src/lib/home-data.ts (nunca fingir
+ * pessoal. Mesma filosofia de src/lib/home-data.ts (nunca fingir
  * personalização que não existe). AppShell/Home continuam mostrando o
  * rótulo "Modo local (sem SSO)" nesse caso, só sem avatar editável.
  */
@@ -32,7 +32,7 @@ export async function loadCurrentUser(): Promise<CurrentUser | null> {
     name: user.name ?? user.email,
     email: user.email,
     // Expõe a URL pública de servir a foto (não a chave interna de
-    // armazenamento) — quem consome isto só precisa de um <img src>.
+    // armazenamento): quem consome isto só precisa de um <img src>.
     avatarUrl: user.avatarUrl ? `/api/users/${user.id}/avatar` : null,
     isAdmin: user.roles?.includes("ADMIN") ?? false,
   };

@@ -17,7 +17,7 @@ export function ChamadoThread({
   const [statusLoading, setStatusLoading] = useState(false);
 
   // `devUserId` (?userId= na URL) só existe em modo bypass local, pra
-  // pré-visualizar a visão de um Solicitante puro sem SSO real — repassado
+  // pré-visualizar a visão de um Solicitante puro sem SSO real, repassado
   // aqui pra que a API (src/app/api/tickets/[id]/...) valide a mesma
   // identidade simulada, em vez de sempre cair no admin padrão do bypass.
   // Fora do bypass, a API ignora esse parâmetro e usa só a sessão real.

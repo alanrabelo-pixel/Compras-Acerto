@@ -5,7 +5,7 @@ import type { TicketStatus } from "@prisma/client";
 
 const VALID_STATUS: TicketStatus[] = ["ABERTO", "EM_ANDAMENTO", "CONCLUIDO"];
 
-// GET /api/tickets/[id] — detalhe de um chamado (com mensagens).
+// GET /api/tickets/[id]: detalhe de um chamado (com mensagens).
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const ticket = await prisma.simpleTicket.findUnique({
     where: { id: params.id },
@@ -15,11 +15,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(ticket);
 }
 
-// PATCH /api/tickets/[id] — muda o status (Aberto / Em Andamento / Concluído).
-// Ação de quem atende o chamado, não de quem abriu — mesmo critério de
+// PATCH /api/tickets/[id]: muda o status (Aberto / Em Andamento / Concluído).
+// Ação de quem atende o chamado, não de quem abriu, mesmo critério de
 // canViewBoard usado no resto do app (ver src/lib/chamados-viewer.ts). A UI
 // já esconde o seletor de status pra quem não pode mudar (ChamadoThread),
-// mas isso sozinho não impede uma chamada direta à API — daí a checagem
+// mas isso sozinho não impede uma chamada direta à API, daí a checagem
 // aqui também.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const viewer = await resolveChamadoViewer(req.nextUrl.searchParams.get("userId") ?? undefined);

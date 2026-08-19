@@ -1,5 +1,5 @@
 /**
- * Acerto Compras — Máquina de estados do fluxo de compras
+ * Acerto Compras: máquina de estados do fluxo de compras
  *
  * Este arquivo é a "fonte da verdade" das regras de transição entre etapas.
  * Cada função guard() decide se uma transição é permitida; cada effect() descreve
@@ -40,7 +40,7 @@ export const STAGES: Record<Stage, StageDefinition> = {
   TRIAGEM: {
     stage: "TRIAGEM",
     label: "Homologação e Triagem",
-    // JURIDICO: atalho para demandType CANCELAMENTO — cancelamento de
+    // JURIDICO: atalho para demandType CANCELAMENTO. Cancelamento de
     // contrato/serviço/ferramenta não precisa do fluxo completo de compra
     // (orçamento/cotação/aprovação/pedido de compra), só formalização jurídica
     // e registro em Contrato. Ver nextStages de JURIDICO abaixo.
@@ -86,7 +86,7 @@ export const STAGES: Record<Stage, StageDefinition> = {
   JURIDICO: {
     stage: "JURIDICO",
     label: "Jurídico",
-    // CONCLUIDO: destino para demandType CANCELAMENTO — depois de assinado o
+    // CONCLUIDO: destino para demandType CANCELAMENTO. Depois de assinado o
     // distrato/termo de cancelamento, encerra direto, sem Pedido de Compra
     // nem Mapeamento de Contrato (o contrato já existe e mapeado; cancelá-lo
     // de fato é feito em Contratos, ver ação CANCELAR em /api/contracts/[id]).
@@ -138,7 +138,7 @@ export const STAGES: Record<Stage, StageDefinition> = {
 };
 
 /**
- * Regras de roteamento condicional — a "inteligência" que decide o próximo
+ * Regras de roteamento condicional: a "inteligência" que decide o próximo
  * estágio quando há mais de uma opção (equivalente às ramificações do doc original).
  *
  * Cada regra é pura (sem I/O) para facilitar testes unitários.
@@ -153,7 +153,7 @@ export function nextAfterValidacaoOrcamentaria(params: {
     // VALIDACAO_ORCAMENTARIA via BudgetException; só sai daqui quando aprovado/reprovado)
     return "VALIDACAO_ORCAMENTARIA";
   }
-  // FERRAMENTA_UPGRADE_DOWNGRADE deliberadamente NÃO aciona Due Diligence —
+  // FERRAMENTA_UPGRADE_DOWNGRADE deliberadamente NÃO aciona Due Diligence:
   // decisão registrada: um upgrade/downgrade de versão de ferramenta já
   // homologada não repete o processo completo de privacidade/segurança.
   if (params.demandType === "FERRAMENTA_NOVA") return "DUE_DILIGENCE";
@@ -167,11 +167,11 @@ export function budgetExceptionLevel(estimatedValue: number): 1 | 2 | 3 {
 }
 
 /**
- * Papel exigido para decidir uma exceção orçamentária, por alçada — pedido
+ * Papel exigido para decidir uma exceção orçamentária, por alçada. Pedido
  * explícito do usuário: antes, qualquer pessoa com papel Controladoria
  * decidia exceção de qualquer nível, sem diferenciar pela alçada calculada
  * acima. Decisão do usuário: manter só dois papéis (Coordenação / Gerente
- * F&NC), sem CEO — Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente F&NC.
+ * F&NC), sem CEO. Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente F&NC.
  */
 export function budgetExceptionApproverRole(level: 1 | 2 | 3): RoleName {
   if (level === 1) return "COORDENACAO";
@@ -179,14 +179,14 @@ export function budgetExceptionApproverRole(level: 1 | 2 | 3): RoleName {
 }
 
 export const BUDGET_EXCEPTION_LEVEL_LABEL: Record<1 | 2 | 3, string> = {
-  1: "Nível 1 (até R$ 5 mil) — Coordenação",
-  2: "Nível 2 (até R$ 25 mil) — Gerente F&NC",
-  3: "Nível 3 (acima de R$ 25 mil) — Gerente F&NC",
+  1: "Nível 1 (até R$ 5 mil): Coordenação",
+  2: "Nível 2 (até R$ 25 mil): Gerente F&NC",
+  3: "Nível 3 (acima de R$ 25 mil): Gerente F&NC",
 };
 
 /**
  * CORREÇÃO (revisão de consistência): o documento de referência definia as
- * alçadas de aprovação final como Nível 1 / 3 / 4 — sem Nível 2. Renumerado
+ * alçadas de aprovação final como Nível 1 / 3 / 4, sem Nível 2. Renumerado
  * aqui para 1 / 2 / 3, mantendo as mesmas faixas de valor e aprovadores.
  */
 export function approvalLevel(estimatedValue: number): 1 | 2 | 3 {
@@ -197,7 +197,7 @@ export function approvalLevel(estimatedValue: number): 1 | 2 | 3 {
 
 // Pedido do usuário: Nível 1 exige 1 aprovador; Níveis 2 e 3 exigem 2
 // aprovadores DISTINTOS decidindo em conjunto (a mesma pessoa não pode
-// contar como as duas assinaturas) — controle de dupla checagem para
+// contar como as duas assinaturas): controle de dupla checagem para
 // valores mais altos. Ver POST/PATCH /api/requests/[id]/aprovacao.
 export function approvalsRequiredForLevel(level: 1 | 2 | 3): number {
   return level === 1 ? 1 : 2;
@@ -231,7 +231,7 @@ export function nextAfterTesouraria(params: { needsMapping: boolean }): Stage {
 /**
  * SLA total por diretoria (usado para calcular slaDeadline na criação da
  * solicitação). Prioridade CRITICA reduz o prazo pela metade (arredondado
- * para cima) — ASSUNÇÃO NÃO VERIFICADA: o documento de referência original
+ * para cima). ASSUNÇÃO NÃO VERIFICADA: o documento de referência original
  * não define uma regra de encurtamento por prioridade; este valor (metade
  * do prazo normal) é um ponto de partida e deve ser confirmado com o time
  * de Compras | F&NC antes de produção.
@@ -258,7 +258,7 @@ export function isValidTransition(from: Stage, to: Stage): boolean {
 // ============================================================================
 
 /**
- * PERSONIFICAÇÃO DE APROVADOR — controlada, não irrestrita.
+ * PERSONIFICAÇÃO DE APROVADOR: controlada, não irrestrita.
  *
  * O documento original permite ao comprador personificar qualquer aprovador em
  * caso de urgência/ausência, sem limite de valor. Isso concentra poder demais
@@ -280,7 +280,7 @@ export function canPersonifyApprover(estimatedValue: number): boolean {
  * alçada que a soma das partes não teria individualmente disparado, sinaliza
  * para revisão da Controladoria antes de prosseguir.
  *
- * Este é um *detector*, não um bloqueio automático — decisões de bloquear
+ * Este é um *detector*, não um bloqueio automático: decisões de bloquear
  * ficam com Controladoria/Compras, para não travar compras legítimas e
  * recorrentes de baixo risco.
  */
@@ -307,7 +307,7 @@ export function minimumQuotesRequired(estimatedValue: number): number {
 }
 
 /**
- * FAIXAS DE RISCO ("LANES") — fast / standard / strategic
+ * FAIXAS DE RISCO ("LANES"): fast / standard / strategic
  *
  * Reintroduz o modelo de lanes já validado em conversas anteriores sobre a
  * redesenho do processo: nem toda compra precisa do fluxo completo. Fornecedor
@@ -325,7 +325,7 @@ export function determineLane(params: {
   handlesPersonalData: boolean; // aciona due diligence de privacidade independente do tipo de demanda
 }): ProcurementLane {
   // FERRAMENTA_UPGRADE_DOWNGRADE não entra aqui de propósito (ver mesma
-  // decisão em nextAfterValidacaoOrcamentaria) — segue a faixa de risco
+  // decisão em nextAfterValidacaoOrcamentaria): segue a faixa de risco
   // padrão por valor/fornecedor abaixo.
   if (params.handlesPersonalData || params.demandType === "FERRAMENTA_NOVA") {
     return params.estimatedValue > 500000 ? "STRATEGIC" : "STANDARD";
@@ -337,7 +337,7 @@ export function determineLane(params: {
   return "STANDARD";
 }
 
-/** Devida diligência básica de fornecedor (CNPJ ativo + listas restritivas) —
+/** Devida diligência básica de fornecedor (CNPJ ativo + listas restritivas):
  * no fluxo original só existia para Ferramenta Nova; aqui é um portão mínimo
  * para QUALQUER fornecedor novo, antes do Pedido de Compra (o due diligence de
  * privacidade/segurança continua sendo adicional, só para ferramentas). */
@@ -345,7 +345,7 @@ export function requiresBasicVendorScreening(params: { supplierIsNew: boolean })
   return params.supplierIsNew;
 }
 
-/** Escalonamento por SLA — se um aprovador não decide dentro do prazo, o
+/** Escalonamento por SLA: se um aprovador não decide dentro do prazo, o
  * sistema deve notificar (não decidir sozinho) o próximo nível hierárquico e
  * a Controladoria, para evitar que a solicitação fique parada indefinidamente. */
 export const APPROVAL_ESCALATION_BUSINESS_DAYS = 3;

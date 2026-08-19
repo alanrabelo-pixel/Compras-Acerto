@@ -7,7 +7,7 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 /**
- * Botão padrão do sistema — mesma aparência de sempre (.btn/.btn-primary/
+ * Botão padrão do sistema. Mantém a mesma aparência de sempre (.btn/.btn-primary/
  * .btn-secondary/.btn-danger em globals.css), só que como um componente
  * tipado em vez de `className="btn btn-primary"` repetido em toda tela.
  */

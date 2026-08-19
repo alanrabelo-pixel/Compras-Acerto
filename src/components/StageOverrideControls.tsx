@@ -24,7 +24,7 @@ export function StageOverrideControls({
     if (!actorId) { setError("Selecione o administrador responsável por este ajuste."); return; }
     if (!targetStage) { setError("Selecione a etapa de destino."); return; }
     const label = allStageOptions.find((o) => o.value === targetStage)?.label ?? targetStage;
-    if (!confirm(`Confirma mover esta solicitação de "${currentStageLabel}" para "${label}"?\n\nIsso NÃO refaz as validações normais da etapa — use só para corrigir um passo em falso.`)) return;
+    if (!confirm(`Confirma mover esta solicitação de "${currentStageLabel}" para "${label}"?\n\nIsso NÃO refaz as validações normais da etapa. Use só para corrigir um passo em falso.`)) return;
 
     setLoading(true);
     setError(null);

@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "MINUTA_EM_ANDAMENTO" });
   }
 
-  // CANCELAMENTO não compra nada e não mapeia contrato novo — o contrato já
+  // CANCELAMENTO não compra nada e não mapeia contrato novo, pois o contrato já
   // existe e já está mapeado (pedido do usuário); depois de assinado o
   // distrato/termo de cancelamento, encerra direto. A baixa do contrato em si
   // (status CANCELADO) é feita separadamente em Contratos, ação CANCELAR

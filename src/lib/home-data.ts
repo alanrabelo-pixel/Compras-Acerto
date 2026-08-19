@@ -30,9 +30,9 @@ export type HomeData =
   | { personalized: true; requesterName: string; items: HomeActivityItem[]; stats: HomeStats; popularHref: string | null; pendingCount: number }
   | { personalized: false; stats: HomeStats; popularHref: string | null };
 
-// "Mais usado" no cardápio de serviços — contagem real dos últimos 30 dias
+// "Mais usado" no cardápio de serviços: contagem real dos últimos 30 dias
 // (não um número inventado, e não all-time: um recorte all-time deixaria o
-// selo travado para sempre no serviço historicamente maior — Compras —, sem
+// selo travado para sempre no serviço historicamente maior, Compras, sem
 // nunca refletir o que está em alta agora). Sempre um recorte organizacional
 // (não muda com sessão/usuário).
 async function loadPopularServiceHref(): Promise<string | null> {
@@ -70,13 +70,13 @@ async function loadStats(where: { requesterId?: string; requesterEmail?: string 
     }),
     prisma.simpleTicket.groupBy({ by: ["category"], where: ticketWhere, _count: { _all: true } }),
     // Contratos vencendo é sempre um recorte organizacional (não "meu
-    // contrato" — o gestor de contrato é atribuído, não necessariamente quem
+    // contrato": o gestor de contrato é atribuído, não necessariamente quem
     // abriu a solicitação de origem), então não é filtrado por usuário mesmo
     // no painel personalizado.
     prisma.contract.count({ where: { status: "ATIVO", renewalDate: { lte: expiringLimit } } }),
   ]);
 
-  // Sempre as 3 categorias, mesmo com 0 chamados — pra "Chamados abertos"
+  // Sempre as 3 categorias, mesmo com 0 chamados, pra "Chamados abertos"
   // mostrar a distribuição completa ao passar o mouse, não só as que tiverem
   // algo aberto no momento (ver hover breakdown em page.tsx).
   const countByCategory = new Map(ticketCounts.map((t) => [t.category, t._count._all]));
@@ -91,11 +91,11 @@ async function loadStats(where: { requesterId?: string; requesterEmail?: string 
 }
 
 /**
- * Dados da Home — painel de "o que está acontecendo" sem precisar navegar.
+ * Dados da Home: painel de "o que está acontecendo" sem precisar navegar.
  * Com sessão real (SSO), personaliza para o usuário logado (últimas
  * solicitações/chamados dele + contadores). Sem sessão real
  * (LOCAL_BYPASS_AUTH, ver .env), não há identidade confiável para filtrar
- * "minhas coisas" — em vez de inventar um usuário, cai para um recorte
+ * "minhas coisas". Em vez de inventar um usuário, cai para um recorte
  * organizacional (contadores gerais), que continua sendo informação real e
  * útil sem fingir personalização que não existe.
  */
@@ -129,7 +129,7 @@ export async function loadHomeData(userEmail: string | null): Promise<HomeData> 
     }),
     loadStats({ requesterId: user.id, requesterEmail: user.email }),
     loadPopularServiceHref(),
-    // Contagem real para o sino de notificações da Home — mesma lógica de
+    // Contagem real para o sino de notificações da Home, mesma lógica de
     // Minhas Pendências (src/lib/pendencias.ts), não um número fabricado.
     loadPendingRequestsForUser(user.id, myRoles),
   ]);

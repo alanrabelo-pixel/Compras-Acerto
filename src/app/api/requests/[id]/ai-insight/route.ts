@@ -15,12 +15,12 @@ import {
 } from "@/lib/integrations/ai";
 
 /**
- * GET /api/requests/[id]/ai-insight — histórico de sugestões de IA já
+ * GET /api/requests/[id]/ai-insight: histórico de sugestões de IA já
  * geradas para esta solicitação, em qualquer etapa (mais recente primeiro),
  * para dar continuidade entre etapas (ex: Cotação -> Mapa de Cotação).
  *
- * POST /api/requests/[id]/ai-insight — gera uma nova análise via IA
- * (Anthropic e Gemini em paralelo — pedido do usuário) a partir do contexto
+ * POST /api/requests/[id]/ai-insight: gera uma nova análise via IA
+ * (Anthropic e Gemini em paralelo, pedido do usuário) a partir do contexto
  * atual da etapa em que a solicitação está. `draft` carrega campos que a
  * pessoa está preenchendo no formulário mas ainda não salvou (ex:
  * observações do Jurídico, dados do contrato no Mapeamento), para a IA
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
   // Pedido do usuário: usa a chave pessoal de quem está atuando, não uma
-  // chave única do app — ver /api/users/[id]/ai-keys e src/lib/integrations/ai.ts.
+  // chave única do app; ver /api/users/[id]/ai-keys e src/lib/integrations/ai.ts.
   const actor = await prisma.user.findUnique({
     where: { id: actorId },
     select: { anthropicApiKey: true, geminiApiKey: true },

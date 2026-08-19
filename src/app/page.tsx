@@ -10,7 +10,7 @@ import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 
 // Compras é o único serviço com fluxo completo (triagem, cotação, aprovação,
-// contrato) — os outros 3 são canais de chamado mais simples. Tratá-los como
+// contrato). Os outros 3 são canais de chamado mais simples. Tratá-los como
 // 4 peers num grid uniforme escondia essa diferença real; agora Compras é o
 // card em destaque e os outros formam uma faixa secundária mais discreta
 // (ver "Outros canais" abaixo).
@@ -18,7 +18,7 @@ const FEATURED_SERVICE = {
   href: "/solicitacoes",
   eyebrow: "Compras",
   title: "Solicitação de Compras",
-  description: "Abra uma solicitação e acompanhe todo o processo — triagem, cotação, aprovação e contrato — em um só lugar.",
+  description: "Abra uma solicitação e acompanhe todo o processo (triagem, cotação, aprovação e contrato) em um só lugar.",
   icon: <ShoppingCart size={22} strokeWidth={1.75} />,
 };
 
@@ -62,7 +62,7 @@ export default async function HomePage() {
   ]);
   const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   const pendingCount = homeData.personalized ? homeData.pendingCount : 0;
-  // Saudação só quando há uma pessoa real logada (SSO) — no bypass de dev
+  // Saudação só quando há uma pessoa real logada (SSO). No bypass de dev
   // (sem sessão real), "Modo local (sem SSO)" não é um nome de pessoa, então
   // cai para um título operacional neutro em vez de uma saudação quebrada.
   const firstName = !bypass && session?.user?.name ? session.user.name.trim().split(/\s+/)[0] : null;
@@ -112,8 +112,8 @@ export default async function HomePage() {
         <p className="exec-welcome-banner-date">{today}</p>
       </div>
 
-      {/* O que precisa de ação agora vem ANTES dos números de referência —
-          por isso "Minha Atenção" (era "Meu Painel") passou a liderar a
+      {/* O que precisa de ação agora vem ANTES dos números de referência.
+          Por isso "Minha Atenção" (era "Meu Painel") passou a liderar a
           tela, e os indicadores abaixo viraram uma faixa quieta de apoio. */}
       {homeData.personalized && (
         <section className="exec-section">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createAppChatMessage, type ChatRole } from "@/lib/requestChat";
 
-// GET /api/requests/[id]/chat — histórico do widget de chat comprador ↔ solicitante.
+// GET /api/requests/[id]/chat: histórico do widget de chat comprador ↔ solicitante.
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const messages = await prisma.requestChatMessage.findMany({
     where: { requestId: params.id },
@@ -11,7 +11,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ messages });
 }
 
-// POST /api/requests/[id]/chat — mensagem enviada pelo widget; espelhada via Slack DM quando possível.
+// POST /api/requests/[id]/chat: mensagem enviada pelo widget, espelhada via Slack DM quando possível.
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const body = await req.json();
   const { authorRole, authorName, body: text } = body as { authorRole: ChatRole; authorName: string; body: string };

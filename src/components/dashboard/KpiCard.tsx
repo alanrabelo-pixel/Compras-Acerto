@@ -4,12 +4,12 @@ import { Sparkline, CHART_COLORS } from "./charts";
 import type { ReactNode } from "react";
 
 /**
- * Card de KPI executivo — ícone, valor, comparação com o período anterior,
+ * Card de KPI executivo: ícone, valor, comparação com o período anterior,
  * tendência (seta + %), sparkline e cor inteligente (verde = favorável,
  * vermelho = desfavorável, seguindo `goodDirection`).
  *
  * Recebe o valor JÁ FORMATADO pelo servidor e o ícone JÁ RENDERIZADO
- * (elemento, não a referência do componente) — funções não podem atravessar
+ * (elemento, não a referência do componente), já que funções não podem atravessar
  * a fronteira Server → Client Component do Next.js, mas elementos JSX podem.
  */
 export function KpiCard({

@@ -15,7 +15,7 @@ export type SupplierOption = {
 /**
  * Seletor de fornecedor cadastrado (cadastro único de fornecedor). Ao
  * selecionar, devolve o registro completo via onSelect para pré-preencher
- * razão social/CNPJ/contato no formulário de Pedido de Compra — sem obrigar
+ * razão social/CNPJ/contato no formulário de Pedido de Compra, sem obrigar
  * o cadastro (o formulário aceita texto livre se o fornecedor ainda não
  * tiver Supplier cadastrado).
  */

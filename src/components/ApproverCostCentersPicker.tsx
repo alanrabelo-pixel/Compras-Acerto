@@ -6,7 +6,7 @@ import { MultiCostCenterPicker } from "@/components/MultiCostCenterPicker";
 
 /**
  * Escolhe quais centros de custo um aprovador pode aprovar (visão "Por
- * Aprovador" de /admin/centros-de-custo — pedido do usuário). Mesma relação
+ * Aprovador" de /admin/centros-de-custo, pedido do usuário). Mesma relação
  * CostCenter.managers do CostCenterManagerPicker, só que editada a partir do
  * lado do usuário.
  */

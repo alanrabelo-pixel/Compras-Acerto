@@ -4,7 +4,7 @@ import { ManualProcessoDocument } from "@/lib/pdf/manualProcesso";
 
 export const runtime = "nodejs";
 
-// GET /api/manual/pdf — gera o Manual do Processo (Compras, Viagens Acerto, Facilities) sob demanda.
+// GET /api/manual/pdf: gera o Manual do Processo (Compras, Viagens Acerto, Facilities) sob demanda.
 export async function GET() {
   const buffer = await renderToBuffer(<ManualProcessoDocument />);
   return new NextResponse(new Uint8Array(buffer), {

@@ -13,11 +13,11 @@ function initialsOf(name: string) {
 }
 
 /**
- * Círculo de avatar — mostra a foto (via /api/users/[id]/avatar) ou as
+ * Círculo de avatar. Mostra a foto (via /api/users/[id]/avatar) ou as
  * iniciais do nome quando não há foto. Só é clicável/editável quando
- * `userId` é um id de User real (sessão SSO resolvida — ver
+ * `userId` é um id de User real (sessão SSO resolvida, ver
  * src/lib/current-user.ts); em bypass local ou sem sessão, `userId` vem
- * null e o círculo fica só decorativo, sem upload possível — não existe um
+ * null e o círculo fica só decorativo, sem upload possível. Não existe um
  * User de verdade pra atrelar a foto nesse caso.
  */
 export function UserAvatar({

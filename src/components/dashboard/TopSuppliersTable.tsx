@@ -11,7 +11,7 @@ function scoreColor(score: number) {
 
 /**
  * Score de confiabilidade: fórmula interna e transparente (não é uma nota de
- * mercado) — 40% risco cadastral do fornecedor, 20% se já é homologado, 40%
+ * mercado): 40% risco cadastral do fornecedor, 20% se já é homologado, 40%
  * saving médio entregue. Ver cálculo em src/lib/dashboard-data.ts.
  */
 export function TopSuppliersTable({ rows }: { rows: SupplierRow[] }) {
@@ -36,7 +36,7 @@ export function TopSuppliersTable({ rows }: { rows: SupplierRow[] }) {
             <span className="text-soft">{money(r.value)}</span>
             <span className="text-soft">{r.count}</span>
             <span style={{ color: r.avgSaving >= 0 ? "var(--acerto-green-dark)" : "var(--danger)", fontWeight: 600 }}>{r.avgSaving.toFixed(1)}%</span>
-            <span className="text-soft">{r.avgLeadTime === null ? "—" : `${r.avgLeadTime.toFixed(1)}d`}</span>
+            <span className="text-soft">{r.avgLeadTime === null ? "-" : `${r.avgLeadTime.toFixed(1)}d`}</span>
             <span style={{ fontWeight: 700, color: scoreColor(r.score) }}>{r.score}</span>
           </TableRow>
         ))}

@@ -6,12 +6,12 @@ import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
 import { Rocket } from "lucide-react";
 
 /**
- * Botão de foguete — comunicados gerais para todo mundo (avisos simples,
+ * Botão de foguete: comunicados gerais para todo mundo (avisos simples,
  * sem alçada nem fluxo). Qualquer pessoa lê; só ADMIN publica (ver
  * POST /api/announcements). O conteúdo (lista + compor) vive em
  * AnnouncementsBody, reaproveitado também dentro do UserMenu da Home.
- * O badge mostra "não vistos neste navegador" (ver useAnnouncementsUnseen)
- * — abrir o painel marca tudo como visto e zera a contagem.
+ * O badge mostra "não vistos neste navegador" (ver useAnnouncementsUnseen).
+ * Abrir o painel marca tudo como visto e zera a contagem.
  */
 export function AnnouncementsPanel({
   isAdmin, authorName, recentCount = 0, align = "right", dropUp = false,

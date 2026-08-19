@@ -27,14 +27,14 @@ export default async function ChamadoDetailPage({
   if (!ticket || ticket.category !== config.enumValue) notFound();
 
   // Quem só tem o papel Solicitante só pode ver o próprio chamado (por
-  // e-mail — SimpleTicket não tem FK pra User, ver chamados-viewer.ts).
+  // e-mail, já que SimpleTicket não tem FK pra User; ver chamados-viewer.ts).
   if (!viewer.showFullBoard && ticket.requesterEmail !== viewer.email) {
     return (
       <>
         <ChamadoHeader categoryLabel={config.label} backHref={`/chamados/${params.category}`} backLabel="← voltar aos chamados" />
         <main className="page-narrow" style={{ paddingTop: 28 }}>
           <div className="card" style={{ marginTop: 20, padding: 28, textAlign: "center", color: "var(--ink-muted)" }}>
-            Este chamado não é seu — você só pode ver os chamados que você mesmo abriu.
+            Este chamado não é seu: você só pode ver os chamados que você mesmo abriu.
           </div>
         </main>
       </>
@@ -72,7 +72,7 @@ export default async function ChamadoDetailPage({
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px", fontSize: 12.5 }}>
               <p style={{ margin: 0 }}><span className="text-muted">Fornecedor:</span> {ticket.supplierName}</p>
               {ticket.supplierContactName && (
-                <p style={{ margin: 0 }}><span className="text-muted">Contato:</span> {ticket.supplierContactName}{ticket.supplierContactRole ? ` — ${ticket.supplierContactRole}` : ""}</p>
+                <p style={{ margin: 0 }}><span className="text-muted">Contato:</span> {ticket.supplierContactName}{ticket.supplierContactRole ? ` (${ticket.supplierContactRole})` : ""}</p>
               )}
               {ticket.supplierContactEmail && (
                 <p style={{ margin: 0 }}><span className="text-muted">E-mail:</span> {ticket.supplierContactEmail}</p>

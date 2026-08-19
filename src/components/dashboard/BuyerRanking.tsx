@@ -21,7 +21,7 @@ export function BuyerRanking({ rows }: { rows: BuyerRow[] }) {
           <span className="text-soft">{money(r.value)}</span>
           <span className="text-soft">{r.count} sol.</span>
           <span style={{ fontWeight: 600, color: r.slaPct === null ? "var(--ink-muted)" : r.slaPct >= 80 ? "var(--acerto-green-dark)" : "var(--warning)" }}>
-            {r.slaPct === null ? "—" : `${r.slaPct.toFixed(0)}% SLA`}
+            {r.slaPct === null ? "-" : `${r.slaPct.toFixed(0)}% SLA`}
           </span>
         </div>
       ))}

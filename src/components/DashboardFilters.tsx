@@ -6,8 +6,8 @@ const DEMAND_TYPES = [
   { value: "COMPRA_PRODUTO", label: "Compra de Produtos" },
   { value: "COMPRA_SERVICO", label: "Compra de Serviço" },
   { value: "FERRAMENTA_NOVA", label: "Compra de Nova Ferramenta" },
-  { value: "FERRAMENTA_USUARIOS", label: "Ferramentas — Inclusão/remoção de usuários" },
-  { value: "FERRAMENTA_UPGRADE_DOWNGRADE", label: "Ferramentas — Upgrade/Downgrade" },
+  { value: "FERRAMENTA_USUARIOS", label: "Ferramentas: Inclusão/remoção de usuários" },
+  { value: "FERRAMENTA_UPGRADE_DOWNGRADE", label: "Ferramentas: Upgrade/Downgrade" },
   { value: "RENOVACAO_CONTRATO", label: "Renovação de Contrato" },
   { value: "CANCELAMENTO", label: "Cancelamento de Contrato/Serviço/Ferramenta" },
 ];

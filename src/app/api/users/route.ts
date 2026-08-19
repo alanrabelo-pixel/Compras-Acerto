@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { RoleName } from "@prisma/client";
 
-// GET /api/users?role=COMPRADOR — lista usuários ativos, opcionalmente filtrados por papel.
+// GET /api/users?role=COMPRADOR: lista usuários ativos, opcionalmente filtrados por papel.
 // Usado pelos seletores de usuário nas telas (substitui colar id cru).
 export async function GET(req: NextRequest) {
   const role = req.nextUrl.searchParams.get("role") as RoleName | null;

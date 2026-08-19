@@ -13,8 +13,8 @@ const DEMAND_TYPE_LABEL: Record<string, string> = {
   COMPRA_PRODUTO: "Compra de Produtos",
   COMPRA_SERVICO: "Compra de Serviço",
   FERRAMENTA_NOVA: "Compra de Nova Ferramenta",
-  FERRAMENTA_USUARIOS: "Ferramentas — Inclusão/remoção de usuários",
-  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas — Upgrade/Downgrade",
+  FERRAMENTA_USUARIOS: "Ferramentas: Inclusão/remoção de usuários",
+  FERRAMENTA_UPGRADE_DOWNGRADE: "Ferramentas: Upgrade/Downgrade",
   RENOVACAO_CONTRATO: "Renovação de Contrato",
   CANCELAMENTO: "Cancelamento de Contrato/Serviço/Ferramenta",
 };
@@ -24,7 +24,7 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
-// Paginação — antes, tanto o Kanban quanto a Lista carregavam a base inteira
+// Paginação: antes, tanto o Kanban quanto a Lista carregavam a base inteira
 // a cada visita (invisível em dezenas de registros, custoso em milhares).
 // Kanban: mostra até KANBAN_CAP_PER_STAGE cards por coluna (a contagem do
 // badge continua exata, via groupBy) com link "ver todas" para a Lista já

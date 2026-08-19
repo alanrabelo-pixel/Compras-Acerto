@@ -2,17 +2,17 @@ import crypto from "crypto";
 
 /**
  * Criptografia em repouso para segredos por usuário (hoje: User.anthropicApiKey
- * / geminiApiKey — ver /api/users/[id]/ai-keys). Antes desta mudança, essas
+ * / geminiApiKey, ver /api/users/[id]/ai-keys). Antes desta mudança, essas
  * chaves ficavam em texto puro no banco (ASSUNÇÃO NÃO VERIFICADA sinalizada
- * no schema.prisma) — risco real antes de qualquer ambiente de produção.
+ * no schema.prisma), um risco real antes de qualquer ambiente de produção.
  *
- * AES-256-GCM com chave derivada (SHA-256) de AI_KEY_ENCRYPTION_SECRET — uma
+ * AES-256-GCM com chave derivada (SHA-256) de AI_KEY_ENCRYPTION_SECRET: uma
  * frase secreta comum, não um hex de 32 bytes gerado à mão, para ficar fácil
  * de configurar. Formato armazenado: "v1:<iv-hex>:<authTag-hex>:<ciphertext-hex>".
  *
  * ASSUNÇÃO NÃO VERIFICADA: para um ambiente de produção real, considerar um
  * cofre de segredos gerenciado (ex: AWS KMS/Secrets Manager, Vault) em vez de
- * uma chave só em variável de ambiente — ver relatório de modernização.
+ * uma chave só em variável de ambiente. Ver relatório de modernização.
  */
 
 const ALGORITHM = "aes-256-gcm";
@@ -22,7 +22,7 @@ function getKey(): Buffer {
   const secret = process.env.AI_KEY_ENCRYPTION_SECRET;
   if (!secret) {
     throw new Error(
-      "AI_KEY_ENCRYPTION_SECRET não configurada — necessária para ler/gravar chaves de IA por usuário (ver .env.example)."
+      "AI_KEY_ENCRYPTION_SECRET não configurada: necessária para ler/gravar chaves de IA por usuário (ver .env.example)."
     );
   }
   return crypto.createHash("sha256").update(secret).digest();
@@ -39,7 +39,7 @@ export function encryptSecret(plainText: string): string {
 /**
  * Descriptografa um segredo salvo por encryptSecret(). Se o valor não estiver
  * no formato esperado (ex: uma chave salva antes desta mudança, ainda em
- * texto puro), devolve o valor original como veio — evita quebrar chaves já
+ * texto puro), devolve o valor original como veio, evitando quebrar chaves já
  * configuradas; elas passam a ser criptografadas na próxima vez que a pessoa
  * salvar (PATCH em /api/users/[id]/ai-keys).
  */

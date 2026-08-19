@@ -3,7 +3,7 @@ import { budgetExceptionLevel, budgetExceptionApproverRole } from "@/lib/workflo
 import type { RoleName, Stage } from "@prisma/client";
 
 /**
- * Papel que precisa agir em cada etapa — complemento ao Kanban completo,
+ * Papel que precisa agir em cada etapa: complemento ao Kanban completo,
  * filtrado por quem de fato está esperando uma ação da pessoa. Compartilhado
  * entre solicitacoes/pendencias/page.tsx (lista completa) e home-data.ts (só
  * a contagem, para o sino de notificações da Home). APROVACAO e
@@ -38,7 +38,7 @@ export async function loadPendingRequestsForUser(userId: string, myRoles: RoleNa
   return requests.filter((r) => {
     if (isAdmin) return true; // ADMIN pode agir em qualquer etapa (ver requireRole em rbac.ts)
 
-    // Aprovação do Gestor do Centro de Custo — só aparece pra quem está no
+    // Aprovação do Gestor do Centro de Custo: só aparece pra quem está no
     // pool de gestores DAQUELE centro de custo específico (CostCenter.managers,
     // ver /admin/centros-de-custo), não pra qualquer APROVADOR da empresa.
     if (r.currentStage === "APROVACAO_GESTOR") {

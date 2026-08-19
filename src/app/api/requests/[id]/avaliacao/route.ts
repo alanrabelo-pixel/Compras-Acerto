@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
  * POST /api/requests/[id]/avaliacao
  *
  * NPS do solicitante sobre o processo de compra concluído (0-10 + feedback
- * livre). Não bloqueia nem altera o fluxo — é só um registro de qualidade.
+ * livre). Não bloqueia nem altera o fluxo, é só um registro de qualidade.
  */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });

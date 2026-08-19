@@ -8,8 +8,8 @@ type StageEventLite = { id: string; fromStage: Stage | null; toStage: Stage; act
  * Histórico com acesso progressivo aos dados de cada etapa: cada linha é uma
  * transição registrada (StageEvent) e, ao clicar, expande os campos
  * preenchidos/decididos na etapa que a solicitação estava deixando naquele
- * momento (fromStage). Assim, ao chegar em qualquer etapa — inclusive
- * Concluído — dá pra abrir e ver o que foi preenchido em todas as etapas
+ * momento (fromStage). Assim, ao chegar em qualquer etapa, inclusive
+ * Concluído, dá pra abrir e ver o que foi preenchido em todas as etapas
  * anteriores, uma por uma, sem precisar de uma seção separada.
  */
 export function HistoryTimeline({
@@ -37,7 +37,7 @@ export function HistoryTimeline({
                 {e.fromStage ? `${STAGES[e.fromStage].label} → ` : ""}
                 <strong style={{ color: "var(--ink)" }}>{STAGES[e.toStage].label}</strong>
                 {e.actor ? ` · ${e.actor.name}` : ""} · {new Date(e.createdAt).toLocaleString("pt-BR")}
-                {e.comment ? ` — ${e.comment}` : ""}
+                {e.comment ? `: ${e.comment}` : ""}
               </span>
             </summary>
             <div style={{ marginLeft: 20, marginTop: -4, marginBottom: 8, padding: 12, background: "var(--surface-muted)", borderRadius: 8 }}>

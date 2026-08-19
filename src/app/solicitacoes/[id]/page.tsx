@@ -44,8 +44,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
   if (!request) notFound();
 
-  // Identidade de quem está logado (mesmo padrão de solicitacoes/nova/page.tsx)
-  // — repassada para RequestActions para autopreencher/travar os campos de
+  // Identidade de quem está logado (mesmo padrão de solicitacoes/nova/page.tsx),
+  // repassada para RequestActions para autopreencher/travar os campos de
   // "responsável" em cada etapa quando o SSO real estiver ligado. Sem sessão
   // real (LOCAL_BYPASS_AUTH, ver .env), fica null e os seletores manuais
   // continuam aparecendo, como antes.
@@ -56,7 +56,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         select: { id: true, name: true, email: true, roles: { select: { role: true } } },
       })
     : null;
-  // isAdmin: pedido do usuário — o Administrador do sistema pode personificar
+  // isAdmin: pedido do usuário. O Administrador do sistema pode personificar
   // um aprovador pré-definido (gestor de centro de custo, aprovador de
   // alçada) sempre que julgar necessário, mesmo com SSO real ligado (ver
   // ActorField/allowAdminOverride em RequestActions.tsx).
@@ -65,8 +65,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     : null;
 
   // ConflictOfInterestDeclaration.declaredBy guarda o id do usuário (via
-  // UserPicker em RequestActions), sem relação FK no schema — resolvendo o
-  // nome aqui para exibição no Histórico, em vez do id cru.
+  // UserPicker em RequestActions), sem relação FK no schema, por isso resolvemos
+  // o nome aqui para exibição no Histórico, em vez do id cru.
   const declaredByIds = [
     ...request.conflictDeclarations.map((c) => c.declaredBy),
     ...(request.managerApprovalActorId ? [request.managerApprovalActorId] : []),
@@ -125,7 +125,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
         {request.fragmentationFlag && (
           <WarningNotice className="section-gap">
-            Sinalizada por risco de fracionamento — a soma das compras deste fornecedor nos últimos 12 meses ultrapassa a alçada individual desta solicitação. Revisão da Controladoria recomendada.
+            Sinalizada por risco de fracionamento: a soma das compras deste fornecedor nos últimos 12 meses ultrapassa a alçada individual desta solicitação. Revisão da Controladoria recomendada.
           </WarningNotice>
         )}
 

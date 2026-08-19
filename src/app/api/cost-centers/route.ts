@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-// GET /api/cost-centers — lista centros de custo ativos, para o formulário de
+// GET /api/cost-centers: lista centros de custo ativos, para o formulário de
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
-// antes de enviar — ver APROVACAO_GESTOR em src/lib/workflow.ts. Mais de um
+// antes de enviar (ver APROVACAO_GESTOR em src/lib/workflow.ts). Mais de um
 // gestor por centro de custo é permitido (pedido do usuário).
 export async function GET() {
   const costCenters = await prisma.costCenter.findMany({
@@ -16,7 +16,7 @@ export async function GET() {
   return NextResponse.json(costCenters);
 }
 
-// POST /api/cost-centers — cria um novo centro de custo (painel
+// POST /api/cost-centers: cria um novo centro de custo (painel
 // /admin/centros-de-custo, pedido do usuário). Mesmo padrão de autenticação
 // de /api/cost-centers/[id]/route.ts.
 export async function POST(req: NextRequest) {

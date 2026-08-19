@@ -16,11 +16,11 @@ const QUICK_ACTIONS: Item[] = [
 ];
 
 /**
- * Command Palette (Ctrl/Cmd+K) — busca global (Solicitações + Contratos) e
+ * Command Palette (Ctrl/Cmd+K): busca global (Solicitações + Contratos) e
  * ações rápidas de navegação, num único lugar. Não reaproveita o Modal
  * genérico da biblioteca de componentes de propósito: uma paleta de comando
  * precisa aparecer perto do topo, mais larga, e sem cabeçalho/botão de
- * fechar — o padrão de UX é digitar imediatamente, não ler um título.
+ * fechar, já que o padrão de UX é digitar imediatamente, não ler um título.
  */
 export function CommandPalette() {
   const router = useRouter();
@@ -117,7 +117,7 @@ export function CommandPalette() {
 
   return (
     <>
-      {/* Gatilho visível — sem isso, o atalho Ctrl+K seria invisível para
+      {/* Gatilho visível: sem isso, o atalho Ctrl+K seria invisível para
           quem não soubesse que ele existe. */}
       <button type="button" className="sidebar-search-trigger" onClick={() => setOpen(true)}>
         <span aria-hidden><Search size={14} strokeWidth={1.75} /></span>

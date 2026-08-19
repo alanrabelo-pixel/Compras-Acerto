@@ -1,5 +1,5 @@
 /**
- * Integração de e-mail — Google Workspace (Gmail API).
+ * Integração de e-mail via Google Workspace (Gmail API).
  *
  * Assunção não verificada: recomendamos usar uma conta de serviço do Workspace
  * (domain-wide delegation) autenticada como compras@acerto.com.br, em vez de
@@ -9,7 +9,7 @@
  *
  * Todas as mensagens definidas no fluxo de referência (confirmação de
  * recebimento, atualização de etapa, aprovação/reprovação, etc.) devem ser
- * chamadas a partir daqui para manter um único ponto de auditoria — cada envio
+ * chamadas a partir daqui para manter um único ponto de auditoria: cada envio
  * grava um registro em Notification (ver prisma/schema.prisma).
  */
 
@@ -79,7 +79,7 @@ export async function sendPurchaseEmail(params: {
       },
     });
     // Falha de e-mail não deve bloquear o fluxo de compras (mesmo princípio já
-    // aplicado ao Slack nas rotas) — a falha fica registrada em Notification.
+    // aplicado ao Slack nas rotas): a falha fica registrada em Notification.
     console.error("Falha ao enviar e-mail:", err);
   }
 }
@@ -108,11 +108,11 @@ export const templates = {
     html: `<p>Olá, <b>${nome}</b>!</p><p>O Pedido de Compra <b>${codigoPedido}</b> foi gerado para a solicitação <b>${descricao}</b>.</p><p><a href="${pdfUrl}">Baixar o PDF do Pedido de Compra</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   chamadoAberto: (nome: string, categoriaLabel: string, codigo: string, linkChamado: string) => ({
-    subject: `Chamado ${codigo} recebido — ${categoriaLabel}`,
+    subject: `Chamado ${codigo} recebido: ${categoriaLabel}`,
     html: `<p>Olá, <b>${nome}</b>!</p><p>Recebemos seu chamado de <b>${categoriaLabel}</b> (${codigo}).</p><p>Acompanhe as respostas e o andamento por aqui: <a href="${linkChamado}">${linkChamado}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
   }),
   chamadoNovaMensagem: (nome: string, categoriaLabel: string, codigo: string, linkChamado: string) => ({
-    subject: `Nova mensagem no chamado ${codigo} — ${categoriaLabel}`,
+    subject: `Nova mensagem no chamado ${codigo}: ${categoriaLabel}`,
     html: `<p>Olá, <b>${nome}</b>!</p><p>Há uma nova mensagem no seu chamado <b>${codigo}</b> (${categoriaLabel}).</p><p>Veja e responda por aqui: <a href="${linkChamado}">${linkChamado}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
   }),
   alertaRenovacaoContrato: (nome: string, fornecedor: string, dataLimite: string, linkNovaSolicitacao: string) => ({

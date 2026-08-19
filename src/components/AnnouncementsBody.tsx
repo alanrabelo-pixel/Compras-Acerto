@@ -7,7 +7,7 @@ type Announcement = { id: string; title: string; body: string; authorName: strin
 
 /**
  * Conteúdo de Comunicados (lista + compor) sem o botão-gatilho nem o
- * backdrop — extraído de AnnouncementsPanel para poder ser encaixado tanto
+ * backdrop. Extraído de AnnouncementsPanel para poder ser encaixado tanto
  * no seu próprio dropdown (rodapé do AppShell) quanto aninhado dentro do
  * UserMenu (topbar da Home), sem duplicar a lógica de fetch/publicação.
  */
@@ -108,7 +108,7 @@ export function AnnouncementsBody({
       </div>
 
       {/* Cartão da lista mostra só as primeiras linhas (tamanho fixo, ver
-          .announcements-item-body no CSS) — clicar abre a mensagem inteira
+          .announcements-item-body no CSS). Clicar abre a mensagem inteira
           aqui, num modal central destacado em verde claro. */}
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.title} panelClassName="announcement-modal-panel">
         {selected && (

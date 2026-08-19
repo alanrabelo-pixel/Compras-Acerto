@@ -9,22 +9,22 @@ import { getToken } from "next-auth/jwt";
  *   autenticada (@acerto.com.br, ver signIn callback em
  *   src/app/api/auth/[...nextauth]/route.ts) pode entrar. O login é pedido
  *   já na porta de entrada (URL raiz) e vale para os três cardápios
- *   (Solicitação de Compras, Viagens Acerto, Facilities) — não é pedido de
+ *   (Solicitação de Compras, Viagens Acerto, Facilities), não é pedido de
  *   novo a cada seção, é a mesma sessão. /solicitacoes/minhas é o recorte de
- *   quem só tem o papel Solicitante (sem acesso ao quadro geral) — mostra só
+ *   quem só tem o papel Solicitante (sem acesso ao quadro geral): mostra só
  *   as próprias solicitações, ver src/app/solicitacoes/minhas/page.tsx.
  * - /solicitacoes (quadro), /solicitacoes/[id], /contratos, /dashboards:
- *   restrito a quem tem User.canViewBoard = true (ver src/lib/roles.ts) —
+ *   restrito a quem tem User.canViewBoard = true (ver src/lib/roles.ts):
  *   ADMIN, COMPRADOR, APROVADOR ou CONTROLADORIA. Gerenciado em
  *   /admin/acessos (ADMIN).
  * - /admin: restrito a quem tem papel ADMIN.
  *
- * Roda no runtime edge — não pode usar Prisma diretamente. getToken() só lê
+ * Roda no runtime edge, então não pode usar Prisma diretamente. getToken() só lê
  * e valida o JWT assinado (NEXTAUTH_SECRET); os dados de canViewBoard/roles
  * já foram gravados nele pelo callback jwt() do NextAuth, que roda no
  * runtime Node e pode consultar o banco livremente.
  *
- * LOCAL_BYPASS_AUTH=true (ver .env) libera tudo sem exigir login — só para
+ * LOCAL_BYPASS_AUTH=true (ver .env) libera tudo sem exigir login, só para
  * esta máquina, enquanto o Google OAuth real (GOOGLE_CLIENT_ID/SECRET) não
  * está configurado. A lógica de SSO abaixo continua intacta e é a que vale
  * assim que a flag voltar para "false".

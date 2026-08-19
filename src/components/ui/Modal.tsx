@@ -5,11 +5,11 @@ import { X } from "lucide-react";
 import { cx } from "./cx";
 
 /**
- * Modal simples (sem dependência externa) — nenhuma tela usa isso ainda hoje
+ * Modal simples (sem dependência externa). Nenhuma tela usa isso ainda hoje
  * (ações como cancelar contrato disparam direto, sem confirmação), então
  * este componente é uma peça nova da biblioteca, pronta para quando alguma
  * tela precisar de uma confirmação/diálogo (ex: "Tem certeza que deseja
- * cancelar este contrato?") — não foi ligado a nenhum botão existente por
+ * cancelar este contrato?"). Não foi ligado a nenhum botão existente por
  * conta própria, para não mudar o comportamento de nada sem pedido explícito.
  */
 export function Modal({

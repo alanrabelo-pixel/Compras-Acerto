@@ -6,14 +6,14 @@ import { SelectAllRow } from "@/components/SelectAllRow";
 type CostCenterOption = { id: string; name: string };
 
 /**
- * Seletor de MÚLTIPLOS centros de custo (checkboxes num dropdown) — usado na
+ * Seletor de MÚLTIPLOS centros de custo (checkboxes num dropdown), usado na
  * visão "Por Aprovador" de /admin/centros-de-custo, o inverso do
  * CostCenterManagerPicker (lá se escolhe o(s) gestor(es) de um centro de
  * custo; aqui se escolhe os centros de custo de um gestor). Mesma relação
- * CostCenter.managers por trás — o Prisma sincroniza dos dois lados.
+ * CostCenter.managers por trás. O Prisma sincroniza dos dois lados.
  *
  * O painel usa position:fixed com coordenadas calculadas a partir do botão
- * (em vez de position:absolute) — o container pai (.table-wrap) tem
+ * (em vez de position:absolute), porque o container pai (.table-wrap) tem
  * overflow:hidden para arredondar os cantos da tabela, o que cortava o
  * dropdown quando ele abria na última linha (ex: Nível 3 da tabela de
  * Alçadas), deixando as opções invisíveis.

@@ -17,7 +17,7 @@ import { requireRole } from "@/lib/rbac";
  * Cria o(s) registro(s) de aprovação na alçada correta (Nível 1/2/3,
  * renumerado na revisão v1.1). Pedido do usuário: Nível 1 exige 1
  * aprovador; Níveis 2 e 3 exigem 2 aprovadores DISTINTOS decidindo em
- * conjunto (dupla checagem) — a solicitação só avança quando TODOS
+ * conjunto (dupla checagem): a solicitação só avança quando TODOS
  * aprovarem (ver PATCH abaixo). Define o prazo (dueAt) de cada um para
  * escalonamento automático.
  */
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const required = approvalsRequiredForLevel(level);
 
   // Aprovador(es) padrão da alçada (ApprovalLevelApprover, ver
-  // /admin/centros-de-custo) — quando o pool tem gente suficiente, os
+  // /admin/centros-de-custo): quando o pool tem gente suficiente, os
   // primeiros (ordem alfabética) são usados automaticamente. Sem gente
   // suficiente configurada, cai no fallback antigo: o comprador informa
   // manualmente `approverIds` (ou `approverId`, quando required=1) com
@@ -51,18 +51,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (!Array.isArray(manual) || manual.length !== required || !manual.every((id) => typeof id === "string")) {
       return NextResponse.json(
         {
-          error: `Nível ${level} exige ${required} aprovador(es) distinto(s) — configure em Administração → Centros de Custo, ou informe manualmente.`,
+          error: `Nível ${level} exige ${required} aprovador(es) distinto(s). Configure em Administração → Centros de Custo, ou informe manualmente.`,
         },
         { status: 422 }
       );
     }
     if (new Set(manual).size !== manual.length) {
-      return NextResponse.json({ error: "Os aprovadores precisam ser pessoas diferentes — a mesma pessoa não pode assinar duas vezes." }, { status: 422 });
+      return NextResponse.json({ error: "Os aprovadores precisam ser pessoas diferentes: a mesma pessoa não pode assinar duas vezes." }, { status: 422 });
     }
     approverIds = manual as string[];
   }
 
-  // requireSelf: false — approverId aqui é uma ATRIBUIÇÃO (o comprador está
+  // requireSelf: false, pois approverId aqui é uma ATRIBUIÇÃO (o comprador está
   // roteando a solicitação para aprovador(es) específico(s) da alçada), não
   // necessariamente quem está logado clicando "Criar". Só o papel do alvo
   // (APROVADOR) é validado, sem exigir que a sessão seja essa mesma pessoa.
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
   if (declaration.hasConflict) {
     return NextResponse.json(
-      { error: "Há conflito de interesse declarado — reatribua solicitante/comprador/aprovador antes de prosseguir." },
+      { error: "Há conflito de interesse declarado. Reatribua solicitante/comprador/aprovador antes de prosseguir." },
       { status: 422 }
     );
   }
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 /**
  * PATCH /api/requests/[id]/aprovacao
  *
- * Decisão de UM aprovador específico (identificado por approvalId) — ou
+ * Decisão de UM aprovador específico (identificado por approvalId), ou
  * personificação controlada (comprador só até o Nível 1; um ADMIN, sem
  * teto, ver checagem abaixo). Quando o nível exige mais de um aprovador
  * (Níveis 2/3), a solicitação só avança depois que TODOS os aprovadores
@@ -131,7 +131,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
     // Pedido do usuário: o Administrador do sistema pode personificar o
-    // aprovador "a qualquer momento, sempre que julgar necessário" — sem o
+    // aprovador "a qualquer momento, sempre que julgar necessário", sem o
     // teto de alçada que existe para a personificação normal do comprador
     // (só até o Nível 1).
     const personifierRoles = await prisma.userRole.findMany({ where: { userId: personifiedBy } });
@@ -153,7 +153,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     data: { decision, justification, personifiedBy: personifiedBy ?? null, decidedAt: new Date() },
   });
 
-  // Se personificado, notifica o aprovador real (transparência — não substitui a auditoria)
+  // Se personificado, notifica o aprovador real (transparência; não substitui a auditoria)
   if (personifiedBy) {
     const approver = await prisma.user.findUnique({ where: { id: approval.approverId } });
     if (approver) {
@@ -179,7 +179,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ status: "REPROVADO" });
   }
 
-  // Nível 2/3 exige mais de um aprovador (ver approvalsRequiredForLevel) —
+  // Nível 2/3 exige mais de um aprovador (ver approvalsRequiredForLevel):
   // só avança quando TODOS os do mesmo lote (mesmo requestId + level)
   // tiverem decidido APROVADO. Se ainda falta alguém, fica esperando.
   const batch = await prisma.approval.findMany({ where: { requestId: request.id, level: approval.level } });

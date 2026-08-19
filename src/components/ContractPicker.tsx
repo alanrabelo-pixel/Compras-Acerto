@@ -10,7 +10,7 @@ export type ContractOption = {
 };
 
 /**
- * Seletor de contrato ATIVO (ver /api/contracts/search) — usado no fluxo de
+ * Seletor de contrato ATIVO (ver /api/contracts/search), usado no fluxo de
  * "Dúvida sobre contrato ativo" em Jurídico (NdaRequestForm.tsx). Mesmo
  * padrão do SupplierPicker: lista pronta, sem obrigar digitar nada; a pessoa
  * escolhe o contrato real ao qual a dúvida se refere, sem inventar dado.
@@ -43,7 +43,7 @@ export function ContractPicker({ onSelect, id }: { onSelect: (contract: Contract
       <option value="">Selecione o contrato</option>
       {contracts.map((c) => (
         <option key={c.id} value={c.id}>
-          {c.supplierTradeName ?? c.supplierName}{c.contractObject ? ` — ${c.contractObject.slice(0, 60)}` : ""}
+          {c.supplierTradeName ?? c.supplierName}{c.contractObject ? ` (${c.contractObject.slice(0, 60)})` : ""}
         </option>
       ))}
     </select>

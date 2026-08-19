@@ -1,7 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
 /**
- * Resumo executivo em PDF do Dashboard de Compras — números e listas (sem
+ * Resumo executivo em PDF do Dashboard de Compras: números e listas (sem
  * os gráficos interativos, que não têm equivalente estático razoável em
  * @react-pdf/renderer sem rasterizar cada SVG). Pensado para ser anexado a
  * um e-mail/apresentação de diretoria, não para reproduzir a tela pixel a
@@ -60,7 +60,7 @@ export function DashboardSummaryDocument(props: DashboardSummaryProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.h1}>Resumo Executivo — Compras</Text>
+        <Text style={styles.h1}>Resumo Executivo de Compras</Text>
         <Text style={styles.subtitle}>Acerto · Gerado em {props.generatedAt}</Text>
 
         <View style={styles.kpiGrid}>
@@ -129,7 +129,7 @@ export function DashboardSummaryDocument(props: DashboardSummaryProps) {
           ))
         )}
 
-        <Text style={styles.footer} fixed>Acerto Compras — resumo gerado automaticamente a partir dos dados do sistema.</Text>
+        <Text style={styles.footer} fixed>Acerto Compras: resumo gerado automaticamente a partir dos dados do sistema.</Text>
       </Page>
     </Document>
   );

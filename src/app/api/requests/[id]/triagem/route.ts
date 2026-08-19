@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     await prisma.comment.create({
       data: { requestId: request.id, authorId: buyerId, body: returnReason ?? "Informações incompletas.", stage: "TRIAGEM" },
     });
-    const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Triagem — informações pendentes");
+    const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Triagem: informações pendentes");
     await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
     return NextResponse.json({ status: "DEVOLVIDO" });
   }
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // Atalho para CANCELAMENTO (pedido do usuário): um cancelamento de
   // contrato/serviço/ferramenta não compra nada, então não faz sentido
   // exigir valor estimado/lane/fracionamento nem passar por Validação
-  // Orçamentária, Cotação, Aprovação e Pedido de Compra — vai direto para
+  // Orçamentária, Cotação, Aprovação e Pedido de Compra: vai direto para
   // Jurídico formalizar o distrato/termo de cancelamento.
   if (request.demandType === "CANCELAMENTO") {
     const updated = await prisma.purchaseRequest.update({
@@ -74,7 +74,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         fromStage: "TRIAGEM",
         toStage: "JURIDICO",
         actorId: buyerId,
-        comment: "Cancelamento de Contrato/Serviço/Ferramenta — fluxo simplificado, direto para Jurídico.",
+        comment: "Cancelamento de Contrato/Serviço/Ferramenta: fluxo simplificado, direto para Jurídico.",
       },
     });
     const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Jurídico");
@@ -83,13 +83,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   // Gate: Valor Estimado é opcional na Solicitação, mas o motor de alçadas (determineLane, checkFragmentationRisk,
-  // approvalLevel, budgetExceptionLevel) exige um número — a Triagem é onde
+  // approvalLevel, budgetExceptionLevel) exige um número, e a Triagem é onde
   // isso é resolvido, já que o comprador tem contexto para estimar o valor.
   let resolvedEstimatedValue = request.estimatedValue !== null ? Number(request.estimatedValue) : null;
   if (resolvedEstimatedValue === null) {
     if (estimatedValue === undefined || estimatedValue === null || Number(estimatedValue) <= 0) {
       return NextResponse.json(
-        { error: "Esta solicitação foi aberta sem valor estimado — informe um valor estimado (estimatedValue) para avançar." },
+        { error: "Esta solicitação foi aberta sem valor estimado. Informe um valor estimado (estimatedValue) para avançar." },
         { status: 422 }
       );
     }
@@ -133,7 +133,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         requestId: request.id,
         channel: "EMAIL",
         recipient: "controladoria@acerto.com.br",
-        subject: `Risco de fracionamento — ${request.code}`,
+        subject: `Risco de fracionamento: ${request.code}`,
         status: "ENVIADO",
       },
     });

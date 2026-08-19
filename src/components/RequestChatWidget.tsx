@@ -91,10 +91,10 @@ export function RequestChatWidget({
             <div className="chat-role-picker">
               <p>Você é:</p>
               <button className="btn btn-secondary" onClick={() => setRole("SOLICITANTE")}>
-                Solicitante — {requesterName}
+                Solicitante: {requesterName}
               </button>
               <button className="btn btn-secondary" onClick={() => setRole("COMPRADOR")} disabled={!buyerName}>
-                Comprador{buyerName ? ` — ${buyerName}` : " (ainda não atribuído)"}
+                Comprador{buyerName ? `: ${buyerName}` : " (ainda não atribuído)"}
               </button>
             </div>
           ) : (

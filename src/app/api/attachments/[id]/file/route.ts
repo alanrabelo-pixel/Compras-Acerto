@@ -15,7 +15,7 @@ const MIME_BY_EXT: Record<string, string> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 
-// GET /api/attachments/[id]/file — baixa o anexo (local em dev, Vercel Blob em produção; ver src/lib/storage.ts).
+// GET /api/attachments/[id]/file: baixa o anexo (local em dev, Vercel Blob em produção; ver src/lib/storage.ts).
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const attachment = await prisma.attachment.findUnique({ where: { id: params.id } });
   if (!attachment) return NextResponse.json({ error: "Anexo não encontrado" }, { status: 404 });

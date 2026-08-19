@@ -1,7 +1,7 @@
 import type { BadgeVariant } from "@/components/ui";
 
 // Mapas de cor por domínio (prioridade de solicitação, status de contrato,
-// status de chamado) — antes redeclarados em cada página que precisava de um
+// status de chamado), antes redeclarados em cada página que precisava de um
 // <Badge>, com o risco de divergir (ex: PRIORITY_BADGE tinha 4 cópias).
 export const PRIORITY_BADGE_VARIANT: Record<string, BadgeVariant> = {
   CRITICA: "danger",

@@ -24,7 +24,7 @@ export default async function ChamadosBoardPage({
   const viewer = await resolveChamadoViewer(searchParams.userId);
 
   // Quem só tem o papel Solicitante (sem canViewBoard) vê só os próprios
-  // chamados — mesmo recorte de Minhas Solicitações, ver src/lib/roles.ts.
+  // chamados, no mesmo recorte de Minhas Solicitações (ver src/lib/roles.ts).
   const where = {
     category: config.enumValue,
     ...(viewer.showFullBoard ? {} : { requesterEmail: viewer.email }),

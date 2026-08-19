@@ -3,11 +3,11 @@ import { Children, cloneElement, isValidElement, useId, type ReactElement } from
 const NATIVE_CONTROL_TAGS = new Set(["input", "select", "textarea"]);
 
 /**
- * Rótulo + texto de ajuda + campo — o mesmo wrapper que já existia duplicado
+ * Rótulo + texto de ajuda + campo. É o mesmo wrapper que já existia duplicado
  * (com o mesmo nome) em NovaSolicitacaoForm.tsx, agora compartilhado.
  *
  * Quando o filho é um único <input>/<select>/<textarea> nativo sem id
- * próprio, gera um id (useId) e associa via htmlFor — sem isso o <label>
+ * próprio, gera um id (useId) e associa via htmlFor. Sem isso o <label>
  * visual não tinha nenhum vínculo real com o campo (falha de WCAG 2.2 AA,
  * leitor de tela não anuncia o rótulo ao focar o campo). Usos somente-leitura
  * (ex: Contratos/StageHistoryPanel, onde children é texto/JSX arbitrário) não

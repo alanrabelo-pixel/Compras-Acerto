@@ -6,7 +6,7 @@ import { UserPicker } from "@/components/UserPicker";
 
 /**
  * Seletor de identidade para páginas "minhas coisas" (Minhas Pendências,
- * Minhas Solicitações) — só aparece quando não há sessão real
+ * Minhas Solicitações), só aparece quando não há sessão real
  * (LOCAL_BYPASS_AUTH ligado / SSO ainda não configurado). Quando o SSO
  * estiver ativo, a página resolve a pessoa direto pela sessão e este
  * seletor nem aparece.

@@ -32,7 +32,7 @@ export default async function PendenciasPage({
         <main className="page" style={{ paddingTop: 28 }}>
           <h1 className="page-title">Minhas Pendências</h1>
           <p className="page-subtitle">
-            Selecione quem você é para ver só as solicitações que estão esperando uma ação sua — sem precisar
+            Selecione quem você é para ver só as solicitações que estão esperando uma ação sua, sem precisar
             escanear as 15 colunas do quadro completo.
           </p>
           <div style={{ maxWidth: 420, marginTop: 20 }}>

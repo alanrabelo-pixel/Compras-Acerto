@@ -7,7 +7,7 @@ import { MultiUserPicker } from "@/components/MultiUserPicker";
 /**
  * Troca o(s) aprovador(es) padrão de uma alçada de valor (Nível 1/2/3, ver
  * PATCH /api/approval-levels/[level]). Mais de um é permitido (mesmo
- * raciocínio do CostCenterManagerPicker) — ao salvar, Aprovações já criadas
+ * raciocínio do CostCenterManagerPicker). Ao salvar, Aprovações já criadas
  * nesse nível e ainda pendentes migram para o novo conjunto.
  */
 export function ApprovalLevelPicker({ level, initialApproverIds }: { level: number; initialApproverIds: string[] }) {

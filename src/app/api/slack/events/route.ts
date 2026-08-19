@@ -6,12 +6,12 @@ import { resolveChatFromSlackEvent, createSlackChatMessage } from "@/lib/request
 export const runtime = "nodejs";
 
 /**
- * Webhook da Events API do Slack — recebe as respostas que o comprador ou o
+ * Webhook da Events API do Slack: recebe as respostas que o comprador ou o
  * solicitante mandam por DM e devolve para o widget de chat da solicitação
  * (ver src/components/RequestChatWidget.tsx e src/lib/requestChat.ts).
  *
  * Pré-requisitos que NÃO existem ainda neste ambiente local (mesma limitação
- * do SSO/Google OAuth — ver .env): um Slack App real com Bot Token
+ * do SSO/Google OAuth, ver .env): um Slack App real com Bot Token
  * (SLACK_BOT_TOKEN), assinatura configurada (SLACK_SIGNING_SECRET) e, como o
  * Slack não aceita localhost, uma URL pública (deploy ou túnel tipo ngrok)
  * cadastrada em "Event Subscriptions" com escopo `message.im`. Até lá este
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
 async function handleIncomingDM(event: { channel: string; user: string; text: string; ts: string; thread_ts?: string }) {
   const sender = await lookupSlackUser(event.user);
-  if (!sender) return; // sem e-mail no perfil Slack — não dá para casar com requester/buyer
+  if (!sender) return; // sem e-mail no perfil Slack: não dá para casar com requester/buyer
 
   const resolved = await resolveChatFromSlackEvent({
     channel: event.channel,
@@ -66,7 +66,7 @@ async function handleIncomingDM(event: { channel: string; user: string; text: st
 
 function verifySignature(req: NextRequest, rawBody: string): boolean {
   const secret = process.env.SLACK_SIGNING_SECRET;
-  if (!secret) return true; // sem segredo configurado ainda neste ambiente local — ver comentário no topo do arquivo
+  if (!secret) return true; // sem segredo configurado ainda neste ambiente local, ver comentário no topo do arquivo
 
   const timestamp = req.headers.get("x-slack-request-timestamp");
   const signature = req.headers.get("x-slack-signature");

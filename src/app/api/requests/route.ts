@@ -4,7 +4,7 @@ import { slaDaysForDiretoria } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 
-// GET /api/requests — lista solicitações (para o Kanban / listagem)
+// GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
   const stage = req.nextUrl.searchParams.get("stage");
   const requests = await prisma.purchaseRequest.findMany({
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(requests);
 }
 
-// POST /api/requests — cria uma nova Solicitação de Compra (ver Nova
+// POST /api/requests: cria uma nova Solicitação de Compra (ver Nova
 // Solicitação na UI).
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -42,11 +42,11 @@ export async function POST(req: NextRequest) {
   } = body;
 
   // Validação mínima dos campos obrigatórios (marcados com * no formulário).
-  // estimatedValue NÃO é obrigatório aqui, de propósito — ver
+  // estimatedValue NÃO é obrigatório aqui, de propósito: ver
   // gate na Triagem, que exige o valor antes de calcular alçada/lane.
   //
   // budgetLineText é dispensado quando extraBudget=true ("Orçamento Extra"
-  // selecionado no lugar de uma linha) — nesse caso o formulário exige o
+  // selecionado no lugar de uma linha); nesse caso o formulário exige o
   // anexo de Aprovação Extra-orçamentária em vez do texto da linha.
   //
   // approverManagerId NÃO vem mais do formulário (pedido do usuário: o gestor
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     include: { managers: { orderBy: { name: "asc" } } },
   });
   if (!costCenter) return NextResponse.json({ error: "Centro de custo não encontrado" }, { status: 404 });
-  // Mais de um gestor pode estar configurado (pedido do usuário) — o primeiro
+  // Mais de um gestor pode estar configurado (pedido do usuário): o primeiro
   // (ordem alfabética) fica como approverManagerId "principal" (FK única em
   // PurchaseRequest), mas TODOS são notificados e qualquer um pode decidir
   // (ver PATCH /api/requests/[id]/aprovacao-gestor).
@@ -115,11 +115,11 @@ export async function POST(req: NextRequest) {
     data: { requestId: request.id, toStage: "SOLICITACAO", actorId: requesterId },
   });
 
-  // Comunicação automática — confirmação de recebimento (ver seção 3.1 do doc de referência)
+  // Comunicação automática: confirmação de recebimento (ver seção 3.1 do doc de referência)
   const { subject, html } = templates.confirmacaoRecebimento(request.requester.name, shortDescription);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  // Notifica TODOS os gestores do centro de custo (não só o principal) — é
+  // Notifica TODOS os gestores do centro de custo (não só o principal), pois é
   // qualquer um deles que pode agir agora, na etapa APROVACAO_GESTOR (não é
   // mais só uma cópia informativa).
   await Promise.all(
@@ -129,12 +129,12 @@ export async function POST(req: NextRequest) {
         text: `Nova solicitação de compra aguardando sua aprovação: *${shortDescription}* (${code}), por ${request.requester.name}.`,
         requestId: request.id,
       }).catch(() => {
-        // Falha de Slack não deve bloquear a criação da solicitação — já registrada em Notification.
+        // Falha de Slack não deve bloquear a criação da solicitação, já registrada em Notification.
       })
     )
   );
 
-  // Move automaticamente para Aprovação do Gestor — só depois da decisão dele
+  // Move automaticamente para Aprovação do Gestor: só depois da decisão dele
   // é que segue para Triagem (ver PATCH /api/requests/[id]/aprovacao-gestor).
   const updated = await prisma.purchaseRequest.update({
     where: { id: request.id },

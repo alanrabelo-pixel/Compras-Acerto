@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// GET /api/contracts/search?q=texto — lista/busca contratos ATIVOS (por razão
+// GET /api/contracts/search?q=texto: lista/busca contratos ATIVOS (por razão
 // social, nome fantasia ou objeto do contrato). Usado pelo ContractPicker no
-// fluxo de "Dúvida sobre contrato ativo" em Jurídico (NdaRequestForm.tsx) —
+// fluxo de "Dúvida sobre contrato ativo" em Jurídico (NdaRequestForm.tsx),
 // mesmo padrão de /api/suppliers, só filtrado a status=ATIVO.
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q");

@@ -13,8 +13,8 @@ function daysUntil(date: Date) {
   return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-// Antes, esta tela carregava a tabela de contratos inteira a cada visita —
-// invisível em dezenas de registros, custoso conforme a base cresce.
+// Antes, esta tela carregava a tabela de contratos inteira a cada visita,
+// algo invisível em dezenas de registros, mas custoso conforme a base cresce.
 const PAGE_SIZE = 20;
 
 export default async function ContratosPage({
@@ -101,7 +101,7 @@ export default async function ContratosPage({
                   <span style={{ fontWeight: 700, display: "block" }}>{c.supplierName}</span>
                   {c.supplierTradeName && <span className="text-soft" style={{ fontSize: 11 }}>{c.supplierTradeName}{c.supplierCnpj ? ` · ${c.supplierCnpj}` : ""}</span>}
                 </span>
-                <span className="text-soft">{c.request?.diretoria ?? c.diretoria ?? "—"}</span>
+                <span className="text-soft">{c.request?.diretoria ?? c.diretoria ?? "-"}</span>
                 <span className="text-soft">{formatDateOnly(c.startDate)} → {formatDateOnly(c.endDate)}</span>
                 <span style={{ fontWeight: 700, color: daysColor }}>{days < 0 ? `${Math.abs(days)}d vencido` : `${days}d`}</span>
                 <span><Badge variant={CONTRACT_STATUS_BADGE_VARIANT[c.status] ?? "neutral"}>{c.status}</Badge></span>

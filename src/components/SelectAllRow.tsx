@@ -1,6 +1,6 @@
 "use client";
 
-/** Linha "Marcar todos / Desmarcar todos" — reaproveitada por todo seletor de múltipla escolha (pedido do usuário). */
+/** Linha "Marcar todos / Desmarcar todos", reaproveitada por todo seletor de múltipla escolha (pedido do usuário). */
 export function SelectAllRow({ onSelectAll, onDeselectAll }: { onSelectAll: () => void; onDeselectAll: () => void }) {
   const linkStyle: React.CSSProperties = {
     fontSize: 11, padding: 0, background: "none", border: "none",

@@ -5,18 +5,18 @@ import { prisma } from "@/lib/db";
 import { encryptSecret } from "@/lib/crypto";
 
 /**
- * GET /api/users/[id]/ai-keys — status das chaves pessoais de IA (Claude e
+ * GET /api/users/[id]/ai-keys: status das chaves pessoais de IA (Claude e
  * Gemini) de um usuário. Nunca retorna o valor da chave, só se está
- * configurada — evita expor o segredo em qualquer resposta de API.
+ * configurada. Isso evita expor o segredo em qualquer resposta de API.
  *
- * PATCH /api/users/[id]/ai-keys — salva/atualiza as chaves pessoais do
+ * PATCH /api/users/[id]/ai-keys: salva/atualiza as chaves pessoais do
  * próprio usuário. Enviar um campo ausente/undefined preserva a chave atual;
  * só um campo explicitamente enviado é alterado (limpa se vier string vazia).
  * Pedido do usuário: os Assistentes de IA usam a chave de quem está atuando
- * na etapa no momento, não uma chave única do app — ver src/lib/integrations/ai.ts.
+ * na etapa no momento, não uma chave única do app (ver src/lib/integrations/ai.ts).
  *
  * Autenticação por sessão real (mesmo padrão de src/app/api/users/[id]/route.ts)
- * porque isso grava uma credencial — confiar num id enviado no corpo/params
+ * porque isso grava uma credencial: confiar num id enviado no corpo/params
  * sem checar a sessão permitiria a qualquer pessoa ler o status ou sobrescrever
  * a chave pessoal de outra. Só o dono da conta (ou ADMIN) pode ver/alterar.
  * Respeita LOCAL_BYPASS_AUTH (ver .env e middleware.ts) para uso local
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json();
   const { anthropicApiKey, geminiApiKey } = body as { anthropicApiKey?: string; geminiApiKey?: string };
 
-  // Criptografadas em repouso (ver src/lib/crypto.ts) — nunca gravamos texto
+  // Criptografadas em repouso (ver src/lib/crypto.ts): nunca gravamos texto
   // puro a partir daqui, mesmo que a leitura (ai-insight route) ainda saiba
   // lidar com chaves antigas não criptografadas por compatibilidade.
   const data: { anthropicApiKey?: string | null; geminiApiKey?: string | null } = {};

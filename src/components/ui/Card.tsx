@@ -1,12 +1,12 @@
 import { cx } from "./cx";
 
 /**
- * Card com título — mesma marcação que existia duplicada como `Panel` em
+ * Card com título. Mesma marcação que existia duplicada como `Panel` em
  * RequestActions.tsx e dashboards/page.tsx (título + ícone opcional +
  * subtítulo opcional + conteúdo), agora um único componente compartilhado.
  *
  * `icon` recebe o elemento já renderizado (ex: `<Wallet size={16}/>`), não a
- * referência do componente — só assim pode atravessar a fronteira Server →
+ * referência do componente. Só assim pode atravessar a fronteira Server →
  * Client quando `Card` é usado a partir de um Client Component.
  *
  * `titleSize="lg"` reproduz o `dash-section-title` (15px) que os painéis do

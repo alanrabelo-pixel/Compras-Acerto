@@ -8,14 +8,14 @@ import { AiKeySettings } from "@/components/AiKeySettings";
 
 type CostCenter = { id: string; name: string; managers: { name: string }[] };
 
-// Sentinelas do <select> de Linha do Orçamento — hoje um campo manual (sem
+// Sentinelas do <select> de Linha do Orçamento. Hoje é um campo manual (sem
 // integração com a base de orçamento), então só existem 2 escolhas reais:
 // Orçamento Extra (anexo obrigatório) ou Outros (texto livre, ver budgetLineText).
 const EXTRA_BUDGET = "ORCAMENTO_EXTRA";
 const OTHER_BUDGET = "OUTROS";
 
 // Conta dias úteis (seg-sex, sem calendário de feriados) entre hoje e a data
-// informada — usado só pro alerta de prazo apertado, não afeta o valor salvo.
+// informada. Usado só pro alerta de prazo apertado, não afeta o valor salvo.
 function countBusinessDaysUntil(dateStr: string): number {
   const [y, m, d] = dateStr.split("-").map(Number);
   const target = new Date(y, m - 1, d);
@@ -33,7 +33,7 @@ function countBusinessDaysUntil(dateStr: string): number {
   return count;
 }
 
-// Rótulos mantidos estáveis, inclusive o "Dowgrade" (sem "n") — de propósito,
+// Rótulos mantidos estáveis, inclusive o "Dowgrade" (sem "n"), de propósito,
 // para não conflitar com o texto já usado em solicitações antigas.
 const DEMAND_TYPES = [
   { value: "COMPRA_PRODUTO", label: "Compra de Produtos" },
@@ -60,7 +60,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Preenchido quando a solicitação já foi criada mas o anexo obrigatório de
-  // Orçamento Extra falhou ao enviar — evita navegar como se tivesse dado
+  // Orçamento Extra falhou ao enviar. Evita navegar como se tivesse dado
   // tudo certo, deixando a pessoa anexar manualmente na página da solicitação.
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
 
@@ -87,10 +87,10 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
   const isExtraBudget = budgetLineChoice === EXTRA_BUDGET;
   const isOtherBudget = budgetLineChoice === OTHER_BUDGET;
 
-  // Assistente de preenchimento (Fase 1 de IA) — lê a Descrição Detalhada já
+  // Assistente de preenchimento (Fase 1 de IA). Lê a Descrição Detalhada já
   // digitada e sugere demandType/priority + um alerta antecipado de
   // Due Diligence. Nunca preenche sozinho sem clique, e cada campo alterado
-  // continua editável normalmente — só marcamos quais vieram de sugestão.
+  // continua editável normalmente. Só marcamos quais vieram de sugestão.
   const [assisting, setAssisting] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
   const [assistNote, setAssistNote] = useState<{ note: string; missingInfo: string[]; likelyDueDiligence: boolean } | null>(null);
@@ -159,7 +159,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao criar solicitação.");
 
-      // Anexo de Orçamento Extra é obrigatório quando isExtraBudget — se o
+      // Anexo de Orçamento Extra é obrigatório quando isExtraBudget. Se o
       // upload falhar aqui, a solicitação já foi criada sem o anexo exigido;
       // avisamos e paramos, em vez de navegar como se tivesse dado tudo
       // certo (o anexo pode ser enviado manualmente na página da solicitação).
@@ -239,8 +239,8 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             return (
               <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: -4 }}>
                 {names.length > 0
-                  ? <>Gestor{names.length > 1 ? "es" : ""} aprovador{names.length > 1 ? "es" : ""} deste centro de custo: <strong>{names.join(", ")}</strong> — será{names.length > 1 ? "ão" : ""} notificado{names.length > 1 ? "s" : ""} automaticamente ao enviar.</>
-                  : "Este centro de custo ainda não tem um gestor aprovador definido — a solicitação ficará parada na etapa de Aprovação do Gestor até um administrador configurar um em Administração → Centros de Custo."}
+                  ? <>Gestor{names.length > 1 ? "es" : ""} aprovador{names.length > 1 ? "es" : ""} deste centro de custo: <strong>{names.join(", ")}</strong>. Será{names.length > 1 ? "ão" : ""} notificado{names.length > 1 ? "s" : ""} automaticamente ao enviar.</>
+                  : "Este centro de custo ainda não tem um gestor aprovador definido. A solicitação ficará parada na etapa de Aprovação do Gestor até um administrador configurar um em Administração → Centros de Custo."}
               </p>
             );
           })()}
@@ -374,7 +374,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
                 )}
                 {assistNote.likelyDueDiligence && (
                   <p style={{ margin: 0, fontWeight: 600, color: "var(--warning)" }}>
-                    Provavelmente vai passar por Due Diligence de Privacidade — parece uma ferramenta nova que trata dado pessoal.
+                    Provavelmente vai passar por Due Diligence de Privacidade. Parece uma ferramenta nova que trata dado pessoal.
                   </p>
                 )}
               </div>
@@ -384,7 +384,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
           <Field
             label="Prioridade de Aquisição"
             required
-            help="Classificação de Urgência — Crítica (Urgência Máxima) · Alta (Urgente, mas não crítica) · Média (Importante, mas não urgente) · Baixa (Rotineira ou Não Urgente)"
+            help="Classificação de Urgência: Crítica (Urgência Máxima) · Alta (Urgente, mas não crítica) · Média (Importante, mas não urgente) · Baixa (Rotineira ou Não Urgente)"
           >
             <select className="input" value={priority} onChange={(e) => { setPriority(e.target.value); setAiSuggestedFields((prev) => { const next = new Set(prev); next.delete("priority"); return next; }); }}>
               {PRIORITIES.map((p) => (
@@ -394,7 +394,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             {aiSuggestedFields.has("priority") && <div style={{ marginTop: 4 }}><AiTag /></div>}
             {(priority === "ALTA" || priority === "CRITICA") && (
               <WarningNotice className="section-gap">
-                Prioridades altas têm custo — geram fila fora de ordem e podem pressionar prazos de outras solicitações. Confirma que essa é mesmo uma urgência real?
+                Prioridades altas têm custo: geram fila fora de ordem e podem pressionar prazos de outras solicitações. Confirma que essa é mesmo uma urgência real?
               </WarningNotice>
             )}
           </Field>
@@ -407,7 +407,7 @@ export function NovaSolicitacaoForm({ sessionRequester = null }: { sessionReques
             <input className="input" type="date" value={suggestedDeadline} onChange={(e) => setSuggestedDeadline(e.target.value)} />
             {suggestedDeadline && countBusinessDaysUntil(suggestedDeadline) < 7 && (
               <WarningNotice className="section-gap">
-                Prazo com menos de 7 dias úteis — cotação, aprovação e emissão do pedido levam tempo, e esse prazo pode não ser cumprido. Avalie se dá para ampliar a data.
+                Prazo com menos de 7 dias úteis. Cotação, aprovação e emissão do pedido levam tempo, e esse prazo pode não ser cumprido. Avalie se dá para ampliar a data.
               </WarningNotice>
             )}
           </Field>

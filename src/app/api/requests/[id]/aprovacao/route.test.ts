@@ -167,7 +167,7 @@ describe("POST/PATCH /api/requests/[id]/aprovacao", () => {
       expect(approvals).toHaveLength(1);
       expect(approvals[0].approverId).toBe(levelDefault.id);
     } finally {
-      // Config global de alçada (não escopada por TEST_PREFIX) — remove para
+      // Config global de alçada (não escopada por TEST_PREFIX): remove para
       // não vazar entre este e outros arquivos de teste rodando em paralelo.
       await prisma.approvalLevelApprover.deleteMany({ where: { level: 1, userId: levelDefault.id } });
     }

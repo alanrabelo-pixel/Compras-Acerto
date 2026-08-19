@@ -1,5 +1,5 @@
 /**
- * Biblioteca de componentes reutilizáveis do sistema — ver relatório de
+ * Biblioteca de componentes reutilizáveis do sistema. Ver relatório de
  * modernização (Fase 3). Cada componente aqui é um wrapper tipado em cima
  * das classes de globals.css já existentes (não muda a aparência atual de
  * nenhuma tela); o valor é ter um único lugar para ajustar o padrão visual

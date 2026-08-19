@@ -9,7 +9,7 @@ import { requireErpAuth } from "@/lib/erpAuth";
  * CONCLUIDA foram importados/lançados do lado dele. Body esperado:
  * { erpExternalId: string, note?: string }
  *
- * Idempotente: pode ser chamado de novo (ex: reprocessamento do ERP) —
+ * Idempotente: pode ser chamado de novo (ex: reprocessamento do ERP);
  * apenas atualiza erpExternalId/erpSyncedAt e registra mais uma entrada de
  * auditoria, não há efeito colateral no fluxo de compras em si.
  *
@@ -39,13 +39,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: { erpSyncedAt: new Date(), erpExternalId },
   });
 
-  // Registro de auditoria — mesmo padrão de Comment usado no restante do fluxo.
+  // Registro de auditoria: mesmo padrão de Comment usado no restante do fluxo.
   await prisma.comment.create({
     data: {
       requestId: request.id,
       authorId: request.requesterId,
       stage: "CONCLUIDO",
-      body: `Confirmado pelo ERP — id externo: ${erpExternalId}.${note ? ` Nota: ${note}` : ""}`,
+      body: `Confirmado pelo ERP, id externo: ${erpExternalId}.${note ? ` Nota: ${note}` : ""}`,
     },
   });
   await prisma.notification.create({
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       requestId: request.id,
       channel: "ERP",
       recipient: "erp-integration",
-      subject: `Confirmação de importação — ${request.code}`,
+      subject: `Confirmação de importação: ${request.code}`,
       status: "ENVIADO",
     },
   });

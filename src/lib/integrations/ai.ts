@@ -1,5 +1,5 @@
 /**
- * Assistentes de IA — pedido do usuário: dar a quem atua em cada etapa uma
+ * Assistentes de IA: pedido do usuário foi dar a quem atua em cada etapa uma
  * ajuda focada (estratégia, riscos, o que confirmar/evitar) nas etapas onde
  * isso é aplicável: Triagem, Due Diligence, Cotação, Mapa de Cotação,
  * Jurídico e Mapeamento de Contrato. Cada etapa tem seu próprio prompt
@@ -7,15 +7,15 @@
  * que um único parser/UI sirva para todas.
  *
  * Pedido do usuário: rodar Anthropic e Gemini EM PARALELO a cada geração,
- * mostrando as duas sugestões lado a lado — cada provedor falha de forma
+ * mostrando as duas sugestões lado a lado, já que cada provedor falha de forma
  * independente (ver generateInsight). Ao contrário do Gmail/Slack
  * (src/lib/integrations/{gmail,slack}.ts), esta integração NÃO falha
  * silenciosamente: é uma ação sob demanda (a pessoa clica um botão e espera
  * uma resposta), não um efeito colateral em segundo plano.
  *
  * Pedido do usuário: as chamadas usam a CHAVE PESSOAL de quem está atuando
- * na etapa (User.anthropicApiKey/geminiApiKey — ver /api/users/[id]/ai-keys),
- * não uma chave única configurada para o app inteiro — todo mundo na Acerto
+ * na etapa (User.anthropicApiKey/geminiApiKey, ver /api/users/[id]/ai-keys),
+ * não uma chave única configurada para o app inteiro: todo mundo na Acerto
  * já tem acesso próprio a Claude e Gemini. O modelo (ANTHROPIC_MODEL/
  * GEMINI_MODEL) continua vindo do .env por ser uma escolha técnica do app,
  * não uma credencial pessoal.
@@ -39,7 +39,7 @@ export type ProviderResult = {
 };
 
 const RESPONSE_FORMAT_INSTRUCTION = `
-Responda em português do Brasil, de forma prática e direta (sem jargão excessivo), com uma análise acionável para ESTE caso específico — não conselhos genéricos.
+Responda em português do Brasil, de forma prática e direta (sem jargão excessivo), com uma análise acionável para ESTE caso específico, não conselhos genéricos.
 
 Responda APENAS com um JSON válido (sem markdown, sem texto antes ou depois), no formato exato:
 {
@@ -50,7 +50,7 @@ Responda APENAS com um JSON válido (sem markdown, sem texto antes ou depois), n
   "nextStep": "próxima ação concreta recomendada, ou null"
 }`;
 
-// Schema JSON exigido via output_config.format (Anthropic) — garante que a
+// Schema JSON exigido via output_config.format (Anthropic): garante que a
 // resposta já venha como JSON válido nesse formato exato, em vez de confiar
 // só na instrução em texto do prompt (RESPONSE_FORMAT_INSTRUCTION).
 const AI_INSIGHT_JSON_SCHEMA = {
@@ -92,7 +92,7 @@ async function callAnthropic(prompt: string, apiKey: string | null): Promise<Pro
       max_tokens: 2000,
       // Sonnet 5 roda com "adaptive thinking" ligado por padrão quando
       // `thinking` não é informado, e max_tokens vira o limite de
-      // thinking+resposta somados — sem isso, o JSON podia vir cortado no
+      // thinking+resposta somados. Sem isso, o JSON podia vir cortado no
       // meio e falhar no parseInsightPayload. Desabilitar aqui é seguro
       // (permitido até effort "high", que é o padrão) e essa é uma extração
       // estruturada, não uma tarefa que se beneficia de raciocínio longo.
@@ -130,7 +130,7 @@ async function callGemini(prompt: string, apiKey: string | null): Promise<Provid
 
 /**
  * Chama os dois provedores em paralelo, cada um com a chave pessoal de quem
- * está atuando (não uma chave única do app) — cada um falha/responde de
+ * está atuando (não uma chave única do app), e cada um falha/responde de
  * forma independente.
  */
 export async function generateInsight(
@@ -145,7 +145,7 @@ export async function generateInsight(
 }
 
 // ----------------------------------------------------------------------------
-// Prompts por etapa — cada um descreve o papel da IA e os dados disponíveis
+// Prompts por etapa: cada um descreve o papel da IA e os dados disponíveis
 // naquela etapa específica. Todos terminam com RESPONSE_FORMAT_INSTRUCTION.
 // ----------------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ export type TriagemContext = {
 };
 
 export function buildTriagemPrompt(ctx: TriagemContext): string {
-  return `Você é um assistente de estratégia de compras (procurement) ajudando um comprador da Acerto (fintech brasileira) na etapa de Homologação e Triagem — o primeiro contato do comprador com a solicitação, onde ele decide a faixa de risco (lane) e se há informação suficiente para prosseguir.
+  return `Você é um assistente de estratégia de compras (procurement) ajudando um comprador da Acerto (fintech brasileira) na etapa de Homologação e Triagem, o primeiro contato do comprador com a solicitação, onde ele decide a faixa de risco (lane) e se há informação suficiente para prosseguir.
 
 Dados da solicitação:
 - Tipo de demanda: ${ctx.demandType}
@@ -197,7 +197,7 @@ export type DueDiligenceContext = {
 };
 
 export function buildDueDiligencePrompt(ctx: DueDiligenceContext): string {
-  return `Você é um assistente de privacidade e segurança da informação ajudando o time de Privacidade da Acerto (fintech brasileira) na etapa de Due Diligence — avaliação obrigatória para contratação de novas ferramentas que podem tratar dados pessoais.
+  return `Você é um assistente de privacidade e segurança da informação ajudando o time de Privacidade da Acerto (fintech brasileira) na etapa de Due Diligence, avaliação obrigatória para contratação de novas ferramentas que podem tratar dados pessoais.
 
 Dados da solicitação:
 - Tipo de demanda: ${ctx.demandType}
@@ -238,21 +238,21 @@ export function buildNegotiationPrompt(ctx: NegotiationContext): string {
       ? ctx.quotes
           .map(
             (q, i) =>
-              `${i + 1}. ${q.supplierName} — valor inicial R$ ${q.initialValue.toLocaleString("pt-BR")}, ` +
+              `${i + 1}. ${q.supplierName}: valor inicial R$ ${q.initialValue.toLocaleString("pt-BR")}, ` +
               `valor negociado R$ ${q.negotiatedValue.toLocaleString("pt-BR")}, condição: ${q.paymentCondition}`
           )
           .join("\n")
       : "Nenhuma cotação registrada ainda.";
 
   // Com 3+ cotações (o mínimo já exigido pelo sistema para valores acima de
-  // R$2.500 — ver minimumQuotesRequired), há dado suficiente para uma síntese
+  // R$2.500, ver minimumQuotesRequired), há dado suficiente para uma síntese
   // comparativa de verdade (preço x condição x risco), não só conselho de
-  // negociação — o cálculo de saving em si já é feito no código; a IA só
+  // negociação. O cálculo de saving em si já é feito no código; a IA só
   // organiza a comparação em texto, nunca substitui os números exibidos.
   const isComparison = ctx.stage === "MAPA_COTACAO" && ctx.quotes.length >= 3;
 
   const stageInstruction = isComparison
-    ? "O comprador está na etapa de Mapa de Cotação com 3 ou mais cotações registradas — dado suficiente para uma comparação direta entre elas, não só conselho de negociação. Compare as cotações entre si (preço negociado, condição de pagamento, saving obtido) e aponte qual parece mais vantajosa e por quê, considerando também que a cotação com menor preço nem sempre é a melhor condição comercial geral."
+    ? "O comprador está na etapa de Mapa de Cotação com 3 ou mais cotações registradas, dado suficiente para uma comparação direta entre elas, não só conselho de negociação. Compare as cotações entre si (preço negociado, condição de pagamento, saving obtido) e aponte qual parece mais vantajosa e por quê, considerando também que a cotação com menor preço nem sempre é a melhor condição comercial geral."
     : ctx.stage === "COTACAO"
       ? "O comprador está na etapa de Cotação, prestes a negociar com um ou mais fornecedores. Foque em como abrir e conduzir a negociação."
       : "O comprador está na etapa de Mapa de Cotação, comparando as cotações já recebidas antes de escolher o vencedor. Foque em como usar as cotações concorrentes como alavanca para uma rodada final de negociação, e o que considerar na escolha.";
@@ -277,7 +277,7 @@ ${quotesBlock}
 
 ${
   isComparison
-    ? `No campo "highlights", liste os pontos fortes da cotação que parece mais vantajosa. No campo "cautions", liste riscos ou pontos de atenção de qualquer uma das cotações (ex: condição de pagamento pior apesar do preço menor). No campo "recommendation", diga qual fornecedor parece a melhor escolha geral e por quê — nunca decida por conta própria, é o comprador quem seleciona a vencedora no Mapa de Cotação.`
+    ? `No campo "highlights", liste os pontos fortes da cotação que parece mais vantajosa. No campo "cautions", liste riscos ou pontos de atenção de qualquer uma das cotações (ex: condição de pagamento pior apesar do preço menor). No campo "recommendation", diga qual fornecedor parece a melhor escolha geral e por quê, mas nunca decida por conta própria: é o comprador quem seleciona a vencedora no Mapa de Cotação.`
     : `No campo "highlights", liste os pontos a abordar na negociação. No campo "cautions", liste o que evitar. No campo "recommendation", sugira uma faixa de desconto/condição-alvo (ou null se não houver base suficiente).`
 }
 ${RESPONSE_FORMAT_INSTRUCTION}`;
@@ -305,7 +305,7 @@ Dados da solicitação:
 - URL da minuta em elaboração: ${ctx.minutaUrl || "ainda não informada"}
 - Observações registradas até agora pelo Jurídico: ${ctx.observations || "nenhuma"}
 
-Você NÃO tem acesso ao texto real do contrato — trabalhe a partir do contexto acima como um checklist preliminar, não uma análise de cláusula por cláusula. Ajude o time Jurídico a: listar os tipos de cláusula de risco que costumam aparecer em contratos deste tipo de demanda/valor (ex: multa rescisória, renovação automática, exclusividade, reajuste, SLA, proteção de dados/LGPD); sugerir cláusulas que vale garantir que estejam presentes; e recomendar se está pronto para assinatura ou se precisa de ajuste.
+Você NÃO tem acesso ao texto real do contrato, então trabalhe a partir do contexto acima como um checklist preliminar, não uma análise de cláusula por cláusula. Ajude o time Jurídico a: listar os tipos de cláusula de risco que costumam aparecer em contratos deste tipo de demanda/valor (ex: multa rescisória, renovação automática, exclusividade, reajuste, SLA, proteção de dados/LGPD); sugerir cláusulas que vale garantir que estejam presentes; e recomendar se está pronto para assinatura ou se precisa de ajuste.
 
 No campo "highlights", liste as cláusulas de risco a verificar no texto real da minuta. No campo "cautions", liste cláusulas que deveriam estar presentes e podem estar faltando. No campo "recommendation", indique "pronto para assinatura", "precisa de ajuste" ou "revisar com mais atenção". Deixe claro que isso é um apoio preliminar, não substitui a leitura integral do contrato pelo Jurídico.
 ${RESPONSE_FORMAT_INSTRUCTION}`;
@@ -339,7 +339,7 @@ export function buildApprovalSummaryPrompt(ctx: ApprovalSummaryContext): string 
   if (ctx.hasConflictDeclared) flags.push("Há declaração de conflito de interesse registrada para esta solicitação.");
   if (ctx.isPersonified) flags.push("Esta aprovação está sendo (ou foi) personificada por um comprador em nome do aprovador real.");
 
-  return `Você é um assistente que prepara um resumo executivo (parecer) para quem vai APROVAR OU REPROVAR uma compra na Acerto (fintech brasileira) — nunca decide por conta própria, só organiza o que já existe no registro para facilitar a leitura de quem decide.
+  return `Você é um assistente que prepara um resumo executivo (parecer) para quem vai APROVAR OU REPROVAR uma compra na Acerto (fintech brasileira). Você nunca decide por conta própria, só organiza o que já existe no registro para facilitar a leitura de quem decide.
 
 Dados da solicitação:
 - Tipo de demanda: ${ctx.demandType}
@@ -356,14 +356,14 @@ Dados da solicitação:
 Cotação vencedora (Mapa de Cotação):
 ${
   ctx.winningQuote
-    ? `${ctx.winningQuote.supplierName} — valor inicial R$ ${ctx.winningQuote.initialValue.toLocaleString("pt-BR")}, valor negociado R$ ${ctx.winningQuote.negotiatedValue.toLocaleString("pt-BR")}, condição: ${ctx.winningQuote.paymentCondition}${saving !== null ? `, saving ${saving.toFixed(1)}%` : ""}`
+    ? `${ctx.winningQuote.supplierName}: valor inicial R$ ${ctx.winningQuote.initialValue.toLocaleString("pt-BR")}, valor negociado R$ ${ctx.winningQuote.negotiatedValue.toLocaleString("pt-BR")}, condição: ${ctx.winningQuote.paymentCondition}${saving !== null ? `, saving ${saving.toFixed(1)}%` : ""}`
     : "Nenhuma cotação vencedora registrada ainda."
 }
 
 Sinalizações automáticas do sistema para esta solicitação:
 ${flags.length > 0 ? flags.map((f) => `- ${f}`).join("\n") : "- Nenhuma sinalização automática de risco para esta solicitação."}
 
-Monte um parecer que ajude o aprovador a decidir rapidamente sem perder nenhum ponto relevante. No campo "summary", resuma em 2-3 frases o que está sendo comprado, por quê, e o resultado da negociação (saving, se houver). No campo "highlights", liste os pontos favoráveis à aprovação (saving obtido, fornecedor adequado, processo completo). No campo "cautions", liste TODAS as sinalizações automáticas acima (se houver) mais qualquer inconsistência que você perceba nos dados (ex: valor alto sem cotação registrada, falta de saving). No campo "recommendation", indique "aprovar", "revisar antes de aprovar" ou "reprovar" com uma frase de justificativa — deixe claro que é um parecer de apoio, a decisão final é sempre de quem tem a alçada.
+Monte um parecer que ajude o aprovador a decidir rapidamente sem perder nenhum ponto relevante. No campo "summary", resuma em 2-3 frases o que está sendo comprado, por quê, e o resultado da negociação (saving, se houver). No campo "highlights", liste os pontos favoráveis à aprovação (saving obtido, fornecedor adequado, processo completo). No campo "cautions", liste TODAS as sinalizações automáticas acima (se houver) mais qualquer inconsistência que você perceba nos dados (ex: valor alto sem cotação registrada, falta de saving). No campo "recommendation", indique "aprovar", "revisar antes de aprovar" ou "reprovar" com uma frase de justificativa. Deixe claro que é um parecer de apoio: a decisão final é sempre de quem tem a alçada.
 ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
 
@@ -381,7 +381,7 @@ export type ContractReviewContext = {
 };
 
 export function buildContractReviewPrompt(ctx: ContractReviewContext): string {
-  return `Você é um assistente de gestão de contratos ajudando um comprador da Acerto (fintech brasileira) na etapa de Mapeamento de Contrato — o cadastro formal do contrato no sistema, última checagem antes de concluir o processo.
+  return `Você é um assistente de gestão de contratos ajudando um comprador da Acerto (fintech brasileira) na etapa de Mapeamento de Contrato, o cadastro formal do contrato no sistema, última checagem antes de concluir o processo.
 
 Dados do contrato sendo cadastrado:
 - Fornecedor: ${ctx.supplierName || "não informado"}
@@ -402,11 +402,11 @@ ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
 
 // ----------------------------------------------------------------------------
-// Assistente de preenchimento da Nova Solicitação — diferente do
+// Assistente de preenchimento da Nova Solicitação, diferente do
 // AiInsightPanel acima (que analisa uma PurchaseRequest já criada, em uma
 // etapa específica, com histórico persistido em AiInsight), este roda ANTES
 // de a solicitação existir: a pessoa descreve a necessidade em texto livre e
-// recebe sugestões de preenchimento (nunca preenchimento automático — quem
+// recebe sugestões de preenchimento (nunca preenchimento automático: quem
 // abre a solicitação sempre confirma/edita antes de enviar). Por ser uma
 // sugestão rápida, sem necessidade de comparar dois provedores lado a lado,
 // usa só UM provedor (Anthropic, com Gemini como alternativa se só a chave
@@ -453,15 +453,15 @@ function parseRequisitionAssistPayload(text: string): RequisitionAssistPayload {
 }
 
 export function buildRequisitionAssistPrompt(description: string): string {
-  return `Você é um assistente que ajuda quem está abrindo uma Solicitação de Compra na Acerto (fintech brasileira) a preencher o formulário a partir de uma descrição em linguagem natural do que a pessoa precisa. Você NUNCA decide nada sozinho — só sugere valores que a pessoa vai confirmar ou corrigir antes de enviar.
+  return `Você é um assistente que ajuda quem está abrindo uma Solicitação de Compra na Acerto (fintech brasileira) a preencher o formulário a partir de uma descrição em linguagem natural do que a pessoa precisa. Você NUNCA decide nada sozinho, só sugere valores que a pessoa vai confirmar ou corrigir antes de enviar.
 
 Descrição da necessidade, como a pessoa escreveu:
 "${description}"
 
 Classifique nos valores EXATOS abaixo (não invente outros):
-- Tipo de demanda (demandType): um de COMPRA_PRODUTO, COMPRA_SERVICO, FERRAMENTA_NOVA, FERRAMENTA_USUARIOS, FERRAMENTA_UPGRADE_DOWNGRADE, RENOVACAO_CONTRATO, CANCELAMENTO — ou null se não conseguir inferir com confiança.
-- Prioridade (priority): um de BAIXA, MEDIA, ALTA, CRITICA — ou null se a descrição não sugerir urgência nem rotina claramente.
-- likelyDueDiligence: true se parecer uma ferramenta/serviço NOVO que provavelmente vai tratar dados pessoais (login de usuários, CRM, dados de clientes/colaboradores) — isso adianta um alerta que hoje só apareceria depois, na etapa de Triagem.
+- Tipo de demanda (demandType): um de COMPRA_PRODUTO, COMPRA_SERVICO, FERRAMENTA_NOVA, FERRAMENTA_USUARIOS, FERRAMENTA_UPGRADE_DOWNGRADE, RENOVACAO_CONTRATO, CANCELAMENTO; ou null se não conseguir inferir com confiança.
+- Prioridade (priority): um de BAIXA, MEDIA, ALTA, CRITICA; ou null se a descrição não sugerir urgência nem rotina claramente.
+- likelyDueDiligence: true se parecer uma ferramenta/serviço NOVO que provavelmente vai tratar dados pessoais (login de usuários, CRM, dados de clientes/colaboradores). Isso adianta um alerta que hoje só apareceria depois, na etapa de Triagem.
 - missingInfo: lista curta do que falta ou está vago na descrição para abrir a solicitação com qualidade (ex: "não ficou claro o centro de custo", "não há indicação de fornecedor").
 - note: 1-2 frases resumindo o que você entendeu, em tom direto.
 

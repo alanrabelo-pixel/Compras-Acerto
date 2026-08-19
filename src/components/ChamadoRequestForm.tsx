@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { TicketCategorySlug } from "@/lib/tickets";
 
 /**
- * Formulário genérico de abertura de chamado simples (Viagens/Facilities) —
+ * Formulário genérico de abertura de chamado simples (Viagens/Facilities),
  * extraído de chamados/[category]/novo/page.tsx para permitir que essa rota
  * passe a decidir, no servidor, entre este formulário genérico e o
  * NdaRequestForm (fluxo próprio, ver NdaRequestForm.tsx).
@@ -31,7 +31,7 @@ export function ChamadoRequestForm({ categorySlug }: { categorySlug: TicketCateg
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao abrir chamado.");
 
-      // Anexo é opcional — se o upload falhar, o chamado já foi aberto
+      // Anexo é opcional: se o upload falhar, o chamado já foi aberto
       // normalmente (pode anexar depois na própria tela do chamado), então
       // isso nunca bloqueia a navegação.
       const file = fileRef.current?.files?.[0];

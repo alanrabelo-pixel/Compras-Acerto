@@ -7,14 +7,14 @@ const STORAGE_KEY = "acerto-announcements-seen-at";
 type AnnouncementStub = { createdAt: string };
 
 /**
- * Contagem de comunicados "não vistos" neste navegador — diferente de
+ * Contagem de comunicados "não vistos" neste navegador. Diferente de
  * countRecentAnnouncements() (server, "criados nos últimos 7 dias", sem
  * noção de leitura). Aqui comparamos com um carimbo salvo no localStorage:
  * assim que a pessoa abre o painel de Comunicados (markSeen), tudo vira
  * "visto" e o badge some, até que um novo comunicado seja publicado depois
  * disso.
  *
- * É por navegador, não por conta — sem sessão real persistente
+ * É por navegador, não por conta. Sem sessão real persistente
  * (LOCAL_BYPASS_AUTH), não há onde guardar isso no servidor por pessoa;
  * `initialCount` (o recorte org-wide de 7 dias) é só o valor exibido antes
  * do primeiro carregamento no cliente.

@@ -7,7 +7,7 @@ import { formatDateOnly } from "@/lib/format";
 type Attachment = { id: string; fileName: string; uploadedBy: string; createdAt: string };
 
 /**
- * Anexos de um chamado (Viagens/Facilities/NDA) — mesmo mecanismo de
+ * Anexos de um chamado (Viagens/Facilities/NDA), com o mesmo mecanismo de
  * armazenamento do AttachmentsPanel (solicitações), mas sem UserPicker: quem
  * abre/responde um chamado não precisa ser um usuário cadastrado no sistema
  * (mesmo padrão de "Seu nome" livre já usado em ChamadoThread).

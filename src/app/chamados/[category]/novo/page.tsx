@@ -22,7 +22,7 @@ export default async function NovoChamadoPage({ params }: { params: { category: 
   const config = TICKET_CATEGORIES[categorySlug];
 
   // Mesmo padrão de solicitacoes/nova/page.tsx: com SSO real, quem abre o
-  // pedido já é conhecido pela sessão — sem sessão (LOCAL_BYPASS_AUTH), fica
+  // pedido já é conhecido pela sessão. Sem sessão (LOCAL_BYPASS_AUTH), fica
   // null e o formulário (NdaRequestForm) volta a mostrar o seletor manual.
   const session = await getServerSession(authOptions);
   const sessionRequester = session?.user?.email
@@ -36,7 +36,7 @@ export default async function NovoChamadoPage({ params }: { params: { category: 
     <>
       <ChamadoHeader categoryLabel={config.label} backHref={`/chamados/${categorySlug}`} backLabel="← voltar aos chamados" />
       <main className="page-narrow" style={{ paddingTop: 28 }}>
-        <h1 className="page-title">Novo Chamado — {config.label}</h1>
+        <h1 className="page-title">Novo Chamado: {config.label}</h1>
         <p className="page-subtitle">
           {categorySlug === "nda"
             ? "Preencha as informações abaixo para solicitar o envio de um NDA ou tirar uma dúvida sobre um contrato ativo com fornecedor."

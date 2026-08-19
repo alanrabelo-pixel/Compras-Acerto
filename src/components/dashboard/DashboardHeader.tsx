@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Cabeçalho executivo — atualizar, exportar (Excel/PDF), compartilhar
+ * Cabeçalho executivo: atualizar, exportar (Excel/PDF), compartilhar
  * (copia o link com os filtros atuais), auto-refresh e tela cheia.
  * generatedAt vem do servidor (hora da última renderização/consulta).
  */

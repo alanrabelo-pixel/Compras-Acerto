@@ -7,7 +7,7 @@ import { MultiUserPicker } from "@/components/MultiUserPicker";
 import { Button, Modal } from "@/components/ui";
 
 /**
- * Cria um novo centro de custo (pedido do usuário) — botão que abre um modal
+ * Cria um novo centro de custo (pedido do usuário): botão que abre um modal
  * em vez de um formulário sempre visível no topo da tela, para não poluir a
  * tela principal.
  */

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 /**
- * Manual do Processo — Compras, Viagens Acerto e Facilities.
+ * Manual do Processo: Compras, Viagens Acerto e Facilities.
  * Documento de orientação (não é UI de produto), por isso segue a paleta e
  * tipografia de DOCUMENTO da Acerto (skill acerto-docs), diferente da paleta
  * de produto usada em globals.css.
@@ -208,7 +208,7 @@ export function ManualProcessoDocument() {
         {ASSETS.sorrisoBranco && <Image style={styles.coverSorriso} src={{ data: ASSETS.sorrisoBranco, format: "png" }} />}
       </Page>
 
-      {/* Conteúdo — um único Page que se estende automaticamente por quantas páginas forem necessárias */}
+      {/* Conteúdo: um único Page que se estende automaticamente por quantas páginas forem necessárias */}
       <Page size="A4" style={styles.page}>
         <RunningHeader label="Manual do Processo de Solicitações Internas" />
         <Footer />
@@ -219,7 +219,7 @@ export function ManualProcessoDocument() {
           <Text style={styles.h1}>Sumário</Text>
           {[
             "1. Introdução",
-            "2. Solicitação de Compras — visão geral do fluxo",
+            "2. Solicitação de Compras: visão geral do fluxo",
             "3. Como abrir uma solicitação de compra",
             "4. Regras e controles importantes",
             "5. Pedido de Compra, Contratos e Dashboards",
@@ -241,8 +241,8 @@ export function ManualProcessoDocument() {
           Este manual explica, de ponta a ponta, como funcionam as quatro formas de abrir uma solicitação
           no <Text style={{ fontWeight: 700, color: BLACK }}>alAi</Text>, o sistema que reúne Solicitação de
           Compras, Viagens Acerto, Facilities e NDA e Contratos de Fornecedores num só lugar. A ideia é
-          que qualquer pessoa da empresa consiga entender o caminho que a própria solicitação percorre —
-          da abertura até a conclusão — sem precisar perguntar para ninguém.
+          que qualquer pessoa da empresa consiga entender o caminho que a própria solicitação percorre,
+          da abertura até a conclusão, sem precisar perguntar para ninguém.
         </P>
         <P>
           Ao acessar o sistema, você encontra um cardápio com quatro opções. Cada uma delas tem seu próprio
@@ -266,16 +266,16 @@ export function ManualProcessoDocument() {
           simples de chamado do Viagens Acerto e Facilities.
         </Card>
 
-        {/* 2. Compras — visão geral */}
-        <H1 bookmark="2. Solicitação de Compras — visão geral">2. Solicitação de Compras — visão geral do fluxo</H1>
+        {/* 2. Compras: visão geral */}
+        <H1 bookmark="2. Solicitação de Compras: visão geral">2. Solicitação de Compras: visão geral do fluxo</H1>
         <P>
           Toda solicitação de compra passa por uma sequência de etapas. Nem toda solicitação passa por
-          todas elas — algumas são puladas automaticamente dependendo do tipo de demanda e do valor
+          todas elas: algumas são puladas automaticamente dependendo do tipo de demanda e do valor
           envolvido (veja a seção 4). Abaixo está a sequência completa, na ordem em que ela normalmente
           acontece:
         </P>
         <Stage n={1} label="Solicitação de Compra" desc="Quem precisa comprar algo abre a solicitação com os dados básicos: o que é, para qual centro de custo, valor estimado e prioridade." />
-        <Stage n={2} label="Aprovação do Gestor" desc="O gestor do centro de custo escolhido decide se aprova antes de qualquer ação do time de Compras — ver alerta de alinhamento prévio na seção 3." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={2} label="Aprovação do Gestor" desc="O gestor do centro de custo escolhido decide se aprova antes de qualquer ação do time de Compras (ver alerta de alinhamento prévio na seção 3)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
         <Stage n={3} label="Homologação e Triagem" desc="O time de Compras | F&NC confere se as informações estão completas antes de seguir." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
         <Stage n={4} label="Validação Orçamentária" desc="Verificamos se existe orçamento disponível na linha informada. Se não houver, a solicitação entra em um fluxo de exceção orçamentária até uma decisão (veja seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
         <Stage n={5} label="Due Diligence (Privacidade)" desc="Só acontece para contratação de ferramenta nova ou que lide com dados pessoais: avaliação de privacidade e segurança antes de cotar." sla="2 dias úteis" />
@@ -291,7 +291,7 @@ export function ManualProcessoDocument() {
         <Stage n={15} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." />
         <Stage n={16} label="Concluído" desc="A solicitação é encerrada." />
         <Card title="Cancelamento">
-          A solicitação pode ser cancelada em praticamente qualquer etapa do fluxo — por exemplo, se o
+          A solicitação pode ser cancelada em praticamente qualquer etapa do fluxo, por exemplo, se o
           orçamento for reprovado ou a aprovação for negada.
         </Card>
 
@@ -301,14 +301,14 @@ export function ManualProcessoDocument() {
           Qualquer pessoa com e-mail @acerto.com.br pode abrir uma nova solicitação de compra, pelo botão
           <Text style={{ fontWeight: 700, color: BLACK }}> + Nova Solicitação</Text>. O formulário pede:
         </P>
-        <Bullet><Text style={{ fontWeight: 700 }}>Solicitante</Text> — quem está pedindo a compra.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Centro de custo</Text> e <Text style={{ fontWeight: 700 }}>diretoria</Text> — Corporativo, Revenue ou Tecnologia (define os prazos de SLA de cada etapa).</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Tipo de demanda</Text> — Compra de Produtos, Compra de Serviço, Compra de Nova Ferramenta, inclusão/remoção de usuários em ferramenta já existente, upgrade ou downgrade de versão, renovação de contrato existente, ou cancelamento de contrato/serviço/ferramenta.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Descrição curta e detalhada</Text> do que está sendo solicitado — um assistente de IA pode sugerir o tipo de demanda e a prioridade a partir do texto digitado.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text> — Baixa (rotineira), Média (importante), Alta (urgente) ou Crítica (urgência máxima). Ao marcar Alta ou Crítica, o sistema pede para confirmar que a urgência é real, já que prioridades altas furam fila e pressionam prazo de outras solicitações.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text> para conclusão — se a data for menor que 7 dias úteis, um alerta lembra que cotação, aprovação e emissão do pedido levam tempo.</Bullet>
-        <Bullet><Text style={{ fontWeight: 700 }}>Linha do Orçamento</Text> — escolha <Text style={{ fontWeight: 700 }}>Orçamento Extra</Text> quando não há linha prevista (exige anexar o print da validação do orçamento pelo time de FP&A) ou <Text style={{ fontWeight: 700 }}>Outros</Text> para digitar o nome da linha manualmente.</Bullet>
-        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não) — marcar "Não" mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Solicitante</Text>: quem está pedindo a compra.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Centro de custo</Text> e <Text style={{ fontWeight: 700 }}>diretoria</Text>: Corporativo, Revenue ou Tecnologia (define os prazos de SLA de cada etapa).</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Tipo de demanda</Text>: Compra de Produtos, Compra de Serviço, Compra de Nova Ferramenta, inclusão/remoção de usuários em ferramenta já existente, upgrade ou downgrade de versão, renovação de contrato existente, ou cancelamento de contrato/serviço/ferramenta.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Descrição curta e detalhada</Text> do que está sendo solicitado. Um assistente de IA pode sugerir o tipo de demanda e a prioridade a partir do texto digitado.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text>: Baixa (rotineira), Média (importante), Alta (urgente) ou Crítica (urgência máxima). Ao marcar Alta ou Crítica, o sistema pede para confirmar que a urgência é real, já que prioridades altas furam fila e pressionam prazo de outras solicitações.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text> para conclusão: se a data for menor que 7 dias úteis, um alerta lembra que cotação, aprovação e emissão do pedido levam tempo.</Bullet>
+        <Bullet><Text style={{ fontWeight: 700 }}>Linha do Orçamento</Text>: escolha <Text style={{ fontWeight: 700 }}>Orçamento Extra</Text> quando não há linha prevista (exige anexar o print da validação do orçamento pelo time de FP&A) ou <Text style={{ fontWeight: 700 }}>Outros</Text> para digitar o nome da linha manualmente.</Bullet>
+        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não): marcar "Não" mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
         <Bullet>Anexos de apoio (proposta, briefing, etc.), quando fizer sentido.</Bullet>
         <P>
           Depois de enviada, a solicitação passa primeiro pelo gestor do centro de custo escolhido (etapa
@@ -338,7 +338,7 @@ export function ManualProcessoDocument() {
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 90 }]}>Standard</Text>
-            <Text style={[styles.td, { flex: 1 }]}>A maioria das compras — segue o fluxo completo normalmente.</Text>
+            <Text style={[styles.td, { flex: 1 }]}>A maioria das compras: segue o fluxo completo normalmente.</Text>
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 90 }]}>Strategic</Text>
@@ -371,14 +371,14 @@ export function ManualProcessoDocument() {
         </View>
         <P>
           Os aprovadores de cada nível são configurados por um administrador em Centros de Custo →
-          Alçadas de Aprovação — mais de uma pessoa pode ser designada por nível, e qualquer uma delas
+          Alçadas de Aprovação. Mais de uma pessoa pode ser designada por nível, e qualquer uma delas
           pode decidir.
         </P>
 
         <H2 icon={ASSETS.documentoCheck}>Exceção orçamentária</H2>
         <P>
           Quando a Validação Orçamentária não encontra saldo disponível, a solicitação entra em exceção e
-          espera uma decisão — o nível de alçada aqui é calculado pelo valor da compra, separado da tabela
+          espera uma decisão. O nível de alçada aqui é calculado pelo valor da compra, separado da tabela
           de Aprovação acima:
         </P>
         <View style={styles.table}>
@@ -408,7 +408,7 @@ export function ManualProcessoDocument() {
         <P>
           O sistema soma o valor de todas as solicitações do mesmo fornecedor nos últimos 12 meses. Se a
           soma ultrapassar uma alçada que o valor individual não atingiria sozinho, a Controladoria é
-          avisada para revisar antes de prosseguir — isso evita que uma compra grande seja dividida em
+          avisada para revisar antes de prosseguir. Isso evita que uma compra grande seja dividida em
           várias pequenas para escapar da aprovação de nível superior.
         </P>
 
@@ -417,7 +417,7 @@ export function ManualProcessoDocument() {
 
         <H2 icon={ASSETS.cadeado}>Personificação controlada de aprovador</H2>
         <P>
-          Em caso de urgência ou ausência do aprovador, o comprador pode personificá-lo — mas só até o
+          Em caso de urgência ou ausência do aprovador, o comprador pode personificá-lo, mas só até o
           Nível 1 de alçada (R$ 50 mil). A ação sempre notifica o aprovador real, para manter transparência.
         </P>
 
@@ -427,7 +427,7 @@ export function ManualProcessoDocument() {
         <H2 icon={ASSETS.relogio}>Prazos e escalonamento</H2>
         <P>
           Cada etapa tem um prazo esperado (mostrado na seção 2). Se um aprovador não decidir dentro de 3
-          dias úteis, o sistema notifica automaticamente o próximo nível hierárquico e a Controladoria —
+          dias úteis, o sistema notifica automaticamente o próximo nível hierárquico e a Controladoria,
           para que a solicitação nunca fique parada sem ninguém saber.
         </P>
 
@@ -444,26 +444,26 @@ export function ManualProcessoDocument() {
         <P>
           Compras que envolvem contrato (aluguel, prestação de serviço recorrente, licenciamento de
           ferramenta, etc.) são registradas na área de Contratos, com data de vigência e alertas automáticos
-          quando a renovação estiver se aproximando — para que ninguém seja pego de surpresa por um
+          quando a renovação estiver se aproximando, para que ninguém seja pego de surpresa por um
           contrato vencendo.
         </P>
         <H2 icon={ASSETS.alvo}>Dashboards</H2>
         <P>
           A área de Dashboards mostra uma visão consolidada de todas as solicitações: quantas estão em
-          cada etapa, tempo médio de ciclo, valores por diretoria e alertas de solicitações fora do prazo —
+          cada etapa, tempo médio de ciclo, valores por diretoria e alertas de solicitações fora do prazo,
           útil para o time de Compras | F&NC acompanhar a saúde geral do processo.
         </P>
 
         {/* 6. Acesso */}
         <H1 bookmark="6. Quem pode acessar o quê">6. Quem pode acessar o quê</H1>
-        <Card title="Nova Solicitação — aberto para todo mundo">
+        <Card title="Nova Solicitação: aberto para todo mundo">
           Qualquer pessoa com e-mail corporativo @acerto.com.br pode abrir uma nova solicitação de compra
           a qualquer momento.
         </Card>
-        <Card title="Solicitações, Contratos e Dashboards — acesso restrito">
+        <Card title="Solicitações, Contratos e Dashboards: acesso restrito">
           Essas três áreas só ficam visíveis para uma lista específica de pessoas autorizadas, mantida por
           um administrador do sistema. Se você tentar acessar sem estar na lista, verá uma tela informando
-          que não tem permissão — nesse caso, procure o administrador do sistema para solicitar acesso.
+          que não tem permissão. Nesse caso, procure o administrador do sistema para solicitar acesso.
         </Card>
 
         {/* 7. Viagens Acerto */}
@@ -471,7 +471,7 @@ export function ManualProcessoDocument() {
         <P>Um fluxo simples e direto, pensado para pedidos relacionados a viagens a trabalho.</P>
         <Stage n={1} label="Abrir chamado" desc="Informe seu nome, e-mail e descreva com detalhes o que você precisa (datas, destino, motivo da viagem, etc.)." />
         <Stage n={2} label="Acompanhamento" desc="O chamado aparece no quadro em uma das três colunas: Aberto, Em Andamento ou Concluído." />
-        <Stage n={3} label="Troca de mensagens" desc="Toda a conversa entre você e o time responsável acontece dentro do próprio chamado, criando um histórico completo — sem depender de e-mail ou chat paralelo." />
+        <Stage n={3} label="Troca de mensagens" desc="Toda a conversa entre você e o time responsável acontece dentro do próprio chamado, criando um histórico completo, sem depender de e-mail ou chat paralelo." />
         <Stage n={4} label="Conclusão" desc="Quando o pedido é resolvido, o time responsável marca o chamado como Concluído." />
 
         {/* 8. Facilities */}

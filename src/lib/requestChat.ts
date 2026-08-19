@@ -35,7 +35,7 @@ export async function createAppChatMessage(params: {
   if (!request) return message;
 
   const recipient = params.authorRole === "COMPRADOR" ? request.requester : request.buyer;
-  if (!recipient?.email) return message; // sem comprador/e-mail definido ainda — só fica registrado no app
+  if (!recipient?.email) return message; // sem comprador/e-mail definido ainda: só fica registrado no app
 
   // Reaproveita a thread já aberta com essa pessoa para esta solicitação, se existir.
   const previous = await prisma.requestChatMessage.findFirst({
@@ -46,7 +46,7 @@ export async function createAppChatMessage(params: {
   try {
     const { channel, ts, threadTs } = await sendSlackThreadDM({
       email: recipient.email,
-      text: `💬 *${params.authorName}* (${roleLabel(params.authorRole)}) sobre a solicitação ${request.code}:\n${params.body}\n\n_Responda esta mensagem no Slack — sua resposta volta automaticamente para o fluxo de compras._`,
+      text: `💬 *${params.authorName}* (${roleLabel(params.authorRole)}) sobre a solicitação ${request.code}:\n${params.body}\n\n_Responda esta mensagem no Slack: sua resposta volta automaticamente para o fluxo de compras._`,
       threadTs: previous?.slackThreadTs ?? undefined,
     });
     await prisma.requestChatMessage.update({
@@ -54,7 +54,7 @@ export async function createAppChatMessage(params: {
       data: { slackChannelId: channel, slackTs: ts, slackThreadTs: threadTs },
     });
   } catch {
-    // Sem token real do Slack configurado (ou usuário sem Slack) — mensagem
+    // Sem token real do Slack configurado (ou usuário sem Slack): mensagem
     // já está registrada no app, só não foi espelhada. Mesmo padrão de
     // "falha silenciosa e registrada" usado em sendSlackDM/sendPurchaseEmail.
   }
@@ -70,7 +70,7 @@ function roleLabel(role: ChatRole) {
  * Resolve para qual solicitação/papel uma mensagem recebida via Slack
  * pertence. Prioridade: thread_ts exato (confiável) e, na ausência dele
  * (cliente Slack que não preserva thread em DM), a solicitação mais recente
- * com uma thread aberta nesse mesmo canal — ASSUNÇÃO NÃO VERIFICADA: um
+ * com uma thread aberta nesse mesmo canal. ASSUNÇÃO NÃO VERIFICADA: um
  * fallback razoável, mas pode errar se a mesma pessoa tiver duas conversas
  * simultâneas sem usar "responder em thread".
  */

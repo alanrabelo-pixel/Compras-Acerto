@@ -4,32 +4,32 @@ import path from "path";
 import { fitFontSize } from "./stringWidth";
 
 /**
- * Pedido de Compra — layout portado 1:1 da especificação do gerador
+ * Pedido de Compra: layout portado 1:1 da especificação do gerador
  * Python/ReportLab já validado em produção pela Acerto (campos, ordem,
- * sem assinatura — ver conversa com o time de Compras | F&NC). O que foi
+ * sem assinatura, ver conversa com o time de Compras | F&NC). O que foi
  * revisado aqui é só o acabamento visual (cores, tipografia, espaçamento)
  * usando a identidade oficial da marca (verde #25D366, extraído do SVG do
- * logo em "Materiais da Marca" no Confluence) — a estrutura/conteúdo do
+ * logo em "Materiais da Marca" no Confluence). A estrutura/conteúdo do
  * documento não muda sem validar com o time.
  *
  * Sem limite de itens: até 6 linhas, a tabela preenche uma única página A4
  * paisagem (preenchendo linhas em branco até 6, para manter o visual
- * original). Acima disso, o @react-pdf/renderer pagina automaticamente —
+ * original). Acima disso, o @react-pdf/renderer pagina automaticamente:
  * cada linha (`wrap={false}`) nunca é cortada ao meio, e o cabeçalho da
  * tabela (`fixed`) se repete em toda página de continuação.
  */
 
-// Dados fixos da Acerto (hardcoded — sempre os mesmos em todo Pedido de Compra).
+// Dados fixos da Acerto (hardcoded, sempre os mesmos em todo Pedido de Compra).
 const ACERTO = {
   razaoSocial: "Acerto Cobrança e Informações Cadastrais S.A.",
   cnpj: "24.533.496/0001-27",
   endereco: "Rua Bernardo Mascarenhas 46, Belo Horizonte/MG – 30.380-010",
 };
 
-// Logo oficial (verde, PNG) — baixado do Drive de materiais de marca da Acerto.
+// Logo oficial (verde, PNG), baixado do Drive de materiais de marca da Acerto.
 const LOGO_PATH = path.join(process.cwd(), "src/lib/pdf/assets/acerto-logo.png");
 
-// RASCUNHO — substituir pelo texto oficial da cláusula de confidencialidade usada
+// RASCUNHO: substituir pelo texto oficial da cláusula de confidencialidade usada
 // hoje no gerador Python antes de ir a produção (ver observação #4 abaixo).
 const CONFIDENTIALITY_CLAUSE =
   "As partes se comprometem a manter sigilo sobre todas as informações comerciais, técnicas e financeiras " +
@@ -46,7 +46,7 @@ const OBSERVACOES = [
 const PAGE_PADDING = 24;
 const USABLE_WIDTH = 776;
 
-// Larguras das colunas da tabela de itens — somam exatamente USABLE_WIDTH.
+// Larguras das colunas da tabela de itens: somam exatamente USABLE_WIDTH.
 const COL = { descricao: 291, qtd: 55, valorUnitario: 145, impostos: 95, valorTotal: 190 };
 
 // Paleta oficial Acerto (ver src/app/globals.css para os mesmos tokens no app web).
@@ -132,7 +132,7 @@ function Logo() {
       </View>
     );
   }
-  // Placeholder — substituir depositando o PNG oficial em src/lib/pdf/assets/acerto-logo.png
+  // Placeholder: substituir depositando o PNG oficial em src/lib/pdf/assets/acerto-logo.png
   return (
     <View style={styles.logoBox}>
       <Text style={styles.logoWordmark}>acerto.</Text>
@@ -169,7 +169,7 @@ export type PedidoCompraPdfData = {
 const BOX_INNER_WIDTH = (USABLE_WIDTH - 12) / 2 - 16; // largura útil dentro de cada caixa (menos padding)
 
 export function PedidoCompraDocument({ data }: { data: PedidoCompraPdfData }) {
-  // Sem limite de itens — preenche com linhas em branco só até 6 (para manter
+  // Sem limite de itens: preenche com linhas em branco só até 6 (para manter
   // o visual original quando o pedido é pequeno); acima disso, renderiza
   // todas as linhas reais e deixa o react-pdf paginar automaticamente.
   const rows = [...data.items];

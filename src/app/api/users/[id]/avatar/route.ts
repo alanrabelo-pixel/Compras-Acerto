@@ -8,8 +8,8 @@ export const runtime = "nodejs";
 const MAX_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 const EXT_BY_MIME: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 
-// POST /api/users/[id]/avatar — envia/atualiza a foto de perfil. Só a
-// própria pessoa altera a própria foto — exige sessão SSO real (sem
+// POST /api/users/[id]/avatar: envia/atualiza a foto de perfil. Só a
+// própria pessoa altera a própria foto, exige sessão SSO real (sem
 // bypass: em LOCAL_BYPASS_AUTH não há um User de verdade "logado" pra
 // comparar contra params.id, ver src/lib/current-user.ts).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ avatarUrl: `/api/users/${params.id}/avatar` }, { status: 200 });
 }
 
-// GET /api/users/[id]/avatar — serve a imagem (local em dev, Vercel Blob em produção; ver src/lib/storage.ts).
+// GET /api/users/[id]/avatar: serve a imagem (local em dev, Vercel Blob em produção; ver src/lib/storage.ts).
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const user = await prisma.user.findUnique({ where: { id: params.id }, select: { avatarUrl: true } });
   if (!user?.avatarUrl) {

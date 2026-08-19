@@ -7,7 +7,7 @@ import { MultiUserPicker } from "@/components/MultiUserPicker";
 /**
  * Troca o(s) gestor(es) aprovador(es) de um centro de custo (ver
  * /admin/centros-de-custo e PATCH /api/cost-centers/[id]). Mais de um
- * aprovador é permitido (pedido do usuário) — qualquer um do grupo pode
+ * aprovador é permitido (pedido do usuário). Qualquer um do grupo pode
  * decidir na etapa Aprovação do Gestor. Ao salvar, solicitações já paradas
  * nessa etapa (e ainda não decididas) migram automaticamente para o novo
  * conjunto de gestores.

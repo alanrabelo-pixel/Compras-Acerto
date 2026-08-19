@@ -1,10 +1,10 @@
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
-// Mapeia os códigos de erro que o NextAuth anexa na URL (?error=...) —
+// Mapeia os códigos de erro que o NextAuth anexa na URL (?error=...).
 // AccessDenied é o caso real hoje: o callback signIn() em src/lib/auth.ts
 // rejeita qualquer e-mail fora de @acerto.com.br.
 const ERROR_MESSAGES: Record<string, string> = {
-  AccessDenied: "Esse e-mail não tem acesso — o Compras é restrito a contas @acerto.com.br. Entre com sua conta corporativa da Acerto.",
+  AccessDenied: "Esse e-mail não tem acesso: o Compras é restrito a contas @acerto.com.br. Entre com sua conta corporativa da Acerto.",
   Configuration: "O login está com um problema de configuração. Avise o time de TI.",
 };
 

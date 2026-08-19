@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 
 /**
  * Botão "Entrar com Google" no padrão visual oficial do Google (fundo
- * branco, borda fina, "G" colorido) — client component porque signIn() do
+ * branco, borda fina, "G" colorido). É client component porque signIn() do
  * next-auth/react dispara o redirect para o OAuth do provedor.
  */
 export function GoogleSignInButton({ callbackUrl }: { callbackUrl: string }) {

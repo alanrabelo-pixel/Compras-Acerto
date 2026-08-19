@@ -9,7 +9,7 @@ function dateTime(d: Date | string | null | undefined) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <p style={{ margin: 0 }}>
-      <span className="text-muted">{label}:</span> {children ?? "—"}
+      <span className="text-muted">{label}:</span> {children ?? "-"}
     </p>
   );
 }
@@ -86,9 +86,9 @@ export type StageHistoryRequest = {
 
 /**
  * Conteúdo (só os campos, sem título/rótulo de ator) do que foi preenchido em
- * uma etapa específica — usado dentro de cada linha expansível do Histórico
+ * uma etapa específica, usado dentro de cada linha expansível do Histórico
  * (ver HistoryTimeline.tsx). Mostra TODOS os campos de cada modelo (não um
- * resumo) — pedido explícito do usuário: o histórico precisa reproduzir o
+ * resumo), pedido explícito do usuário: o histórico precisa reproduzir o
  * formulário completo preenchido em cada etapa, não uma versão reduzida.
  * Retorna null quando a etapa não tem modelo de dados próprio (ex:
  * Aguardando Entrega) ou nada foi preenchido ainda.
@@ -143,9 +143,9 @@ export function stageDataFields(
       return grid(
         <>
           <Field label="Decisão">{APPROVAL_DECISION_LABEL[request.managerApprovalDecision] ?? request.managerApprovalDecision}</Field>
-          <Field label="Decidido por">{request.managerApprovalActorId ? (declaredByNames[request.managerApprovalActorId] ?? request.managerApprovalActorId) : "—"}</Field>
-          <Field label="Decidido em">{dateTime(request.managerApprovalDecidedAt) ?? "—"}</Field>
-          <Full><Field label="Justificativa">{request.managerApprovalJustification ?? "—"}</Field></Full>
+          <Field label="Decidido por">{request.managerApprovalActorId ? (declaredByNames[request.managerApprovalActorId] ?? request.managerApprovalActorId) : "-"}</Field>
+          <Field label="Decidido em">{dateTime(request.managerApprovalDecidedAt) ?? "-"}</Field>
+          <Full><Field label="Justificativa">{request.managerApprovalJustification ?? "-"}</Field></Full>
         </>
       );
 
@@ -153,10 +153,10 @@ export function stageDataFields(
       if (request.valueType === null && request.needsContract === null && request.needsMapping === null) return null;
       return grid(
         <>
-          <Field label="Tipo de valor">{request.valueType ?? "—"}</Field>
-          <Field label="Lane calculada">{request.lane ?? "—"}</Field>
-          <Field label="Precisa de contrato">{request.needsContract === null ? "—" : request.needsContract ? "Sim" : "Não"}</Field>
-          <Field label="Precisa de mapeamento">{request.needsMapping === null ? "—" : request.needsMapping ? "Sim" : "Não"}</Field>
+          <Field label="Tipo de valor">{request.valueType ?? "-"}</Field>
+          <Field label="Lane calculada">{request.lane ?? "-"}</Field>
+          <Field label="Precisa de contrato">{request.needsContract === null ? "-" : request.needsContract ? "Sim" : "Não"}</Field>
+          <Field label="Precisa de mapeamento">{request.needsMapping === null ? "-" : request.needsMapping ? "Sim" : "Não"}</Field>
           <Field label="Risco de fracionamento">{request.fragmentationFlag ? "Sinalizado" : "Não sinalizado"}</Field>
         </>
       );
@@ -167,15 +167,15 @@ export function stageDataFields(
         <>
           <Field label="Alçada">Nível {request.budgetException.level}</Field>
           <Field label="Decisão">{APPROVAL_DECISION_LABEL[request.budgetException.decision] ?? request.budgetException.decision}</Field>
-          <Field label="Decidido em">{dateTime(request.budgetException.decidedAt) ?? "—"}</Field>
+          <Field label="Decidido em">{dateTime(request.budgetException.decidedAt) ?? "-"}</Field>
           <Field label="Anexo de aprovação extra-orçamentária">
             {request.budgetException.attachment ? (
               <a href={`/api/attachments/${request.budgetException.attachment.id}/file`} target="_blank" rel="noreferrer" style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>
                 {request.budgetException.attachment.fileName}
               </a>
-            ) : "—"}
+            ) : "-"}
           </Field>
-          <Full><Field label="Justificativa">{request.budgetException.justification ?? "—"}</Field></Full>
+          <Full><Field label="Justificativa">{request.budgetException.justification ?? "-"}</Field></Full>
         </>
       );
 
@@ -183,9 +183,9 @@ export function stageDataFields(
       if (!request.dueDiligence) return null;
       return grid(
         <>
-          <Field label="Aprovado">{request.dueDiligence.approved === null ? "—" : request.dueDiligence.approved ? "Sim" : "Não"}</Field>
-          <Field label="Decidido em">{dateTime(request.dueDiligence.decidedAt) ?? "—"}</Field>
-          <Full><Field label="Justificativa">{request.dueDiligence.justification ?? "—"}</Field></Full>
+          <Field label="Aprovado">{request.dueDiligence.approved === null ? "-" : request.dueDiligence.approved ? "Sim" : "Não"}</Field>
+          <Field label="Decidido em">{dateTime(request.dueDiligence.decidedAt) ?? "-"}</Field>
+          <Full><Field label="Justificativa">{request.dueDiligence.justification ?? "-"}</Field></Full>
         </>
       );
 
@@ -204,8 +204,8 @@ export function stageDataFields(
           ))}
           {request.conflictDeclarations.map((c) => (
             <Full key={c.id}>
-              <Field label={`Conflito de interesse — ${declaredByNames[c.declaredBy] ?? c.declaredBy}`}>
-                {c.hasConflict ? "Declarou conflito" : "Sem conflito"}{c.details ? ` — ${c.details}` : ""} · {formatDateOnly(c.createdAt)}
+              <Field label={`Conflito de interesse: ${declaredByNames[c.declaredBy] ?? c.declaredBy}`}>
+                {c.hasConflict ? "Declarou conflito" : "Sem conflito"}{c.details ? `: ${c.details}` : ""} · {formatDateOnly(c.createdAt)}
               </Field>
             </Full>
           ))}
@@ -219,10 +219,10 @@ export function stageDataFields(
         <>
           {request.approvals.map((a) => (
             <Full key={a.id}>
-              <Field label={`Nível ${a.level} — ${a.approver.name} (${a.approver.email})`}>
+              <Field label={`Nível ${a.level}: ${a.approver.name} (${a.approver.email})`}>
                 {APPROVAL_DECISION_LABEL[a.decision] ?? a.decision}
                 {a.personifiedBy ? ` · personificado por ${a.personifiedBy}` : ""}
-                {a.justification ? ` — ${a.justification}` : ""}
+                {a.justification ? `: ${a.justification}` : ""}
                 {a.dueAt ? ` · prazo: ${dateTime(a.dueAt)}` : ""}
                 {a.escalatedAt ? ` · escalonado em ${dateTime(a.escalatedAt)}` : ""}
                 {a.decidedAt ? ` · decidido em ${dateTime(a.decidedAt)}` : ""}
@@ -236,15 +236,15 @@ export function stageDataFields(
       if (!request.legalReview) return null;
       return grid(
         <>
-          <Field label="Assinado">{request.legalReview.signed === null ? "—" : request.legalReview.signed ? "Sim" : "Não"}</Field>
-          <Field label="Decidido em">{dateTime(request.legalReview.decidedAt) ?? "—"}</Field>
+          <Field label="Assinado">{request.legalReview.signed === null ? "-" : request.legalReview.signed ? "Sim" : "Não"}</Field>
+          <Field label="Decidido em">{dateTime(request.legalReview.decidedAt) ?? "-"}</Field>
           <Field label="Minuta">
-            {request.legalReview.minutaUrl ? <a href={request.legalReview.minutaUrl} target="_blank" rel="noreferrer" style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Abrir →</a> : "—"}
+            {request.legalReview.minutaUrl ? <a href={request.legalReview.minutaUrl} target="_blank" rel="noreferrer" style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Abrir →</a> : "-"}
           </Field>
           <Field label="Documento assinado">
-            {request.legalReview.signedDocUrl ? <a href={request.legalReview.signedDocUrl} target="_blank" rel="noreferrer" style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Abrir →</a> : "—"}
+            {request.legalReview.signedDocUrl ? <a href={request.legalReview.signedDocUrl} target="_blank" rel="noreferrer" style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Abrir →</a> : "-"}
           </Field>
-          <Full><Field label="Observações">{request.legalReview.observations ?? "—"}</Field></Full>
+          <Full><Field label="Observações">{request.legalReview.observations ?? "-"}</Field></Full>
         </>
       );
 
@@ -270,13 +270,13 @@ export function stageDataFields(
           })()}
           <Field label="Condição de Pagamento">{request.purchaseOrder.paymentCondition}</Field>
           <Field label="Número de Parcelas">{request.purchaseOrder.installments}x</Field>
-          <Field label="Valor da Parcela">{request.purchaseOrder.installmentValue !== null ? money(request.purchaseOrder.installmentValue as number) : "—"}</Field>
+          <Field label="Valor da Parcela">{request.purchaseOrder.installmentValue !== null ? money(request.purchaseOrder.installmentValue as number) : "-"}</Field>
           <Field label="Frete">{request.purchaseOrder.frete}</Field>
-          <Field label="Prazo de Entrega">{request.purchaseOrder.prazoEntrega ?? "—"}</Field>
+          <Field label="Prazo de Entrega">{request.purchaseOrder.prazoEntrega ?? "-"}</Field>
           <Field label="Enviado ao fornecedor">{request.purchaseOrder.sentToSupplier ? "Sim" : "Não"}</Field>
           <Field label="Precisa de medição">{request.purchaseOrder.needsMeasurement ? "Sim" : "Não"}</Field>
           <Field label="Emitido em">{dateTime(request.purchaseOrder.createdAt)}</Field>
-          <Full><Field label="Local de Entrega">{request.purchaseOrder.localEntrega ?? "—"}</Field></Full>
+          <Full><Field label="Local de Entrega">{request.purchaseOrder.localEntrega ?? "-"}</Field></Full>
           {request.purchaseOrder.items.length > 0 && (
             <Full>
               <p style={{ margin: "4px 0", fontWeight: 600 }}>Itens:</p>
@@ -301,11 +301,11 @@ export function stageDataFields(
       return grid(
         <>
           <Field label="Aprovação técnica">{APPROVAL_DECISION_LABEL[request.measurement.technicalApproval] ?? request.measurement.technicalApproval}</Field>
-          <Field label="Referência de contrato">{request.measurement.contractRef ?? "—"}</Field>
-          <Field label="Quantidades">{request.measurement.quantities ?? "—"}</Field>
-          <Field label="Decidido em">{dateTime(request.measurement.decidedAt) ?? "—"}</Field>
+          <Field label="Referência de contrato">{request.measurement.contractRef ?? "-"}</Field>
+          <Field label="Quantidades">{request.measurement.quantities ?? "-"}</Field>
+          <Field label="Decidido em">{dateTime(request.measurement.decidedAt) ?? "-"}</Field>
           <Full><Field label="Escopo executado">{request.measurement.scopeExecuted}</Field></Full>
-          <Full><Field label="Comentário da revisão">{request.measurement.reviewComment ?? "—"}</Field></Full>
+          <Full><Field label="Comentário da revisão">{request.measurement.reviewComment ?? "-"}</Field></Full>
         </>
       );
 
@@ -313,12 +313,12 @@ export function stageDataFields(
       if (!request.fiscalDocument) return null;
       return grid(
         <>
-          <Field label="Aprovado">{request.fiscalDocument.approved === null ? "—" : request.fiscalDocument.approved ? "Sim" : "Não"}</Field>
-          <Field label="Decidido em">{dateTime(request.fiscalDocument.decidedAt) ?? "—"}</Field>
+          <Field label="Aprovado">{request.fiscalDocument.approved === null ? "-" : request.fiscalDocument.approved ? "Sim" : "Não"}</Field>
+          <Field label="Decidido em">{dateTime(request.fiscalDocument.decidedAt) ?? "-"}</Field>
           <Field label="Documento">
             <a href={request.fiscalDocument.documentUrl} target="_blank" rel="noreferrer" style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}>Abrir →</a>
           </Field>
-          <Full><Field label="Comentário">{request.fiscalDocument.reviewComment ?? "—"}</Field></Full>
+          <Full><Field label="Comentário">{request.fiscalDocument.reviewComment ?? "-"}</Field></Full>
         </>
       );
 
@@ -328,8 +328,8 @@ export function stageDataFields(
         <>
           <Field label="Status">{request.payment.status}</Field>
           <Field label="Confirmado no ERP">{request.payment.erpConfirmed ? "Sim" : "Não"}</Field>
-          <Field label="Data programada">{request.payment.scheduledDate ? formatDateOnly(request.payment.scheduledDate) : "—"}</Field>
-          <Field label="Data de pagamento">{request.payment.paidDate ? formatDateOnly(request.payment.paidDate) : "—"}</Field>
+          <Field label="Data programada">{request.payment.scheduledDate ? formatDateOnly(request.payment.scheduledDate) : "-"}</Field>
+          <Field label="Data de pagamento">{request.payment.paidDate ? formatDateOnly(request.payment.paidDate) : "-"}</Field>
         </>
       );
 
@@ -347,9 +347,9 @@ export function stageDataFields(
       if (!request.supplierEvaluation) return null;
       return grid(
         <>
-          <Field label="Nota (NPS)">{request.supplierEvaluation.score ?? "—"}</Field>
+          <Field label="Nota (NPS)">{request.supplierEvaluation.score ?? "-"}</Field>
           <Field label="Avaliado em">{dateTime(request.supplierEvaluation.createdAt)}</Field>
-          <Full><Field label="Comentário">{request.supplierEvaluation.feedback ?? "—"}</Field></Full>
+          <Full><Field label="Comentário">{request.supplierEvaluation.feedback ?? "-"}</Field></Full>
         </>
       );
 

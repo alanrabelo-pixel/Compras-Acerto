@@ -15,7 +15,7 @@ export function ContractActions({ contractId, status }: { contractId: string; st
   if (status === "CANCELADO") {
     return (
       <section className="card section-gap">
-        <p style={{ fontSize: 12.5, color: "var(--ink-muted)", margin: 0 }}>Contrato cancelado — Tesouraria já foi notificada.</p>
+        <p style={{ fontSize: 12.5, color: "var(--ink-muted)", margin: 0 }}>Contrato cancelado. Tesouraria já foi notificada.</p>
       </section>
     );
   }
@@ -53,7 +53,7 @@ export function ContractActions({ contractId, status }: { contractId: string; st
         </div>
         <label className="checkbox-row">
           <input type="checkbox" checked={treasuryNotified} onChange={(e) => setTreasuryNotified(e.target.checked)} /> Confirmo que a
-          Tesouraria será notificada (obrigatório — evita continuar pagando contrato cancelado)
+          Tesouraria será notificada (obrigatório: evita continuar pagando contrato cancelado)
         </label>
         {error && <p style={{ fontSize: 12, color: "var(--danger)" }}>{error}</p>}
         <div>

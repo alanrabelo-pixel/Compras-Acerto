@@ -6,14 +6,14 @@ import type { UserOption } from "@/components/UserPicker";
 import { SelectAllRow } from "@/components/SelectAllRow";
 
 /**
- * Seletor de MÚLTIPLOS usuários (checkboxes num dropdown) — usado para
+ * Seletor de MÚLTIPLOS usuários (checkboxes num dropdown), usado para
  * designar mais de um aprovador por centro de custo/alçada (pedido do
  * usuário: reduz a necessidade de reajuste manual quando o titular está
  * ausente, qualquer um do grupo pode decidir). Mesma fonte de dados do
  * UserPicker (filtro por role via /api/users?role=X).
  *
  * O painel usa position:fixed com coordenadas calculadas a partir do botão
- * (em vez de position:absolute) — o container pai (.table-wrap) tem
+ * (em vez de position:absolute), porque o container pai (.table-wrap) tem
  * overflow:hidden para arredondar os cantos da tabela, o que cortava o
  * dropdown quando ele abria na última linha (ex: Nível 3 da tabela de
  * Alçadas), deixando as opções invisíveis.

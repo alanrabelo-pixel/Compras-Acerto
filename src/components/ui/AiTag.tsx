@@ -2,7 +2,7 @@ import { Sparkles } from "lucide-react";
 
 /**
  * Selo discreto para marcar um valor/sugestão gerado por IA (ex: campo
- * pré-preenchido pelo assistente de Nova Solicitação) — mesmo tom "quase
+ * pré-preenchido pelo assistente de Nova Solicitação), no mesmo tom "quase
  * transparente" já usado no hint do Ctrl+K (sidebar-search-kbd): sem
  * caixa/preenchimento, só um ícone pequeno + texto sobre --ink-muted com
  * opacidade reduzida. O objetivo é dar proveniência sem chamar mais atenção

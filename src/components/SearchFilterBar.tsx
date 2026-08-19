@@ -10,7 +10,7 @@ export type FilterConfig = { key: string; label: string; options: FilterOption[]
  * Barra de busca + filtros reutilizável (Solicitações, Contratos). Segue o
  * mesmo padrão do DashboardFilters: tudo vive na URL (searchParams), então a
  * página server component só precisa ler searchParams e montar o `where` do
- * Prisma — dá pra copiar/compartilhar um link já filtrado.
+ * Prisma. Dá pra copiar/compartilhar um link já filtrado.
  */
 export function SearchFilterBar({
   searchPlaceholder, filters,

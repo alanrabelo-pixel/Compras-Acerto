@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendSlackDM } from "@/lib/integrations/slack";
 
 /**
- * Escalonamento por SLA (revisão v1.1) — roda diariamente. Para toda Approval
+ * Escalonamento por SLA (revisão v1.1). Roda diariamente: para toda Approval
  * pendente cujo dueAt já passou e que ainda não foi escalonada, notifica o
  * aprovador (lembrete) e a Controladoria (visibilidade), sem decidir sozinho.
  *

@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 
 /**
- * POST /api/requests/[id]/cotacao — adiciona uma cotação (uma chamada por
+ * POST /api/requests/[id]/cotacao: adiciona uma cotação (uma chamada por
  * fornecedor cotado). GET lista as cotações já registradas. PATCH avança
  * para o Mapa de Cotação, respeitando o número mínimo de cotações por faixa
  * de valor (ver minimumQuotesRequired em workflow.ts).
@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const required = minimumQuotesRequired(Number(request.estimatedValue));
   if (quotes.length < required) {
     return NextResponse.json(
-      { error: `Mínimo de ${required} cotação(ões) exigido para este valor — ${quotes.length} registrada(s).` },
+      { error: `Mínimo de ${required} cotação(ões) exigido para este valor, ${quotes.length} registrada(s).` },
       { status: 422 }
     );
   }

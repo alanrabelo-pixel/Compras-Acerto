@@ -1,5 +1,5 @@
 /**
- * Integração Slack — usada para os mesmos eventos-chave do e-mail (aprovações,
+ * Integração Slack, usada para os mesmos eventos-chave do e-mail (aprovações,
  * mudanças de etapa, alertas de renovação de contrato), com foco em quem
  * precisa agir rápido (aprovadores, compradores).
  *
@@ -18,7 +18,7 @@ const slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 /**
  * Envia uma DM "encadeada" (thread_ts) para o widget de chat comprador ↔
  * solicitante (ver src/components/RequestChatWidget.tsx). Diferente de
- * sendSlackDM abaixo, devolve channel/ts em vez de só logar Notification —
+ * sendSlackDM abaixo, devolve channel/ts em vez de só logar Notification:
  * são esses IDs que permitem casar a resposta do Slack de volta com a
  * solicitação certa (ver src/app/api/slack/events/route.ts).
  */

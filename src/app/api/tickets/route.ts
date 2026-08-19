@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 
-// GET /api/tickets?category=viagens|facilities — lista chamados de uma categoria.
+// GET /api/tickets?category=viagens|facilities: lista chamados de uma categoria.
 export async function GET(req: NextRequest) {
   const categorySlug = req.nextUrl.searchParams.get("category") ?? "";
   if (!isTicketCategorySlug(categorySlug)) {
@@ -17,9 +17,9 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(tickets);
 }
 
-// POST /api/tickets — cria um novo chamado (nome, e-mail, descrição livre).
+// POST /api/tickets: cria um novo chamado (nome, e-mail, descrição livre).
 // supplierName/supplierContact* e requestKind/contract* são exclusivos do
-// fluxo de Jurídico (ver NdaRequestForm.tsx) e opcionais — ficam undefined
+// fluxo de Jurídico (ver NdaRequestForm.tsx) e opcionais, ficam undefined
 // para Viagens/Facilities. requestKind distingue "NDA" de "CONTRATO" dentro
 // dessa mesma categoria.
 export async function POST(req: NextRequest) {

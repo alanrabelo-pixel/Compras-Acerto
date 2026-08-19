@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * Gestão das chaves pessoais de IA (Anthropic/Gemini) de quem está atuando —
+ * Gestão das chaves pessoais de IA (Anthropic/Gemini) de quem está atuando,
  * extraído do AiInsightPanel para ser reaproveitado em qualquer lugar que
  * precise de uma chamada de IA por conta do usuário (ex: assistente de
  * preenchimento da Nova Solicitação), em vez de duplicar o mesmo bloco.
@@ -62,8 +62,8 @@ export function AiKeySettings({ actorId }: { actorId: string }) {
     <div style={{ fontSize: 11, display: "grid", gap: 6 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ color: "var(--ink-muted)" }}>
-          Suas chaves pessoais — Claude: {keyStatus.anthropicConfigured ? "configurada ✓" : "não configurada"} ·
-          {" "}Gemini: {keyStatus.geminiConfigured ? "configurada ✓" : "não configurada"}
+          Chaves pessoais (Claude: {keyStatus.anthropicConfigured ? "configurada ✓" : "não configurada"} ·
+          {" "}Gemini: {keyStatus.geminiConfigured ? "configurada ✓" : "não configurada"})
         </span>
         <button
           type="button"
@@ -76,12 +76,12 @@ export function AiKeySettings({ actorId }: { actorId: string }) {
       {editingKeys && (
         <div style={{ display: "grid", gap: 6, background: "var(--surface)", border: "1px solid var(--border-soft)", borderRadius: "var(--radius-sm)", padding: 8 }}>
           <p style={{ color: "var(--ink-muted)" }}>
-            Cada pessoa usa sua própria chave (todo mundo na Acerto já tem acesso a Claude e Gemini) — deixe em
+            Cada pessoa usa sua própria chave (todo mundo na Acerto já tem acesso a Claude e Gemini). Deixe em
             branco o que não quiser alterar.
           </p>
           <details>
             <summary style={{ cursor: "pointer", color: "var(--acerto-green-dark)", fontWeight: 600 }}>
-              Não sei onde pegar minha chave — como faço?
+              Não sei onde pegar minha chave, como faço?
             </summary>
             <div style={{ display: "grid", gap: 10, marginTop: 8 }}>
               <div>
@@ -90,7 +90,7 @@ export function AiKeySettings({ actorId }: { actorId: string }) {
                   <li>Acesse <strong>console.anthropic.com</strong> e entre com sua conta @acerto.com.br.</li>
                   <li>No menu à esquerda, clique em <strong>API Keys</strong>.</li>
                   <li>Clique em <strong>Create Key</strong>, dê um nome (ex: &quot;Acerto Compras&quot;) e confirme.</li>
-                  <li>Copie a chave gerada (começa com <strong>sk-ant-...</strong>) — ela só aparece uma vez.</li>
+                  <li>Copie a chave gerada (começa com <strong>sk-ant-...</strong>). Ela só aparece uma vez.</li>
                   <li>Cole no campo &quot;Sua chave da Anthropic (Claude)&quot; abaixo e clique em Salvar.</li>
                 </ol>
               </div>
@@ -104,7 +104,7 @@ export function AiKeySettings({ actorId }: { actorId: string }) {
                 </ol>
               </div>
               <p style={{ margin: 0, fontStyle: "italic" }}>
-                Só precisa de uma das duas para usar o assistente — configure Claude, Gemini, ou os dois.
+                Só precisa de uma das duas para usar o assistente: configure Claude, Gemini, ou os dois.
               </p>
             </div>
           </details>

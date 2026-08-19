@@ -4,17 +4,17 @@ import type { RoleName, Diretoria, DemandType, Priority, Stage } from "@prisma/c
 /**
  * Fixtures para os testes de integração das rotas de alçada (ver
  * src/app/api/requests/[id]/*.test.ts). Roda contra o Postgres real de
- * desenvolvimento (não há banco de teste dedicado ainda — ver relatório de
- * modernização, item de escala) — por isso todo registro criado aqui é
+ * desenvolvimento (não há banco de teste dedicado ainda, ver relatório de
+ * modernização, item de escala), por isso todo registro criado aqui é
  * marcado com o prefixo TEST_PREFIX e removido no cleanup() do teste.
  *
  * LOCAL_BYPASS_AUTH="true" (ver .env) faz requireRole() pular a checagem de
- * sessão real e confiar no id enviado no corpo — é o que permite chamar as
+ * sessão real e confiar no id enviado no corpo, o que permite chamar as
  * rotas diretamente aqui sem simular um cookie de sessão do NextAuth.
  */
 // Escopado por MÓDULO (não por processo inteiro): o Vitest isola cada
 // arquivo de teste em seu próprio grafo de módulos, então este valor
-// aleatório é diferente por arquivo — evita que o cleanup() de um arquivo
+// aleatório é diferente por arquivo. Isso evita que o cleanup() de um arquivo
 // apague os dados de outro arquivo rodando em paralelo (mesma base de dados
 // de desenvolvimento, sem banco de teste dedicado ainda).
 export const TEST_PREFIX = `__test_${Math.random().toString(36).slice(2, 8)}__`;
@@ -78,7 +78,7 @@ export async function createTestRequest(params: {
 }
 
 /**
- * Remove todos os registros de teste (por prefixo em code/email) — chamar em
+ * Remove todos os registros de teste (por prefixo em code/email); chamar em
  * afterAll/afterEach. Segue a ordem de dependência (filhos antes dos pais).
  */
 export async function cleanupTestData() {

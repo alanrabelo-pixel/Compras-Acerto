@@ -5,7 +5,7 @@ import { useState, Children } from "react";
 export type TabDef = { id: string; label: string };
 
 /**
- * Abas simples — os painéis já vêm renderizados no servidor (cada um pode
+ * Abas simples. Os painéis já vêm renderizados no servidor (cada um pode
  * ter sua própria query/tabela); o componente cliente só decide qual mostrar.
  * Evita empilhar N seções completas (tabela + parágrafo explicativo cada)
  * verticalmente numa única tela de configuração.

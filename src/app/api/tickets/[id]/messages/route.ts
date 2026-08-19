@@ -4,10 +4,10 @@ import { TICKET_CATEGORIES } from "@/lib/tickets";
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 
-// POST /api/tickets/[id]/messages — adiciona uma mensagem ao histórico do chamado
-// (usado tanto pelo solicitante quanto pelo atendente — cada um digita o próprio nome).
+// POST /api/tickets/[id]/messages: adiciona uma mensagem ao histórico do chamado
+// (usado tanto pelo solicitante quanto pelo atendente, cada um digita o próprio nome).
 // Só quem gerencia (canViewBoard) ou o próprio solicitante (e-mail bate com
-// o do chamado) pode escrever — mesmo critério da tela de detalhe, que já
+// o do chamado) pode escrever, mesmo critério da tela de detalhe, que já
 // bloqueia abrir o chamado de outra pessoa (ver chamados-viewer.ts).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const ticket = await prisma.simpleTicket.findUnique({ where: { id: params.id } });
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: { ticketId: ticket.id, authorName, body: messageBody },
   });
 
-  // Avisa o solicitante por e-mail de que há novidade no chamado — mesmo que
+  // Avisa o solicitante por e-mail de que há novidade no chamado, mesmo que
   // quem tenha acabado de escrever seja ele próprio (simples e previsível;
   // não há como distinguir "atendente" de "solicitante" neste modelo).
   const categorySlug = Object.entries(TICKET_CATEGORIES).find(([, c]) => c.enumValue === ticket.category)?.[0];

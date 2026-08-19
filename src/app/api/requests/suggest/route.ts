@@ -4,9 +4,9 @@ import { decryptSecret } from "@/lib/crypto";
 import { generateRequisitionAssist } from "@/lib/integrations/ai";
 
 /**
- * POST /api/requests/suggest — assistente de preenchimento da Nova
+ * POST /api/requests/suggest: assistente de preenchimento da Nova
  * Solicitação. Diferente de /api/requests/[id]/ai-insight, não persiste nada
- * (não existe PurchaseRequest ainda nesta etapa) — é só uma sugestão
+ * (não existe PurchaseRequest ainda nesta etapa). É só uma sugestão
  * stateless que a pessoa confirma ou edita antes de enviar o formulário.
  */
 export async function POST(req: NextRequest) {

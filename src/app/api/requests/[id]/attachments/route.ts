@@ -5,7 +5,7 @@ import type { AttachmentCategory, Stage } from "@prisma/client";
 
 export const runtime = "nodejs";
 
-// GET /api/requests/[id]/attachments — lista anexos da solicitação.
+// GET /api/requests/[id]/attachments: lista anexos da solicitação.
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const attachments = await prisma.attachment.findMany({
     where: { requestId: params.id },
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(attachments);
 }
 
-// POST /api/requests/[id]/attachments — upload (multipart/form-data: file, uploadedBy, stage).
+// POST /api/requests/[id]/attachments: upload (multipart/form-data: file, uploadedBy, stage).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });

@@ -11,10 +11,10 @@ export type SearchResult = {
 };
 
 /**
- * GET /api/search?q=texto — busca global (Command Palette, Ctrl+K), unindo
+ * GET /api/search?q=texto: busca global (Command Palette, Ctrl+K), unindo
  * Solicitações (código/descrição/solicitante) e Contratos (fornecedor/CNPJ)
  * num único resultado ordenável por relevância simples (mais recente
- * primeiro dentro de cada tipo). Poucos registros por tipo — é uma busca
+ * primeiro dentro de cada tipo). Poucos registros por tipo, pois é uma busca
  * rápida de navegação, não um relatório.
  */
 export async function GET(req: NextRequest) {
