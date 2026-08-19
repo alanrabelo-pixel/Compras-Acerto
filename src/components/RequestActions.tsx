@@ -228,9 +228,68 @@ export function RequestActions({
   );
 }
 
+/**
+ * O que cada etapa significa, em uma frase.
+ *
+ * Due Diligence, Mapa de Cotação, Medição, Triagem, Homologação e
+ * Personificação apareciam como rótulo puro, sem tooltip nem texto de ajuda.
+ * Existe um manual completo, mas ele só era alcançável por um link no rodapé
+ * da home, e nenhum dos painéis de etapa apontava para ele: quem estava
+ * atuando na etapa não tinha como saber o que se esperava dele ali.
+ *
+ * A chave é o título do painel, para o texto acompanhar o painel sem exigir
+ * que cada formulário passe a explicação.
+ */
+const EXPLICACAO_DA_ETAPA: Record<string, string> = {
+  "Triagem":
+    "O comprador confere se a solicitação tem o que precisa para seguir, define se vai gerar contrato e calcula a faixa de risco e o valor estimado.",
+  "Validação orçamentária":
+    "Confirma se existe orçamento para a compra. Não havendo, abre uma exceção que precisa ser decidida por quem tem alçada para isso.",
+  "Due Diligence (Privacidade)":
+    "Análise de privacidade e segurança antes de contratar uma ferramenta nova, para avaliar como ela trata dado pessoal.",
+  "Cotação":
+    "Registro das propostas recebidas. O número mínimo de cotações depende do valor da compra.",
+  "Mapa de Cotação":
+    "Comparação lado a lado das propostas para escolher a vencedora, registrando o motivo da escolha.",
+  "Aprovação do Gestor":
+    "Primeira aprovação, feita por quem gerencia o centro de custo que vai pagar a compra.",
+  "Aprovação":
+    "Aprovação por alçada de valor. Acima de R$ 50 mil exige duas pessoas diferentes decidindo, como dupla checagem.",
+  "Jurídico":
+    "Elaboração e assinatura do contrato ou, quando é um cancelamento, do distrato.",
+  "Pedido de Compra":
+    "Emissão do documento oficial enviado ao fornecedor, com itens, valores e condições acordadas.",
+  "Aguardando Entrega/Conclusão":
+    "A compra foi feita e o sistema aguarda a entrega ou a execução do serviço.",
+  "Medição e Aprovação Financeira":
+    "Conferência do que foi de fato entregue ou executado, antes de liberar o pagamento.",
+  "Validação Fiscal":
+    "Conferência da nota fiscal e dos documentos que sustentam o pagamento.",
+  "Tesouraria (Pagamento)":
+    "Programação e confirmação do pagamento junto ao ERP.",
+  "Mapeamento de Contrato":
+    "Cadastro do contrato resultante da compra, que passa a receber aviso automático antes do vencimento.",
+  "Concluído":
+    "Fluxo encerrado. Só resta registrar a avaliação da experiência, que é opcional.",
+};
+
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  const explicacao = EXPLICACAO_DA_ETAPA[title];
   return (
     <Card title={title} accent className="section-gap">
+      {explicacao && (
+        <p style={{ fontSize: 12, color: "var(--ink-muted)", lineHeight: 1.5, margin: "0 0 14px" }}>
+          {explicacao}{" "}
+          <a
+            href="/api/manual/pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--acerto-green-dark)", fontWeight: 600 }}
+          >
+            Ver o manual do processo
+          </a>
+        </p>
+      )}
       {children}
     </Card>
   );
