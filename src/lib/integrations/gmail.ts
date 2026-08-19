@@ -115,6 +115,26 @@ export const templates = {
     subject: `Nova mensagem no chamado ${codigo}: ${categoriaLabel}`,
     html: `<p>Olá, <b>${nome}</b>!</p><p>Há uma nova mensagem no seu chamado <b>${codigo}</b> (${categoriaLabel}).</p><p>Veja e responda por aqui: <a href="${linkChamado}">${linkChamado}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
   }),
+  /**
+   * Risco de fracionamento: a soma das compras do mesmo fornecedor nos últimos
+   * 12 meses ultrapassa uma alçada que o valor isolado não atingiria.
+   *
+   * Antes este alerta não existia: a Triagem gravava um registro de
+   * notificação com status ENVIADO e não mandava nada, então a Controladoria
+   * nunca ficava sabendo. O controle detectava e morria ali.
+   */
+  riscoFracionamento: (
+    codigo: string,
+    descricao: string,
+    fornecedor: string,
+    nivelIsolado: number,
+    nivelSomado: number,
+    link: string
+  ) => ({
+    subject: `Risco de fracionamento: ${codigo}`,
+    html: `<p>A solicitação <b>${codigo}</b> (${descricao}) foi sinalizada com risco de fracionamento na Triagem.</p><p>Sozinha, ela cai na alçada de <b>Nível ${nivelIsolado}</b>. Somada às compras do fornecedor <b>${fornecedor}</b> nos últimos 12 meses, o total alcança a alçada de <b>Nível ${nivelSomado}</b>.</p><p>Isso não bloqueia a solicitação: ela segue o fluxo normalmente. O alerta existe para a Controladoria avaliar se as compras deveriam ter sido tratadas como uma só.</p><p><a href="${link}">Abrir a solicitação</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  }),
+
   alertaRenovacaoContrato: (nome: string, fornecedor: string, dataLimite: string, linkNovaSolicitacao: string) => ({
     subject: `Renovação ou Cancelamento de Contrato - ${fornecedor}`,
     html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que o contrato do fornecedor <b>${fornecedor}</b> está próximo do fim da vigência, prevista até o dia ${dataLimite}.</p><p>Para dar andamento, acesse: <a href="${linkNovaSolicitacao}">abrir novo processo de compras</a>.</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,

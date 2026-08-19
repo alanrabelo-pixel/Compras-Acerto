@@ -7,8 +7,11 @@ import {
   nextAfterValidacaoOrcamentaria,
 } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { sendSlackDM } from "@/lib/integrations/slack";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
+import { DESTINO_CONTROLADORIA } from "@/lib/destinatarios";
+import { logger } from "@/lib/logger";
 
 /**
  * PATCH /api/requests/[id]/triagem
@@ -135,14 +138,28 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const updated = avanco.solicitacao;
 
   if (fragmentation.flagged) {
-    await prisma.notification.create({
-      data: {
-        requestId: request.id,
-        channel: "EMAIL",
-        recipient: "controladoria@acerto.com.br",
-        subject: `Risco de fracionamento: ${request.code}`,
-        status: "ENVIADO",
-      },
+    // Antes isto gravava uma linha de Notification com status ENVIADO e não
+    // mandava nada. Pior que não avisar: o registro afirmava que a
+    // Controladoria tinha sido avisada, então nem dava para perceber a falta
+    // olhando o log. O controle antifraude detectava e morria ali.
+    //
+    // sendPurchaseEmail já grava o Notification sozinho, com ENVIADO ou FALHA
+    // conforme o resultado real, então o registro manual some junto.
+    const { subject, html } = templates.riscoFracionamento(
+      request.code,
+      request.shortDescription,
+      request.indicatedSupplierName ?? "não informado",
+      fragmentation.individualLevel,
+      fragmentation.combinedLevel,
+      `${process.env.APP_URL}/solicitacoes/${request.id}`
+    );
+    await sendPurchaseEmail({ to: DESTINO_CONTROLADORIA, subject, html, requestId: request.id });
+    await sendSlackDM({
+      slackUserEmail: DESTINO_CONTROLADORIA,
+      text: `Risco de fracionamento em ${request.code}: sozinha cai no Nível ${fragmentation.individualLevel}, somada às compras do fornecedor nos últimos 12 meses alcança o Nível ${fragmentation.combinedLevel}.`,
+      requestId: request.id,
+    }).catch((erro: unknown) => {
+      logger.warn("aviso_fracionamento_slack_falhou", { solicitacao: request.code, erro });
     });
   }
 

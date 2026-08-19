@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { verificarTokenDeMaquina } from "@/lib/segredos";
 import { logger } from "@/lib/logger";
+import { DESTINO_CONTROLADORIA } from "@/lib/destinatarios";
 
 /**
  * Escalonamento por SLA (revisão v1.1). Roda diariamente: para toda Approval
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
     });
 
     await sendSlackDM({
-      slackUserEmail: "controladoria@acerto.com.br",
+      slackUserEmail: DESTINO_CONTROLADORIA,
       text: `Aprovação em atraso: ${approval.request.code}, aprovador ${approval.approver.name}, aberta desde ${approval.request.createdAt.toLocaleDateString("pt-BR")}.`,
     }).catch((erro) => {
       falhasDeAviso++;
