@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendSlackDM } from "@/lib/integrations/slack";
+import { verificarTokenDeMaquina } from "@/lib/segredos";
+import { logger } from "@/lib/logger";
 
 /**
  * Escalonamento por SLA (revisão v1.1). Roda diariamente: para toda Approval
@@ -11,9 +13,9 @@ import { sendSlackDM } from "@/lib/integrations/slack";
  * com o mesmo CRON_SECRET usado no alerta de contratos.
  */
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const credencial = verificarTokenDeMaquina(req.headers.get("authorization"), "CRON_SECRET");
+  if (!credencial.ok) {
+    return NextResponse.json({ error: credencial.erro }, { status: credencial.status });
   }
 
   const overdue = await prisma.approval.findMany({
@@ -21,21 +23,35 @@ export async function GET(req: NextRequest) {
     include: { approver: true, request: true },
   });
 
+  logger.info("cron_escalonamento_iniciado", { aprovacoesEmAtraso: overdue.length });
+
   let escalated = 0;
+  let falhasDeAviso = 0;
   for (const approval of overdue) {
+    // O aviso é best-effort de propósito: se o Slack estiver fora, o
+    // escalonamento ainda precisa ser marcado. Mas a falha agora fica
+    // registrada, em vez de sumir num catch vazio, senão ninguém descobre
+    // que o lembrete parou de chegar.
     await sendSlackDM({
       slackUserEmail: approval.approver.email,
       text: `Lembrete: a solicitação ${approval.request.code} está aguardando sua aprovação há mais de ${process.env.APPROVAL_ESCALATION_DAYS ?? 3} dias úteis.`,
-    }).catch(() => {});
+    }).catch((erro) => {
+      falhasDeAviso++;
+      logger.warn("cron_escalonamento_slack_falhou", { destino: "aprovador", solicitacao: approval.request.code, erro });
+    });
 
     await sendSlackDM({
       slackUserEmail: "controladoria@acerto.com.br",
       text: `Aprovação em atraso: ${approval.request.code}, aprovador ${approval.approver.name}, aberta desde ${approval.request.createdAt.toLocaleDateString("pt-BR")}.`,
-    }).catch(() => {});
+    }).catch((erro) => {
+      falhasDeAviso++;
+      logger.warn("cron_escalonamento_slack_falhou", { destino: "controladoria", solicitacao: approval.request.code, erro });
+    });
 
     await prisma.approval.update({ where: { id: approval.id }, data: { escalatedAt: new Date() } });
     escalated++;
   }
 
-  return NextResponse.json({ escalated });
+  logger.info("cron_escalonamento_concluido", { escalonadas: escalated, falhasDeAviso });
+  return NextResponse.json({ escalated, falhasDeAviso });
 }

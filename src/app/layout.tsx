@@ -25,6 +25,10 @@ const THEME_INIT_SCRIPT = `
     var v = localStorage.getItem("acerto-compras-theme");
     if (v === "light" || v === "dark") document.documentElement.setAttribute("data-theme", v);
   } catch (e) {}
+  // O catch vazio acima é intencional e não é um erro engolido por descuido:
+  // localStorage lança em navegação anônima ou com cookies bloqueados, e a
+  // única consequência é a página nascer no tema claro. Não há o que registrar
+  // nem o que fazer, e este script roda antes de qualquer coisa do app existir.
 })();
 `;
 

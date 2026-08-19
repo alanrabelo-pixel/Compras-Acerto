@@ -10,6 +10,7 @@ import {
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { requireRole } from "@/lib/rbac";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/requests/[id]/aprovacao
@@ -183,7 +184,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         slackUserEmail: approver.email,
         text: `A solicitação ${request.code} foi ${decision === "APROVADO" ? "aprovada" : "reprovada"} em seu nome pelo comprador, por urgência/ausência. Justificativa: ${justification}`,
         requestId: request.id,
-      }).catch(() => {});
+      }).catch((erro) => {
+        // Este aviso é o que dá ao aprovador real transparência de que
+        // decidiram em nome dele. Falhar calado apaga justamente essa
+        // transparência, então a falha precisa ficar registrada.
+        logger.warn("aviso_personificacao_falhou", {
+          solicitacao: request.code,
+          aprovadorReal: approver.email,
+          erro,
+        });
+      });
     }
   }
 

@@ -701,7 +701,7 @@ model ContractAlert {
   contractId String
   contract   Contract @relation(fields: [contractId], references: [id])
   sentAt     DateTime @default(now())
-  channel    String   // EMAIL | SLACK
+  channel    String   // EMAIL | SLACK | EMAIL_E_SLACK
   newRequestOpened Boolean @default(false)
 }
 

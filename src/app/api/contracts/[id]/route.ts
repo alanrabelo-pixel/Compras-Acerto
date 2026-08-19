@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
+import { logger } from "@/lib/logger";
 
 /**
  * PATCH /api/contracts/[id]
@@ -41,7 +42,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await sendSlackDM({
         slackUserEmail: user.email,
         text: `Contrato com ${contract.supplierName} foi cancelado. Suspenda pagamentos recorrentes associados.`,
-      }).catch(() => {});
+      }).catch((erro) => {
+        logger.warn("aviso_cancelamento_contrato_falhou", {
+          contratoId: contract.id,
+          destino: user.email,
+          erro,
+        });
+      });
     }
 
     const updated = await prisma.contract.update({

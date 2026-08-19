@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { nextAfterAprovacaoGestor } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { requireRole } from "@/lib/rbac";
+import { logger } from "@/lib/logger";
 
 /**
  * PATCH /api/requests/[id]/aprovacao-gestor
@@ -80,7 +81,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if (!approved) {
     const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification);
-    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id }).catch(() => {});
+    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id }).catch((erro) => {
+      logger.warn("email_reprovacao_gestor_falhou", { solicitacao: request.code, erro });
+    });
   }
 
   return NextResponse.json(updated);

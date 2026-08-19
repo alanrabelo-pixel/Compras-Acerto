@@ -27,6 +27,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const EMPTY = <span style={{ color: "var(--ink-muted)", fontStyle: "italic" }}>Preencher manualmente</span>;
 
+// O canal era renderizado cru na tela, então a pessoa lia "EMAIL_E_SLACK".
+const CANAL_DO_ALERTA: Record<string, string> = {
+  EMAIL: "E-mail",
+  SLACK: "Slack",
+  EMAIL_E_SLACK: "E-mail e Slack",
+};
+
 export default async function ContractDetailPage({ params }: { params: { id: string } }) {
   const contract = await prisma.contract.findUnique({
     where: { id: params.id },
@@ -161,7 +168,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           {contract.alerts.map((a) => (
             <div key={a.id} className="timeline-item">
               <span className="timeline-dot" />
-              <span>{a.channel} · {formatDateTime(a.sentAt)}</span>
+              <span>{CANAL_DO_ALERTA[a.channel] ?? a.channel} · {formatDateTime(a.sentAt)}</span>
             </div>
           ))}
         </section>
