@@ -12,6 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
+    "migrations:sync": "tsx scripts/sync-migration-sql.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
