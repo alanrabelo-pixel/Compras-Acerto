@@ -101,6 +101,17 @@ describe("middleware: rotas de API", () => {
     }
   });
 
+  it("recusa token de pessoa desativada, mesmo com o cookie ainda válido", async () => {
+    // O callback jwt zera as reivindicações e marca `desativado` quando a
+    // pessoa é desativada ou some do banco. Sem esta checagem o token seguiria
+    // passando aqui só por existir.
+    token.current = { sub: "user-1", roles: [], canViewBoard: false, desativado: true };
+
+    const res = await middleware(req("/api/requests"));
+
+    expect(res.status).toBe(401);
+  });
+
   it("libera tudo quando LOCAL_BYPASS_AUTH está ligada", async () => {
     vi.stubEnv("LOCAL_BYPASS_AUTH", "true");
 
@@ -137,5 +148,14 @@ describe("middleware: páginas", () => {
     const res = await middleware(req("/admin/acessos"));
 
     expect(res.headers.get("location")).toContain("/sem-acesso");
+  });
+
+  it("manda pessoa desativada para o login em toda página, não só na home", async () => {
+    token.current = { sub: "user-1", roles: ["ADMIN"], canViewBoard: true, desativado: true };
+
+    for (const rota of ["/", "/solicitacoes/nova", "/chamados/viagens", "/admin/acessos", "/dashboards"]) {
+      const res = await middleware(req(rota));
+      expect(res.headers.get("location"), rota).toContain("/login");
+    }
   });
 });

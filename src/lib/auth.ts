@@ -79,27 +79,58 @@ export const authOptions: NextAuthOptions = {
           where: { email: token.email },
           include: { roles: true },
         });
-        if (dbUser) {
-          token.userId = dbUser.id;
-          token.roles = dbUser.roles.map((r) => r.role);
-          token.canViewBoard = dbUser.canViewBoard;
+        // `active` era checado só no signIn, então desativar alguém em
+        // /admin/acessos bloqueava logins novos mas não encerrava a sessão em
+        // curso. E quando o usuário sumia do banco, o `if (dbUser)` deixava as
+        // reivindicações antigas intactas no token, que é o pior caso: papéis
+        // de quem já não deveria ter acesso continuavam valendo.
+        if (!dbUser || !dbUser.active) {
+          token.userId = undefined;
+          token.roles = [];
+          token.canViewBoard = false;
+          token.desativado = true;
+          return token;
         }
+        token.userId = dbUser.id;
+        token.roles = dbUser.roles.map((r) => r.role);
+        token.canViewBoard = dbUser.canViewBoard;
+        token.desativado = false;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session }) {
       if (session.user?.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: session.user.email },
           include: { roles: true },
         });
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).id = dbUser?.id;
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).roles = dbUser?.roles.map((r) => r.role);
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).canViewBoard = dbUser?.canViewBoard ?? Boolean(token.canViewBoard);
-        (session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null }).avatarUrl = dbUser?.avatarUrl ?? null;
+        const user = session.user as { id?: string; roles?: string[]; canViewBoard?: boolean; avatarUrl?: string | null };
+
+        // Este callback consulta o banco a cada chamada, então é aqui que a
+        // revogação vale imediatamente para as rotas de API, que usam
+        // getServerSession. Sem id, requireRole responde "Não autenticado".
+        if (!dbUser || !dbUser.active) {
+          user.id = undefined;
+          user.roles = [];
+          user.canViewBoard = false;
+          user.avatarUrl = null;
+          return session;
+        }
+
+        user.id = dbUser.id;
+        user.roles = dbUser.roles.map((r) => r.role);
+        // Sem cair para token.canViewBoard: esse era o valor velho gravado no
+        // cookie, exatamente o que precisa parar de valer quando o acesso muda.
+        user.canViewBoard = dbUser.canViewBoard;
+        user.avatarUrl = dbUser.avatarUrl ?? null;
       }
       return session;
     },
   },
-  session: { strategy: "jwt" },
+  // Oito horas em vez dos 30 dias padrão do NextAuth. O middleware roda no
+  // runtime edge e decide pelo conteúdo do cookie, sem consultar o banco, então
+  // enquanto o token não é renovado ele carrega os papéis antigos. Encurtar a
+  // validade limita essa janela; o callback jwt acima zera as reivindicações
+  // assim que o token é renovado.
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
 };

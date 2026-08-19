@@ -60,7 +60,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
     const token = await getToken({ req });
-    if (!token) {
+    if (!token || token.desativado) {
       // Rota de API responde 401 em JSON. Redirecionar para o login, como as
       // páginas fazem, devolveria HTML para quem esperava JSON e quebraria o
       // cliente com erro de parse em vez de uma mensagem clara.
@@ -76,13 +76,13 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/chamados")
   ) {
     const token = await getToken({ req });
-    if (!token) return signInRedirect(req);
+    if (!token || token.desativado) return signInRedirect(req);
     return NextResponse.next();
   }
 
   if (pathname.startsWith("/admin")) {
     const token = await getToken({ req });
-    if (!token) return signInRedirect(req);
+    if (!token || token.desativado) return signInRedirect(req);
     if (!Array.isArray(token.roles) || !token.roles.includes("ADMIN")) {
       return NextResponse.redirect(new URL("/sem-acesso", req.url));
     }
@@ -90,7 +90,7 @@ export async function middleware(req: NextRequest) {
   }
 
   const token = await getToken({ req });
-  if (!token) return signInRedirect(req);
+  if (!token || token.desativado) return signInRedirect(req);
   if (!token.canViewBoard) {
     return NextResponse.redirect(new URL("/sem-acesso", req.url));
   }
