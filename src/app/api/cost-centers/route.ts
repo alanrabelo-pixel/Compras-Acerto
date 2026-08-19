@@ -3,6 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+// Sem parâmetro no GET, o Next.js tenta pré-renderizar esta rota em tempo de
+// build (acha que é "estática") — e quebra o build sem banco disponível
+// (ex.: no runner de CI). force-dynamic desliga essa tentativa.
+export const dynamic = "force-dynamic";
+
 // GET /api/cost-centers — lista centros de custo ativos, para o formulário de
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
 // antes de enviar — ver APROVACAO_GESTOR em src/lib/workflow.ts. Mais de um
