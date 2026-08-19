@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { actorId, decision, justification, personifiedBy } = body;
 
   if (!["APROVADO", "REPROVADO"].includes(decision)) {
-    return NextResponse.json({ error: "decision inválida (esperado APROVADO ou REPROVADO)" }, { status: 400 });
+    return NextResponse.json({ error: "Decisão inválida. Escolha aprovar ou reprovar." }, { status: 400 });
   }
 
   const request = await prisma.purchaseRequest.findUnique({

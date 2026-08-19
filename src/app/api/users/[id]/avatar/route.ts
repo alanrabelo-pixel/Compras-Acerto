@@ -45,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const user = await prisma.user.findUnique({ where: { id: params.id }, select: { avatarUrl: true } });
   if (!user?.avatarUrl) {
-    return NextResponse.json({ error: "Sem foto de perfil." }, { status: 404 });
+    return NextResponse.json({ error: "Esta pessoa ainda não enviou uma foto de perfil." }, { status: 404 });
   }
 
   const buffer = await readFile(user.avatarUrl);

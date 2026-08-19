@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireErpAuth } from "@/lib/erpAuth";
+import { STAGES } from "@/lib/workflow";
 
 /**
  * GET /api/erp/purchase-requests/[id]
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "CONCLUIDO") {
     return NextResponse.json(
-      { error: `Solicitação ainda não está Concluída (etapa atual: ${request.currentStage}). Só é exposta ao ERP após a conclusão do fluxo.` },
+      { error: `Solicitação ainda não foi concluída, está em ${STAGES[request.currentStage].label}. Só é exposta ao ERP depois que o fluxo termina.` },
       { status: 409 }
     );
   }

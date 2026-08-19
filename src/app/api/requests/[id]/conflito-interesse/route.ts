@@ -17,12 +17,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const body = await req.json();
   const { declaredBy, hasConflict, details } = body;
 
-  if (!declaredBy) return NextResponse.json({ error: "Campo obrigatório ausente: declaredBy" }, { status: 400 });
+  if (!declaredBy) return NextResponse.json({ error: "Informe quem está fazendo a declaração de conflito de interesse." }, { status: 400 });
   if (typeof hasConflict !== "boolean") {
-    return NextResponse.json({ error: "Campo obrigatório ausente ou inválido: hasConflict" }, { status: 400 });
+    return NextResponse.json({ error: "Responda se existe ou não conflito de interesse." }, { status: 400 });
   }
   if (hasConflict && !details) {
-    return NextResponse.json({ error: "Detalhe o conflito declarado no campo 'details'." }, { status: 422 });
+    return NextResponse.json({ error: "Descreva qual é o conflito, para o time avaliar a reatribuição." }, { status: 422 });
   }
 
   const declaration = await prisma.conflictOfInterestDeclaration.create({

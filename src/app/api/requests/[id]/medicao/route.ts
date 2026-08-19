@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
   if (!scopeExecuted) {
-    return NextResponse.json({ error: "Campo obrigatório ausente: scopeExecuted" }, { status: 400 });
+    return NextResponse.json({ error: "Descreva o escopo executado para registrar a medição." }, { status: 400 });
   }
 
   await prisma.measurement.upsert({

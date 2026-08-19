@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (action === "CANCELAR") {
     if (!treasuryNotified) {
       return NextResponse.json(
-        { error: "Confirme que a Tesouraria foi notificada (treasuryNotified=true) antes de cancelar, pois o contrato pode ter pagamentos recorrentes em andamento." },
+        { error: "Antes de cancelar, confirme que a Tesouraria foi avisada: o contrato pode ter pagamentos recorrentes em andamento." },
         { status: 422 }
       );
     }

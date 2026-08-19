@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
   if (!supplierName || initialValue === undefined || negotiatedValue === undefined || !paymentCondition) {
-    return NextResponse.json({ error: "Campos obrigatórios: supplierName, initialValue, negotiatedValue, paymentCondition." }, { status: 400 });
+    return NextResponse.json({ error: "Preencha o fornecedor, o valor inicial, o valor negociado e a condição de pagamento da cotação." }, { status: 400 });
   }
 
   const quote = await prisma.quote.create({

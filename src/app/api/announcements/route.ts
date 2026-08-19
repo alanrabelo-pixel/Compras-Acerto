@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { title, body: message, authorName } = body;
   if (!title || !message || !authorName) {
-    return NextResponse.json({ error: "Campos obrigatórios: title, body, authorName." }, { status: 400 });
+    return NextResponse.json({ error: "Preencha o título e a mensagem do comunicado." }, { status: 400 });
   }
 
   const announcement = await prisma.announcement.create({ data: { title, body: message, authorName } });

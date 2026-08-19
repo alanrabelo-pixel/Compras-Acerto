@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
   const form = await req.formData();
   const file = form.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Nenhum arquivo enviado (campo 'file')." }, { status: 400 });
+    return NextResponse.json({ error: "Selecione a planilha de contratos para importar." }, { status: 400 });
   }
 
   if (file.size > TAMANHO_MAXIMO_BYTES) {

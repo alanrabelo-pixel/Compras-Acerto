@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if ("managerIds" in body) {
     if (!Array.isArray(body.managerIds) || !body.managerIds.every((id: unknown) => typeof id === "string")) {
-      return NextResponse.json({ error: "managerIds deve ser um array de strings" }, { status: 400 });
+      return NextResponse.json({ error: "Selecione ao menos uma pessoa como gestora deste centro de custo." }, { status: 400 });
     }
     data.managers = { set: body.managerIds.map((id: string) => ({ id })) };
   }

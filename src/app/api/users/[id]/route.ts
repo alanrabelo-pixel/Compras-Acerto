@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const requested: unknown = body.roles;
   if (!Array.isArray(requested) || !requested.every((r) => typeof r === "string")) {
-    return NextResponse.json({ error: "Campo obrigatório ausente: roles (string[]) ou active (boolean)" }, { status: 400 });
+    return NextResponse.json({ error: "Informe os tipos de acesso a conceder, ou se a pessoa fica ativa ou inativa." }, { status: 400 });
   }
   const invalid = requested.filter((r) => !MANAGED_ROLES.includes(r as RoleName));
   if (invalid.length > 0) {

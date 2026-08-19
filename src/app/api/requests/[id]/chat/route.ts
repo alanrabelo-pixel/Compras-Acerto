@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { authorRole, authorName, body: text } = body as { authorRole: ChatRole; authorName: string; body: string };
 
   if (!authorRole || !["COMPRADOR", "SOLICITANTE"].includes(authorRole)) {
-    return NextResponse.json({ error: "authorRole inválido." }, { status: 400 });
+    return NextResponse.json({ error: "Não foi possível identificar se quem escreve é o comprador ou o solicitante." }, { status: 400 });
   }
   if (!authorName?.trim() || !text?.trim()) {
     return NextResponse.json({ error: "Nome e mensagem são obrigatórios." }, { status: 400 });

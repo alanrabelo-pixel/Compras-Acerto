@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
+import { campo } from "@/lib/rotulos";
 
 /**
  * POST /api/requests/[id]/mapeamento-contrato
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const required = { supplierName, startDate, endDate, renewalDate, contractManagerId, area };
   for (const [key, value] of Object.entries(required)) {
-    if (!value) return NextResponse.json({ error: `Campo obrigatório ausente: ${key}` }, { status: 400 });
+    if (!value) return NextResponse.json({ error: `Preencha o campo ${campo(key)} para cadastrar o contrato.` }, { status: 400 });
   }
 
   const contract = await prisma.contract.create({

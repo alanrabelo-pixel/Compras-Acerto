@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const body = await req.json();
   const { score, feedback } = body;
   if (typeof score !== "number" || score < 0 || score > 10) {
-    return NextResponse.json({ error: "score deve ser um número entre 0 e 10." }, { status: 400 });
+    return NextResponse.json({ error: "Dê uma nota de 0 a 10 para a sua experiência." }, { status: 400 });
   }
 
   const evaluation = await prisma.supplierEvaluation.upsert({

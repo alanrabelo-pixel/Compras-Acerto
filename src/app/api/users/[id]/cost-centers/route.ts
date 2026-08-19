@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const body = await req.json();
   if (!Array.isArray(body.costCenterIds) || !body.costCenterIds.every((id: unknown) => typeof id === "string")) {
-    return NextResponse.json({ error: "costCenterIds deve ser um array de strings" }, { status: 400 });
+    return NextResponse.json({ error: "Selecione ao menos um centro de custo." }, { status: 400 });
   }
 
   const user = await prisma.user.update({

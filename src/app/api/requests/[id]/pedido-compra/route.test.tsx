@@ -56,7 +56,10 @@ describe("POST /api/requests/[id]/pedido-compra", () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toMatch(/contactPhone/);
+    // A mensagem nomeia o campo como ele aparece no formulário, não pela chave
+    // interna: quem está preenchendo a tela não reconhece "contactPhone".
+    expect(data.error).toMatch(/Telefone do contato/);
+    expect(data.error, "não deve vazar o nome interno do campo").not.toMatch(/contactPhone/);
   });
 
   it("rejeita quando o ator não tem papel Comprador", async () => {

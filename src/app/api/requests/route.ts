@@ -4,6 +4,7 @@ import { slaDaysForDiretoria } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
+import { campo } from "@/lib/rotulos";
 
 // GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
@@ -60,11 +61,11 @@ export async function POST(req: NextRequest) {
   };
   for (const [key, value] of Object.entries(required)) {
     if (value === undefined || value === null || value === "") {
-      return NextResponse.json({ error: `Campo obrigatório ausente: ${key}` }, { status: 400 });
+      return NextResponse.json({ error: `Preencha o campo ${campo(key)} antes de enviar a solicitação.` }, { status: 400 });
     }
   }
   if (!budgetLineText && !extraBudget) {
-    return NextResponse.json({ error: "Campo obrigatório ausente: budgetLineText (ou selecione Orçamento Extra)" }, { status: 400 });
+    return NextResponse.json({ error: "Informe a Linha do Orçamento, ou marque Orçamento Extra se não houver uma." }, { status: 400 });
   }
 
   const costCenter = await prisma.costCenter.findUnique({

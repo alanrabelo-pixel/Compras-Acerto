@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireErpAuth } from "@/lib/erpAuth";
+import { STAGES } from "@/lib/workflow";
 
 /**
  * POST /api/erp/purchase-requests/[id]/confirm
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "CONCLUIDO") {
     return NextResponse.json(
-      { error: `Solicitação ainda não está Concluída (etapa atual: ${request.currentStage}).` },
+      { error: `Solicitação ainda não foi concluída, está em ${STAGES[request.currentStage].label}.` },
       { status: 409 }
     );
   }
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const body = await req.json();
   const { erpExternalId, note } = body;
   if (!erpExternalId) {
-    return NextResponse.json({ error: "Campo obrigatório ausente: erpExternalId" }, { status: 400 });
+    return NextResponse.json({ error: "Informe o identificador da solicitação no ERP." }, { status: 400 });
   }
 
   const updated = await prisma.purchaseRequest.update({

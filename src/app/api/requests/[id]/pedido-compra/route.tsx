@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { avancarEtapa } from "@/lib/etapa";
 import { type PedidoCompraItem } from "@/lib/pdf/pedidoCompra";
+import { campo } from "@/lib/rotulos";
 
 /**
  * POST /api/requests/[id]/pedido-compra
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   };
   for (const [key, value] of Object.entries(required)) {
     if (value === undefined || value === null || value === "") {
-      return NextResponse.json({ error: `Campo obrigatório ausente: ${key}` }, { status: 400 });
+      return NextResponse.json({ error: `Preencha o campo ${campo(key)} para gerar o Pedido de Compra.` }, { status: 400 });
     }
   }
 

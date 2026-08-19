@@ -3,7 +3,7 @@ import { RoleName } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { decryptSecret } from "@/lib/crypto";
-import { approvalLevel } from "@/lib/workflow";
+import { approvalLevel, STAGES } from "@/lib/workflow";
 import {
   generateInsight,
   buildTriagemPrompt,
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const allowedRoles = STAGE_ROLE[request.currentStage];
   if (!allowedRoles) {
     return NextResponse.json(
-      { error: `Assistente de IA não está disponível na etapa atual (${request.currentStage}).` },
+      { error: `O assistente de IA não atua na etapa de ${STAGES[request.currentStage].label}.` },
       { status: 409 }
     );
   }

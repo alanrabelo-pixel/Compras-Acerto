@@ -58,3 +58,65 @@ export function rotulo(mapa: Record<string, string>, valor: string | null | unde
   if (!valor) return "";
   return mapa[valor] ?? valor;
 }
+
+/**
+ * Nome dos campos do jeito que aparecem no formulário.
+ *
+ * As mensagens de erro da API interpolavam a chave do objeto direto, então a
+ * pessoa lia "Campo obrigatório ausente: shortDescription" ou
+ * "supplierLegalName". O nome interno do campo não ajuda quem está preenchendo
+ * a tela: ele precisa do rótulo que está vendo.
+ */
+export const CAMPO_LABEL: Record<string, string> = {
+  // Nova Solicitação
+  requesterId: "Solicitante",
+  diretoria: "Diretoria",
+  costCenterId: "Centro de Custo",
+  leadershipPreApproved: "Alinhamento com a liderança",
+  budgetLineText: "Linha do Orçamento",
+  priority: "Prioridade",
+  demandType: "Tipo de Demanda",
+  shortDescription: "Descrição Resumida",
+  longDescription: "Descrição Detalhada",
+  suggestedDeadline: "Prazo Sugerido",
+  quantity: "Quantidade",
+  estimatedValue: "Valor Estimado",
+  // Pedido de Compra
+  supplierLegalName: "Razão Social do fornecedor",
+  supplierCnpj: "CNPJ do fornecedor",
+  contactName: "Nome do contato",
+  contactPhone: "Telefone do contato",
+  contactEmail: "E-mail do contato",
+  initialValue: "Valor inicial",
+  negotiatedValue: "Valor negociado",
+  paymentCondition: "Condição de pagamento",
+  installments: "Número de parcelas",
+  prazoEntrega: "Prazo de entrega",
+  localEntrega: "Local de entrega",
+  // Mapeamento de Contrato
+  supplierName: "Razão Social do fornecedor",
+  startDate: "Início da vigência",
+  endDate: "Fim da vigência",
+  renewalDate: "Renovação prevista",
+  contractManagerId: "Gestor do contrato",
+  area: "Área",
+  // Outras etapas
+  documentUrl: "Link do documento",
+  scopeExecuted: "Escopo executado",
+  erpExternalId: "Identificador no ERP",
+  declaredBy: "Quem declara",
+  hasConflict: "Há conflito de interesse",
+  uploadedBy: "Quem está anexando",
+  authorName: "Nome de quem escreve",
+  title: "Título",
+  body: "Mensagem",
+  requesterName: "Nome do solicitante",
+  requesterEmail: "E-mail do solicitante",
+  description: "Descrição",
+  name: "Nome",
+};
+
+/** Rótulo de um campo, com o nome interno como último recurso. */
+export function campo(chave: string): string {
+  return CAMPO_LABEL[chave] ?? chave;
+}

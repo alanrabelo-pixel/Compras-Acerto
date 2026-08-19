@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { level: str
 
   const body = await req.json();
   if (!Array.isArray(body.approverIds) || !body.approverIds.every((id: unknown) => typeof id === "string")) {
-    return NextResponse.json({ error: "approverIds deve ser um array de strings" }, { status: 400 });
+    return NextResponse.json({ error: "Selecione ao menos uma pessoa como aprovadora desta alçada." }, { status: 400 });
   }
   const approverIds: string[] = body.approverIds;
 

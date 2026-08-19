@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
   }
   if (!requesterName || !requesterEmail || !description) {
-    return NextResponse.json({ error: "Campos obrigatórios: requesterName, requesterEmail, description." }, { status: 400 });
+    return NextResponse.json({ error: "Preencha seu nome, seu e-mail e a descrição do que precisa." }, { status: 400 });
   }
 
   const config = TICKET_CATEGORIES[categorySlug];

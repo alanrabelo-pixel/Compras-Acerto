@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const body = await req.json();
   const { authorName, body: messageBody } = body;
   if (!authorName || !messageBody) {
-    return NextResponse.json({ error: "Campos obrigatórios: authorName, body." }, { status: 400 });
+    return NextResponse.json({ error: "Escreva a mensagem antes de enviar." }, { status: 400 });
   }
 
   const message = await prisma.ticketMessage.create({

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name) return NextResponse.json({ error: "Campo obrigatório ausente: name" }, { status: 400 });
+  if (!name) return NextResponse.json({ error: "Informe o nome do centro de custo." }, { status: 400 });
 
   const managerIds: string[] = Array.isArray(body.managerIds) ? body.managerIds : [];
 
