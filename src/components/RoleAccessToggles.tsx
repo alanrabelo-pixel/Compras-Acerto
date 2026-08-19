@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAcaoRemota, StatusDaAcao } from "@/components/useAcaoRemota";
 
 const TIERS: { role: string; label: string }[] = [
   { role: "ADMIN", label: "Admin" },
@@ -14,24 +15,28 @@ const TIERS: { role: string; label: string }[] = [
 export function RoleAccessToggles({ userId, initialRoles }: { userId: string; initialRoles: string[] }) {
   const router = useRouter();
   const [roles, setRoles] = useState<string[]>(initialRoles);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [emAndamento, setEmAndamento] = useState<string | null>(null);
+  const { estado, executar } = useAcaoRemota();
 
   async function toggle(role: string) {
     const next = roles.includes(role) ? roles.filter((r) => r !== role) : [...roles, role];
-    setLoading(role);
-    try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roles: next }),
-      });
-      if (res.ok) {
+    setEmAndamento(role);
+    // Só aplica na tela depois que o servidor aceitou. Um 403 aqui significa
+    // que o papel NÃO foi concedido, e deixar o botão aceso mentiria sobre
+    // quem tem acesso ao quê, que é justamente o que esta tela controla.
+    await executar(
+      () =>
+        fetch(`/api/users/${userId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roles: next }),
+        }),
+      () => {
         setRoles(next);
         router.refresh();
       }
-    } finally {
-      setLoading(null);
-    }
+    );
+    setEmAndamento(null);
   }
 
   return (
@@ -43,13 +48,14 @@ export function RoleAccessToggles({ userId, initialRoles }: { userId: string; in
             key={t.role}
             className={`btn ${active ? "btn-primary" : "btn-secondary"}`}
             style={{ padding: "4px 9px", fontSize: 11 }}
-            disabled={loading === t.role}
+            disabled={emAndamento === t.role}
             onClick={() => toggle(t.role)}
           >
             {t.label}
           </button>
         );
       })}
+      <StatusDaAcao estado={estado} />
     </div>
   );
 }

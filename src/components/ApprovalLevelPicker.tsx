@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAcaoRemota, StatusDaAcao } from "@/components/useAcaoRemota";
 import { MultiUserPicker } from "@/components/MultiUserPicker";
 
 /**
@@ -13,26 +14,27 @@ import { MultiUserPicker } from "@/components/MultiUserPicker";
 export function ApprovalLevelPicker({ level, initialApproverIds }: { level: number; initialApproverIds: string[] }) {
   const router = useRouter();
   const [approverIds, setApproverIds] = useState(initialApproverIds);
-  const [loading, setLoading] = useState(false);
+  const { estado, executar, salvando } = useAcaoRemota();
 
   async function save(nextApproverIds: string[]) {
+    const anterior = approverIds;
     setApproverIds(nextApproverIds);
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/approval-levels/${level}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approverIds: nextApproverIds }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setLoading(false);
-    }
+    const deuCerto = await executar(
+      () =>
+        fetch(`/api/approval-levels/${level}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approverIds: nextApproverIds }),
+        }),
+      () => router.refresh()
+    );
+    if (!deuCerto) setApproverIds(anterior);
   }
 
   return (
-    <div style={{ opacity: loading ? 0.6 : 1 }}>
+    <div style={{ opacity: salvando ? 0.6 : 1 }}>
       <MultiUserPicker selectedIds={approverIds} onChange={save} role="APROVADOR" emptyLabel="Sem aprovador definido" />
+      <StatusDaAcao estado={estado} />
     </div>
   );
 }

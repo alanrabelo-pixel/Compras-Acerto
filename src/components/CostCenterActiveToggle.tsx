@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAcaoRemota, StatusDaAcao } from "@/components/useAcaoRemota";
 
 /**
  * Ativa/desativa um centro de custo (ver /admin/centros-de-custo). Preferir
@@ -11,24 +11,22 @@ import { useRouter } from "next/navigation";
  */
 export function CostCenterActiveToggle({ costCenterId, active }: { costCenterId: string; active: boolean }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { estado, executar, salvando } = useAcaoRemota();
 
   async function toggle() {
     const next = !active;
     if (!next && !confirm("Desativar este centro de custo? Ele deixa de aparecer para novas solicitações, mas o histórico das já existentes continua intacto.")) {
       return;
     }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/cost-centers/${costCenterId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: next }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setLoading(false);
-    }
+    await executar(
+      () =>
+        fetch(`/api/cost-centers/${costCenterId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ active: next }),
+        }),
+      () => router.refresh()
+    );
   }
 
   return (
@@ -42,11 +40,12 @@ export function CostCenterActiveToggle({ costCenterId, active }: { costCenterId:
       <button
         className={`btn ${active ? "btn-danger" : "btn-secondary"}`}
         style={{ padding: "4px 9px", fontSize: 11 }}
-        disabled={loading}
+        disabled={salvando}
         onClick={toggle}
       >
         {active ? "Desativar" : "Reativar"}
       </button>
+      <StatusDaAcao estado={estado} />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAcaoRemota, StatusDaAcao } from "@/components/useAcaoRemota";
 import { MultiUserPicker } from "@/components/MultiUserPicker";
 
 /**
@@ -15,26 +16,29 @@ import { MultiUserPicker } from "@/components/MultiUserPicker";
 export function CostCenterManagerPicker({ costCenterId, initialManagerIds }: { costCenterId: string; initialManagerIds: string[] }) {
   const router = useRouter();
   const [managerIds, setManagerIds] = useState(initialManagerIds);
-  const [loading, setLoading] = useState(false);
+  const { estado, executar, salvando } = useAcaoRemota();
 
   async function save(nextManagerIds: string[]) {
+    const anterior = managerIds;
     setManagerIds(nextManagerIds);
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/cost-centers/${costCenterId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ managerIds: nextManagerIds }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setLoading(false);
-    }
+    const deuCerto = await executar(
+      () =>
+        fetch(`/api/cost-centers/${costCenterId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ managerIds: nextManagerIds }),
+        }),
+      () => router.refresh()
+    );
+    // Reverte a mudança otimista: sem isso a tela mostraria o valor novo
+    // enquanto o servidor recusou, que é pior que não dar retorno nenhum.
+    if (!deuCerto) setManagerIds(anterior);
   }
 
   return (
-    <div style={{ opacity: loading ? 0.6 : 1 }}>
+    <div style={{ opacity: salvando ? 0.6 : 1 }}>
       <MultiUserPicker selectedIds={managerIds} onChange={save} role="APROVADOR" emptyLabel="Sem gestor do centro de custo definido" />
+      <StatusDaAcao estado={estado} />
     </div>
   );
 }
