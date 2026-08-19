@@ -126,6 +126,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "Aprovação não encontrada para esta solicitação" }, { status: 404 });
   }
 
+  // `decision` era gravada crua. Como só "REPROVADO" e "PENDENTE" recebem
+  // tratamento especial abaixo, qualquer outra string fazia a solicitação
+  // avançar como se tivesse sido aprovada. Valida contra o enum antes de tudo.
+  if (decision !== "APROVADO" && decision !== "REPROVADO") {
+    return NextResponse.json(
+      { error: "Decisão inválida. Envie APROVADO ou REPROVADO." },
+      { status: 422 }
+    );
+  }
+
   if (personifiedBy) {
     const roleError = await requireRole(personifiedBy, ["COMPRADOR"]);
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
@@ -146,6 +156,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!justification) {
       return NextResponse.json({ error: "Justificativa é obrigatória ao personificar um aprovador." }, { status: 422 });
     }
+  } else {
+    // Sem personificação, a decisão só pode ser registrada pelo próprio
+    // aprovador designado. Antes disso não havia checagem nenhuma neste
+    // caminho: bastava omitir `personifiedBy` para decidir qualquer aprovação,
+    // em qualquer valor, sem papel e sem deixar rastro (personifiedBy fica
+    // null, então o histórico atribuía a decisão ao aprovador legítimo).
+    //
+    // requireRole com requireSelf (padrão) resolve as duas checagens de uma
+    // vez: que quem chama é de fato `approval.approverId`, e que essa pessoa
+    // tem o papel APROVADOR.
+    const roleError = await requireRole(approval.approverId, ["APROVADOR"]);
+    if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
   }
 
   await prisma.approval.update({

@@ -99,7 +99,11 @@ describe("POST /api/requests/[id]/pedido-compra", () => {
 
     const pdfPath = path.join(process.cwd(), "public", "pedidos-compra", `${request.code}.pdf`);
     expect(fs.existsSync(pdfPath)).toBe(true);
-  });
+    // Prazo maior só aqui: este teste gera um PDF de verdade, registrando três
+    // fontes TTF. Sozinho leva ~3s, mas sob a concorrência da suíte cheia
+    // passava dos 5s padrão e falhava por timeout, sem nada de errado no
+    // comportamento testado.
+  }, 30000);
 
   it("rejeita quando nenhum item é informado", async () => {
     const requester = await createTestUser([]);
