@@ -10,6 +10,7 @@ import {
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { requireRole } from "@/lib/rbac";
+import { avancarEtapa } from "@/lib/etapa";
 import { logger } from "@/lib/logger";
 
 /**
