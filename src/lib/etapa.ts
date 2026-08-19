@@ -104,8 +104,14 @@ export async function avancarEtapa(params: {
   }
 }
 
-/** Sentinela interna: força o rollback da transação sem virar erro 500. */
-class ConflitoDeEtapa extends Error {}
+/**
+ * Sentinela: força o rollback da transação sem virar erro 500.
+ *
+ * Exportada porque a rota de override administrativo precisa do mesmo padrão
+ * de guard atômico, mas não pode usar avancarEtapa: ela existe justamente para
+ * contornar o grafo de transições que o helper impõe.
+ */
+export class ConflitoDeEtapa extends Error {}
 
 /**
  * Aviso padrão de mudança de etapa ao solicitante.

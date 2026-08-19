@@ -200,13 +200,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if (decision === "REPROVADO") {
     const nextStage = nextAfterAprovacao({ approved: false, needsContract: Boolean(request.needsContract) });
-    await prisma.purchaseRequest.update({
-      where: { id: request.id },
-      data: { currentStage: nextStage, status: "CANCELADO", cancelReason: justification },
+    const cancelamento = await avancarEtapa({
+      requestId: request.id,
+      de: "APROVACAO",
+      para: nextStage,
+      comentario: justification,
+      dadosExtras: { status: "CANCELADO", cancelReason: justification },
     });
-    await prisma.stageEvent.create({
-      data: { requestId: request.id, fromStage: "APROVACAO", toStage: nextStage, comment: justification },
-    });
+    if (!cancelamento.ok) {
+      return NextResponse.json({ error: cancelamento.erro }, { status: cancelamento.status });
+    }
     const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification ?? "não informado");
     await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
     return NextResponse.json({ status: "REPROVADO" });
@@ -223,15 +226,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const nextStage = nextAfterAprovacao({ approved: true, needsContract: Boolean(request.needsContract) });
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: nextStage },
+
+  // O guard atômico importa especialmente aqui: dois aprovadores de Nível 2 ou
+  // 3 decidindo quase junto liam os dois o mesmo lote acima, viam ambos que
+  // ninguém estava pendente, e ambos avançavam a etapa. O resultado era evento
+  // de histórico duplicado e o e-mail de aprovado saindo duas vezes. Agora só o
+  // primeiro escreve, e o segundo recebe 409.
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "APROVACAO",
+    para: nextStage,
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "APROVACAO", toStage: nextStage },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
+
   const { subject, html } = templates.aprovado(request.requester.name, request.shortDescription);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  return NextResponse.json(updated);
+  return NextResponse.json(avanco.solicitacao);
 }

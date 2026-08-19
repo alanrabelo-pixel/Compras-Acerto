@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa } from "@/lib/etapa";
 import { type PedidoCompraItem } from "@/lib/pdf/pedidoCompra";
 
 /**
@@ -115,16 +116,20 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   await prisma.purchaseOrder.update({ where: { id: purchaseOrder.id }, data: { pdfUrl } });
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: "AGUARDANDO_ENTREGA" },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "PEDIDO_COMPRA",
+    para: "AGUARDANDO_ENTREGA",
+    actorId,
+    comentario: `Pedido de Compra ${request.code} gerado.`,
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "PEDIDO_COMPRA", toStage: "AGUARDANDO_ENTREGA", actorId, comment: `Pedido de Compra ${request.code} gerado.` },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
+  // Template próprio, com o link do PDF: não é o aviso genérico de avanço.
   const { subject, html } = templates.pedidoCompraGerado(request.requester.name, request.shortDescription, request.code, `${process.env.APP_URL}${pdfUrl}`);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  return NextResponse.json({ purchaseOrder: { ...purchaseOrder, pdfUrl }, request: updated }, { status: 201 });
+  return NextResponse.json({ purchaseOrder: { ...purchaseOrder, pdfUrl }, request: avanco.solicitacao }, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { Stage } from "@prisma/client";
+import { ConflitoDeEtapa } from "@/lib/etapa";
 
 /**
  * PATCH /api/requests/[id]/stage-override
@@ -39,20 +40,47 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const status = newStage === "CONCLUIDO" ? "CONCLUIDO" : newStage === "CANCELADO" ? "CANCELADO" : "ABERTO";
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: newStage, status },
+  // Esta rota NÃO usa avancarEtapa de propósito, e é a única do fluxo que não
+  // usa. O helper recusa qualquer transição que o grafo não preveja, e este
+  // endpoint existe justamente para contornar o grafo: é o mecanismo de exceção
+  // para corrigir um passo em falso. Dar ao helper uma opção de "ignorar o
+  // grafo" enfraqueceria a garantia dele para as outras quinze rotas.
+  //
+  // O que ela ganha aqui é a outra metade: a mudança de etapa e o registro de
+  // auditoria passam a ser atômicos. Antes eram duas escritas soltas, e uma
+  // falha no meio deixava a solicitação movida sem nenhum rastro de quem a
+  // moveu, o que num override manual é justamente o registro que mais importa.
+  const updated = await prisma.$transaction(async (tx) => {
+    const alteradas = await tx.purchaseRequest.updateMany({
+      where: { id: request.id, currentStage: request.currentStage },
+      data: { currentStage: newStage, status },
+    });
+    if (alteradas.count === 0) {
+      throw new ConflitoDeEtapa();
+    }
+
+    await tx.stageEvent.create({
+      data: {
+        requestId: request.id,
+        fromStage: request.currentStage,
+        toStage: newStage,
+        actorId,
+        comment: direction === "back" ? "Etapa retrocedida manualmente por um administrador." : "Etapa avançada manualmente por um administrador (sem validações da etapa).",
+      },
+    });
+
+    return tx.purchaseRequest.findUniqueOrThrow({ where: { id: request.id } });
+  }).catch((erro) => {
+    if (erro instanceof ConflitoDeEtapa) return null;
+    throw erro;
   });
 
-  await prisma.stageEvent.create({
-    data: {
-      requestId: request.id,
-      fromStage: request.currentStage,
-      toStage: newStage,
-      actorId,
-      comment: direction === "back" ? "Etapa retrocedida manualmente por um administrador." : "Etapa avançada manualmente por um administrador (sem validações da etapa).",
-    },
-  });
+  if (!updated) {
+    return NextResponse.json(
+      { error: "A solicitação mudou de etapa enquanto esta ação era processada. Recarregue a página para ver o estado atual." },
+      { status: 409 }
+    );
+  }
 
   return NextResponse.json(updated);
 }

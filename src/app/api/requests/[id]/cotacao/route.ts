@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { minimumQuotesRequired } from "@/lib/workflow";
 import { requireRole } from "@/lib/rbac";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * POST /api/requests/[id]/cotacao: adiciona uma cotação (uma chamada por
@@ -70,13 +70,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     );
   }
 
-  const updated = await prisma.purchaseRequest.update({ where: { id: request.id }, data: { currentStage: "MAPA_COTACAO" } });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "COTACAO", toStage: "MAPA_COTACAO", actorId: body.actorId },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "COTACAO",
+    para: "MAPA_COTACAO",
+    actorId: body.actorId,
   });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Mapa de Cotação");
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  await notificarAvancoDeEtapa(avanco.solicitacao, "MAPA_COTACAO");
 
-  return NextResponse.json(updated);
+  return NextResponse.json(avanco.solicitacao);
 }

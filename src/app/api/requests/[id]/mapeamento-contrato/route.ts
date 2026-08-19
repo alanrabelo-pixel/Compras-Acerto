@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 
 /**
  * POST /api/requests/[id]/mapeamento-contrato
@@ -60,16 +60,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     },
   });
 
-  const updated = await prisma.purchaseRequest.update({
-    where: { id: request.id },
-    data: { currentStage: "CONCLUIDO", status: "CONCLUIDO" },
+  const avanco = await avancarEtapa({
+    requestId: request.id,
+    de: "MAPEAMENTO_CONTRATO",
+    para: "CONCLUIDO",
+    actorId,
+    dadosExtras: { status: "CONCLUIDO" },
   });
-  await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "MAPEAMENTO_CONTRATO", toStage: "CONCLUIDO", actorId },
-  });
+  if (!avanco.ok) {
+    return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
+  }
 
-  const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Concluído");
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  await notificarAvancoDeEtapa(avanco.solicitacao, "CONCLUIDO");
 
-  return NextResponse.json({ contract, request: updated }, { status: 201 });
+  return NextResponse.json({ contract, request: avanco.solicitacao }, { status: 201 });
 }
