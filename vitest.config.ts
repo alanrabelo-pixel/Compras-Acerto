@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 
 // Carrega .env manualmente (sem dep extra) para os testes de integração das
-// rotas de API — elas importam @/lib/db (Prisma real) no topo do arquivo, e
+// rotas de API, já que elas importam @/lib/db (Prisma real) no topo, e
 // precisam de DATABASE_URL/LOCAL_BYPASS_AUTH disponíveis antes de rodar.
 const envPath = path.resolve(__dirname, ".env");
 if (fs.existsSync(envPath)) {
@@ -19,7 +19,7 @@ if (fs.existsSync(envPath)) {
 
 export default defineConfig({
   // O tsconfig do app usa jsx:"preserve" (o build do Next.js faz essa parte via
-  // SWC) — mas o transformador do Vitest (oxc, nesta versão do Vite) não sabe
+  // SWC), mas o transformador do Vitest (oxc, nesta versão do Vite) não sabe
   // compilar "preserve", só "automatic"/"transform". Sem este override,
   // qualquer .tsx importado por um teste (ex: a rota de Pedido de Compra, que
   // gera PDF via JSX) falha ao transformar.

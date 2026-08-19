@@ -2,11 +2,11 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Centros de custo — lista final (2026-08-11) confirmada pelo usuário: os 11
+// Centros de custo. Lista final (2026-08-11) confirmada pelo usuário: os 11
 // centros com líder definido em COST_CENTER_MANAGERS abaixo, um por um. Os 7
 // centros sem líder (Atendimento, Engenharia de Dados, Engenharia de
 // Software, Outros, Performance, Plataforma Cloud, SI e Privacidade) foram
-// excluídos a pedido do usuário — nenhum tinha solicitação vinculada.
+// excluídos a pedido do usuário, pois nenhum tinha solicitação vinculada.
 const COST_CENTERS = [
   "Comitê de IA", "Gestão", "Data Intelligence", "F&NC",
   "Atração e Fidelização de Consumidores", "Pessoas e Cultura",
@@ -15,7 +15,7 @@ const COST_CENTERS = [
 ];
 
 // Gestor que aprova solicitações de cada centro de custo logo após o envio
-// (etapa APROVACAO_GESTOR) — pedido do usuário (2026-08-11). Todo centro de
+// (etapa APROVACAO_GESTOR), a pedido do usuário (2026-08-11). Todo centro de
 // custo hoje tem um líder definido (ver comentário acima).
 const COST_CENTER_MANAGERS = [
   { costCenter: "Comitê de IA", name: "Afonso Borsoi", email: "afonso.borsoi@acerto.com.br" },
@@ -31,13 +31,13 @@ const COST_CENTER_MANAGERS = [
   { costCenter: "Vendas e Sucesso do Cliente", name: "Pedro", email: "pedro@acerto.com.br" },
 ];
 
-// Linhas de orçamento — dados de exemplo para desenvolvimento local. O
+// Linhas de orçamento: dados de exemplo para desenvolvimento local. O
 // mecanismo real de importação mensal (planilha/API do FP&A) ainda não está
 // definido (ver README, seção "Assunções não verificadas").
 const BUDGET_LINES = [
-  { externalCode: "BL-2026-001", description: "Tecnologia — Infraestrutura", monthRef: "2026-07", available: 150000 },
-  { externalCode: "BL-2026-002", description: "Revenue — Ferramentas Comerciais", monthRef: "2026-07", available: 80000 },
-  { externalCode: "BL-2026-003", description: "Corporativo — Operações Gerais", monthRef: "2026-07", available: 50000 },
+  { externalCode: "BL-2026-001", description: "Tecnologia - Infraestrutura", monthRef: "2026-07", available: 150000 },
+  { externalCode: "BL-2026-002", description: "Revenue - Ferramentas Comerciais", monthRef: "2026-07", available: 80000 },
+  { externalCode: "BL-2026-003", description: "Corporativo - Operações Gerais", monthRef: "2026-07", available: 50000 },
 ];
 
 async function main() {
@@ -63,14 +63,14 @@ async function main() {
     await prisma.costCenter.update({ where: { name: m.costCenter }, data: { managers: { connect: { id: manager.id } } } });
   }
 
-  // Usuários-chave citados no documento (memória de contexto Acerto) — ajustar
+  // Usuários-chave citados no documento (memória de contexto Acerto). Ajustar
   // e-mails/roles reais antes de rodar em produção.
   //
   // canViewBoard: dado de exemplo para desenvolvimento local (libera o
   // Quadro/Contratos/Dashboards para essas pessoas). Em produção, isso é
   // gerenciado manualmente em /admin/acessos (ADMIN), não pelo seed.
   // extraRoles: papéis de alçada da exceção orçamentária (Coordenação/Gerente
-  // F&NC — ver budgetExceptionApproverRole em workflow.ts). ASSUNÇÃO NÃO
+  // F&NC, ver budgetExceptionApproverRole em workflow.ts). ASSUNÇÃO NÃO
   // VERIFICADA: são placeholders sobre pessoas já seedadas, só para o fluxo
   // ficar testável; quem de fato ocupa cada papel precisa ser validado com o
   // time de Compras | F&NC antes de produção.

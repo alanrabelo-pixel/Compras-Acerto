@@ -1,5 +1,5 @@
 // ============================================================================
-// Acerto Compras — Schema de dados
+// Acerto Compras: schema de dados
 // Modela o fluxo completo descrito em "Processo de Compras" (doc de referência)
 // ============================================================================
 
@@ -27,10 +27,10 @@ enum RoleName {
   FISCAL
   ADMIN
   // Papéis de alçada da exceção orçamentária (ver budgetExceptionApproverRole
-  // em workflow.ts) — Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente
+  // em workflow.ts): Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente
   // F&NC. Decisão do usuário: manter só estes dois papéis, sem CEO. ASSUNÇÃO
   // NÃO VERIFICADA: quem de fato ocupa cada papel ainda precisa ser validado
-  // com o time de Compras | F&NC — os usuários de seed são só placeholders.
+  // com o time de Compras | F&NC, pois os de seed são só placeholders.
   COORDENACAO
   GERENTE_FNC
 }
@@ -50,22 +50,22 @@ model User {
   diretoria     Diretoria?
   active        Boolean  @default(true)
   // Controle de acesso às telas internas (Solicitações/quadro, Contratos,
-  // Dashboards) — lista explícita, marcada manualmente por um ADMIN em
+  // Dashboards): lista explícita, marcada manualmente por um ADMIN em
   // /admin/acessos. Todo usuário autenticado (@acerto.com.br) pode abrir
   // Nova Solicitação independente deste campo; só a visão do processo
   // inteiro é restrita.
   canViewBoard  Boolean  @default(false)
   createdAt     DateTime @default(now())
-  // Foto de perfil — chave de armazenamento local (ver src/lib/storage.ts),
+  // Foto de perfil: chave de armazenamento local (ver src/lib/storage.ts),
   // igual ao padrão já usado em Attachment.storageUrl. Só editável pela
   // própria pessoa (ver /api/users/[id]/avatar), e só quando há sessão SSO
-  // real — sem isso não há uma identidade confiável para anexar a foto.
+  // real, porque sem isso não há identidade confiável para anexar a foto.
   avatarUrl     String?
 
   // Chaves de IA pessoais (pedido do usuário): todo mundo na Acerto já tem
   // acesso próprio a Claude e Gemini, então os Assistentes de IA (ver
   // AiInsight/src/lib/integrations/ai.ts) usam a chave de quem está atuando
-  // na etapa no momento — não uma chave única da empresa/app. ASSUNÇÃO NÃO
+  // na etapa no momento, e não uma chave única da empresa/app. ASSUNÇÃO NÃO
   // VERIFICADA: guardadas em texto puro neste ambiente de desenvolvimento;
   // antes de produção, avaliar criptografia em repouso ou um cofre de
   // segredos (ex: variável gerenciada, Vault), já que agora é uma chave por
@@ -100,9 +100,9 @@ model CostCenter {
   active Boolean @default(true)
 
   // Gestor(es) que aprovam solicitações deste centro de custo logo após o
-  // envio (etapa APROVACAO_GESTOR) — mais de um permitido (pedido do
+  // envio (etapa APROVACAO_GESTOR). Mais de um é permitido (pedido do
   // usuário: reduz a necessidade de ajuste manual quando o titular está
-  // ausente — qualquer um do grupo pode decidir). Configurável em
+  // ausente, e aí qualquer um do grupo decide). Configurável em
   // /admin/centros-de-custo. Pode ficar vazio enquanto não configurado.
   managers User[] @relation("CostCenterManagers")
 
@@ -110,7 +110,7 @@ model CostCenter {
 }
 
 // Aprovador(es) padrão de cada alçada de valor (Nível 1/2/3, ver
-// approvalLevel() em src/lib/workflow.ts) — configurável em
+// approvalLevel() em src/lib/workflow.ts), configurável em
 // /admin/centros-de-custo, mesma tela dos gestores de centro de custo. Usado
 // em POST /api/requests/[id]/aprovacao para atribuir automaticamente o
 // aprovador ao criar a Aprovação. Mais de um userId por level é permitido,
@@ -123,7 +123,7 @@ model ApprovalLevelApprover {
   @@id([level, userId])
 }
 
-// Linha de orçamento — importada mensalmente da base de remodelagem FP&A.
+// Linha de orçamento, importada mensalmente da base de remodelagem FP&A.
 // Assunção não verificada: mecanismo de importação (planilha/API) a confirmar com FP&A.
 model BudgetLine {
   id           String   @id @default(cuid())
@@ -137,7 +137,7 @@ model BudgetLine {
 
 // ----------------------------------------------------------------------------
 // Cadastro único de fornecedor (revisão: no fluxo original o fornecedor era
-// texto livre repetido em Cotação, Pedido de Compra e Contrato — sem histórico
+// texto livre repetido em Cotação, Pedido de Compra e Contrato, sem histórico
 // nem status de compliance consolidado). Screening básico (CNPJ ativo, listas
 // restritivas) é obrigatório para QUALQUER fornecedor novo, não só "Ferramenta
 // Nova"; o Due Diligence de privacidade/segurança (DueDiligenceReview) continua
@@ -177,7 +177,7 @@ model Supplier {
 }
 
 // ----------------------------------------------------------------------------
-// Declaração de conflito de interesse — revisão: ausente no fluxo original.
+// Declaração de conflito de interesse. Revisão: ausente no fluxo original.
 // Solicitante e comprador declaram não ter relação pessoal/familiar/financeira
 // com o fornecedor proposto, antes da etapa de Aprovação.
 // ----------------------------------------------------------------------------
@@ -202,7 +202,7 @@ enum DemandType {
   // Adicionado para paridade com o formulário Pipefy ("Compra de Ferramentas
   // - Upgrade ou Dowgrade de versão"). Decisão registrada: NÃO entra no
   // gatilho de Due Diligence completa em nextAfterValidacaoOrcamentaria() /
-  // determineLane() — assume-se que a ferramenta já foi avaliada na
+  // determineLane(), pois assume-se que a ferramenta já foi avaliada na
   // homologação original e um upgrade/downgrade de versão não justifica
   // repetir todo o processo de privacidade/segurança.
   FERRAMENTA_UPGRADE_DOWNGRADE
@@ -215,7 +215,7 @@ enum Priority {
   MEDIA
   ALTA
   // Adicionado para paridade com o Pipefy ("Crítica (Urgência Máxima)").
-  // Reduz o SLA calculado em slaDaysForDiretoria() — ver comentário lá.
+  // Reduz o SLA calculado em slaDaysForDiretoria() (ver comentário lá).
   CRITICA
 }
 
@@ -225,14 +225,14 @@ enum ValueType {
 }
 
 // Faixa de risco do processo (revisão: reintroduz o modelo de lanes já
-// validado em conversas anteriores — nem toda compra precisa do fluxo completo)
+// validado antes, já que nem toda compra precisa do fluxo completo)
 enum Lane {
   FAST
   STANDARD
   STRATEGIC
 }
 
-// Estágios do fluxo — ordem reflete o fluxograma vertical do documento de referência.
+// Estágios do fluxo: a ordem reflete o fluxograma vertical do documento de referência.
 enum Stage {
   SOLICITACAO
   APROVACAO_GESTOR
@@ -272,14 +272,14 @@ model PurchaseRequest {
   costCenter      CostCenter @relation(fields: [costCenterId], references: [id])
 
   // Preenchido automaticamente a partir de CostCenter.managerId na criação da
-  // solicitação (ver POST /api/requests) — nullable porque nem todo centro de
+  // solicitação (ver POST /api/requests), nullable porque nem todo centro de
   // custo tem gestor definido ainda. Decisão dele é registrada nos campos
   // managerApproval* abaixo, na etapa APROVACAO_GESTOR.
   approverManagerId String?
   approverManager   User?   @relation("ApproverManager", fields: [approverManagerId], references: [id])
 
   // Decisão do gestor do centro de custo na etapa APROVACAO_GESTOR (logo após
-  // o envio do formulário) — separada da Approval por alçada de valor, que
+  // o envio do formulário), separada da Approval por alçada de valor, que
   // acontece bem mais à frente (depois de Cotação/Mapa de Cotação) e não
   // existe ainda neste ponto do fluxo.
   managerApprovalDecision      String?   // APROVADO | REPROVADO
@@ -288,13 +288,13 @@ model PurchaseRequest {
   managerApprovalDecidedAt     DateTime?
   // Preenchido quando um ADMIN personifica o gestor pré-definido (pedido do
   // usuário: sem teto de alçada, diferente da personificação do comprador em
-  // Approval.personifiedBy) — managerApprovalActorId continua sendo a quem a
+  // Approval.personifiedBy). managerApprovalActorId continua sendo a quem a
   // decisão é atribuída; aqui fica registrado quem de fato clicou.
   managerApprovalPersonifiedBy String?
 
   budgetLineId String?
   budgetLine   BudgetLine? @relation(fields: [budgetLineId], references: [id])
-  // Texto livre pra "Linha do Orçamento" quando não é Orçamento Extra — hoje
+  // Texto livre pra "Linha do Orçamento" quando não é Orçamento Extra. Hoje
   // esse campo é manual (sem integração com a base de orçamento), então não
   // referencia BudgetLine; budgetLineId/budgetLine seguem só pra registros
   // antigos que já tinham uma linha real vinculada.
@@ -305,18 +305,18 @@ model PurchaseRequest {
   shortDescription String
   longDescription  String   @db.Text
   quantity         Int
-  // Opcional (paridade com o Pipefy, onde este campo não tem asterisco —
+  // Opcional (paridade com o Pipefy, onde este campo não tem asterisco);
   // decisão registrada: preenchimento não é mais exigido na abertura, mas
   // o motor de alçadas (approvalLevel, budgetExceptionLevel,
   // minimumQuotesRequired, determineLane, todos em src/lib/workflow.ts)
-  // continua exigindo um número — por isso a Triagem trava o avanço até o
+  // continua exigindo um número, então a Triagem trava o avanço até o
   // comprador preencher, se ainda estiver nulo (ver rota de triagem).
   estimatedValue   Decimal? @db.Decimal(14, 2)
 
   // Campos abaixo replicam o formulário real do Pipefy (ver conversa com
-  // Compras | F&NC) — não existiam no documento de referência original.
+  // Compras | F&NC), e não existiam no documento de referência original.
   leadershipPreApproved Boolean // "Solicitação de Compras aprovado pela liderança?"
-  suggestedDeadline     DateTime // "Data Limite sugerida para entrega do processo" — sugerida pelo solicitante, não substitui slaDeadline (calculado automaticamente).
+  suggestedDeadline     DateTime // "Data Limite sugerida para entrega do processo", sugerida pelo solicitante, não substitui slaDeadline (calculado automaticamente).
   indicatedSupplierName    String?
   indicatedSupplierPhone   String?
   indicatedSupplierEmail   String?
@@ -329,12 +329,12 @@ model PurchaseRequest {
   valueType     ValueType?
 
   // Revisão: faixa de risco (fast/standard/strategic) calculada na Triagem via
-  // determineLane() — substitui o "um tamanho serve para todos" do fluxo original.
+  // determineLane(). Substitui o "um tamanho serve para todos" do fluxo original.
   lane Lane?
 
   // Revisão: sinalizado quando checkFragmentationRisk() detecta que a soma das
   // solicitações do mesmo fornecedor nos últimos 12 meses ultrapassa a alçada
-  // que essa solicitação sozinha não atingiria. Não bloqueia — força revisão.
+  // que essa solicitação sozinha não atingiria. Não bloqueia, mas força revisão.
   fragmentationFlag Boolean @default(false)
 
   currentStage Stage    @default(SOLICITACAO)
@@ -343,7 +343,7 @@ model PurchaseRequest {
 
   slaDeadline  DateTime? // calculado a partir da diretoria (Tecnologia/Revenue = 45d, Corporativo = 30d)
 
-  // Integração com o futuro ERP (ver src/app/api/erp) — preenchidos quando a
+  // Integração com o futuro ERP (ver src/app/api/erp): preenchidos quando a
   // solicitação CONCLUIDA é puxada e confirmada pelo ERP. erpExternalId é o
   // identificador do lançamento criado do lado do ERP (nota, doc contábil etc).
   erpSyncedAt   DateTime?
@@ -372,13 +372,13 @@ model PurchaseRequest {
   aiInsights       AiInsight[]
 }
 
-// Assistentes de IA (pedido do usuário) — gera, sob demanda de quem está na
+// Assistentes de IA (pedido do usuário): gera, sob demanda de quem está na
 // etapa, uma análise focada (estratégia/riscos/o que confirmar) nas etapas
 // onde é aplicável: Triagem, Due Diligence, Cotação, Mapa de Cotação,
 // Jurídico e Mapeamento de Contrato (o "stage" abaixo identifica qual). Cada
 // chamada roda Anthropic e Gemini EM PARALELO (pedido do usuário) e persiste
-// os dois resultados aqui para histórico/auditoria e comparação lado a lado
-// — uma sugestão gerada em Cotação, por exemplo, continua visível quando a
+// os dois resultados aqui para histórico/auditoria e comparação lado a lado.
+// Uma sugestão gerada em Cotação, por exemplo, continua visível quando a
 // solicitação chega ao Mapa de Cotação. Ver src/lib/integrations/ai.ts.
 model AiInsight {
   id            String   @id @default(cuid())
@@ -446,14 +446,14 @@ model Comment {
   createdAt DateTime @default(now())
 }
 
-// Categorias de anexo do formulário Pipefy (ver Nova Solicitação) — GERAL
+// Categorias de anexo do formulário Pipefy (ver Nova Solicitação). GERAL
 // cobre os anexos soltos durante o fluxo (ex: painel de Anexos genérico).
 enum AttachmentCategory {
   GERAL
   PROPOSTA_FORNECEDOR_INDICADO
   APROVACAO_EXTRA_ORCAMENTARIA
   ANEXO_COMPLEMENTAR
-  // Contrato assinado (PDF), anexado na tela de Contratos — reaproveita o
+  // Contrato assinado (PDF), anexado na tela de Contratos. Reaproveita o
   // mesmo mecanismo de Attachment/storage.ts da solicitação de origem
   // (Contract.requestId), sem precisar de uma tabela própria.
   CONTRATO_ASSINADO
@@ -462,7 +462,7 @@ enum AttachmentCategory {
 model Attachment {
   id         String   @id @default(cuid())
   // Um anexo pertence a uma PurchaseRequest OU a um SimpleTicket (Chamados),
-  // nunca os dois — por isso os dois lados são opcionais. Chamados não têm
+  // nunca os dois, por isso os dois lados são opcionais. Chamados não têm
   // Stage (fluxo de workflow da Compras não se aplica a eles), daí stage
   // também virar opcional em vez de exigir um valor sem sentido.
   requestId  String?
@@ -479,10 +479,10 @@ model Attachment {
   budgetExceptions BudgetException[]
 }
 
-// Comunicados gerais (botão de foguete na Home/AppShell) — avisos simples de
+// Comunicados gerais (botão de foguete na Home/AppShell): avisos simples de
 // leitura para todo mundo, sem alçada nem fluxo. Só ADMIN publica (ver
 // POST /api/announcements); qualquer usuário autenticado lê. Sem tabela de
-// "lido/não lido" por pessoa por enquanto — o badge de "novo" no botão usa
+// "lido/não lido" por pessoa por enquanto, e o badge de "novo" no botão usa
 // só a contagem dos últimos dias (ver src/lib/announcements.ts).
 model Announcement {
   id         String   @id @default(cuid())
@@ -512,14 +512,14 @@ model BudgetException {
   decidedAt   DateTime?
 
   // Anexo de "Aprovação Extra-orçamentária" enviado pelo solicitante já na
-  // abertura (categoria APROVACAO_EXTRA_ORCAMENTARIA) — vinculado aqui
+  // abertura (categoria APROVACAO_EXTRA_ORCAMENTARIA), vinculado aqui
   // automaticamente quando esta exceção é criada, se existir.
   attachmentId String?
   attachment   Attachment? @relation(fields: [attachmentId], references: [id])
 }
 
 // ----------------------------------------------------------------------------
-// Due Diligence (Privacidade) — obrigatório para Ferramenta Nova
+// Due Diligence (Privacidade): obrigatório para Ferramenta Nova
 // ----------------------------------------------------------------------------
 
 model DueDiligenceReview {
@@ -560,12 +560,12 @@ model Approval {
   id            String   @id @default(cuid())
   requestId     String
   request       PurchaseRequest @relation(fields: [requestId], references: [id])
-  level         Int      // 1: até 50k | 2: até 500k | 3: acima de 500k (CEO) — renumerado, ver revisão
+  level         Int      // 1: até 50k | 2: até 500k | 3: acima de 500k (CEO). Renumerado, ver revisão
   approverId    String
   approver      User     @relation(fields: [approverId], references: [id])
   decision      ApprovalDecision @default(PENDENTE)
   justification String?
-  personifiedBy String?  // comprador que agiu em nome do aprovador — só permitido até o Nível 1 (ver canPersonifyApprover)
+  personifiedBy String?  // comprador que agiu em nome do aprovador, só permitido até o Nível 1 (ver canPersonifyApprover)
   dueAt         DateTime? // revisão: prazo para decisão; disparo de escalonamento se ultrapassado
   escalatedAt   DateTime? // revisão: quando o escalonamento por SLA foi disparado
   decidedAt     DateTime?
@@ -610,7 +610,7 @@ model PurchaseOrder {
   negotiatedValue   Decimal @db.Decimal(14, 2)
   paymentCondition  String
   installments      Int
-  // Valor de cada parcela — sugerido automaticamente (negotiatedValue /
+  // Valor de cada parcela, sugerido automaticamente (negotiatedValue /
   // installments) mas editável no formulário, para cobrir arredondamento ou
   // parcelas desiguais. Pedido do usuário: ajuda a alimentar o fluxo de
   // caixa futuramente (quanto sai, em quantas parcelas).
@@ -619,7 +619,7 @@ model PurchaseOrder {
   // Campos exigidos pelo layout do PDF do Pedido de Compra (portado do
   // gerador Python/ReportLab já validado em produção pela Acerto).
   prazoEntrega      String?
-  localEntrega      String? // "Local de Entrega / Instruções de Recebimento" — campo distinto de prazoEntrega, não fundir.
+  localEntrega      String? // "Local de Entrega / Instruções de Recebimento", campo distinto de prazoEntrega, não fundir.
   frete             FreightType @default(CIF)
   sentToSupplier    Boolean @default(false)
   needsMeasurement  Boolean @default(false)
@@ -629,7 +629,7 @@ model PurchaseOrder {
   items PurchaseOrderItem[]
 }
 
-// Itens do Pedido de Compra — sem limite de linhas; o PDF (ver
+// Itens do Pedido de Compra, sem limite de linhas. O PDF (ver
 // src/lib/pdf/pedidoCompra.tsx) pagina automaticamente quando ultrapassa a
 // primeira página A4 paisagem.
 model PurchaseOrderItem {
@@ -652,7 +652,7 @@ model Contract {
   id                String   @id @default(cuid())
   // Opcional para permitir contratos legados importados em massa (planilha,
   // ver /api/contratos/import) que não nasceram de uma PurchaseRequest deste
-  // sistema — nesse caso, diretoria abaixo guarda o valor direto (para
+  // sistema. Nesse caso, diretoria abaixo guarda o valor direto (para
   // contratos originados do fluxo normal, a diretoria continua vindo de
   // request.diretoria, ver contratos/page.tsx e contratos/[id]/page.tsx).
   requestId         String?  @unique
@@ -667,8 +667,8 @@ model Contract {
   // SupplierPicker, nomeFantasia/CNPJ vêm do cadastro (Supplier); objeto e
   // condição de pagamento são sugeridos a partir da solicitação de origem
   // (shortDescription/longDescription e PurchaseOrder.paymentCondition) mas
-  // continuam editáveis. tipoDeDocumento não tem nenhuma fonte no processo —
-  // é sempre preenchido manualmente.
+  // continuam editáveis. tipoDeDocumento não tem nenhuma fonte no processo,
+  // por isso é sempre preenchido manualmente.
   supplierTradeName String? // Nome fantasia
   supplierCnpj      String?
   documentType      String? // Tipo de documento (preenchimento manual)
@@ -689,7 +689,7 @@ model Contract {
   corporateChangeClause Boolean @default(false)
   status            String   @default("ATIVO") // ATIVO | RENOVACAO_EM_ANDAMENTO | CANCELADO
   // Revisão: cancelamento do fluxo original só notificava solicitante e
-  // jurídico, sem avisar Tesouraria — risco de continuar pagando contrato
+  // jurídico, sem avisar Tesouraria, com risco de seguir pagando contrato
   // cancelado. Este campo força a checagem antes de marcar CANCELADO.
   treasuryNotifiedOnCancel Boolean @default(false)
 
@@ -755,7 +755,7 @@ model SupplierEvaluation {
 }
 
 // ----------------------------------------------------------------------------
-// Notificações (log de e-mails/Slack disparados — auditoria de comunicação)
+// Notificações (log de e-mails/Slack disparados, auditoria de comunicação)
 // ----------------------------------------------------------------------------
 
 model Notification {
@@ -770,10 +770,10 @@ model Notification {
 }
 
 // ----------------------------------------------------------------------------
-// Chamados simples (Viagens Acerto / Facilities) — fluxo bem mais enxuto que
+// Chamados simples (Viagens Acerto / Facilities): fluxo bem mais enxuto que
 // o de Compras: nome/e-mail livres (não exige cadastro de User) + descrição
 // aberta + histórico de mensagens trocadas dentro do próprio chamado. Sem
-// alçada, sem etapas — só aberto/em andamento/concluído.
+// alçada, sem etapas, só aberto/em andamento/concluído.
 // ----------------------------------------------------------------------------
 
 enum TicketCategory {
@@ -800,7 +800,7 @@ model SimpleTicket {
   updatedAt      DateTime       @updatedAt
 
   // Campos exclusivos do fluxo de Envio de NDA (opcionais, ver
-  // src/components/NdaRequestForm.tsx) — dados de contato do fornecedor com
+  // src/components/NdaRequestForm.tsx): dados de contato do fornecedor com
   // quem o termo de confidencialidade será compartilhado. Vazios para
   // chamados de Viagens/Facilities.
   supplierName         String?
@@ -810,10 +810,10 @@ model SimpleTicket {
   supplierContactPhone String?
 
   // Subtipo do pedido dentro da categoria Jurídico/NDA (ver
-  // src/components/NdaRequestForm.tsx) — "NDA" (usa os campos supplier*
+  // src/components/NdaRequestForm.tsx): "NDA" (usa os campos supplier*
   // acima) ou "CONTRATO" (dúvida sobre contrato ativo, usa os campos
   // contract* abaixo). Nulo para Viagens/Facilities. contractId não é uma
-  // relação Prisma de propósito — mesmo padrão denormalizado já usado para
+  // relação Prisma de propósito, seguindo o padrão denormalizado usado para
   // supplierName acima (sem FK pra Supplier), só guarda de qual Contract
   // real o pedido partiu, sem inventar dado novo.
   requestKind          String?

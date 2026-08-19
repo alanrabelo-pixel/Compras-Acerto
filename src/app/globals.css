@@ -1,5 +1,5 @@
 /* ============================================================================
-   Acerto Compras — sistema de design
+   Acerto Compras: sistema de design
    Paleta e wordmark extraídos dos materiais oficiais da marca (Confluence
    "Materiais da Marca" / timbrado institucional / logo em SVG). Verde
    #25D366 confirmado como o verde oficial da Acerto (fill do SVG do logo).
@@ -25,9 +25,9 @@
   --danger-bg: #fef3f2;
   --warning: #b54708;
   --warning-bg: #fff4d6;
-  /* "Informativo" — propositalmente grafite/neutro, não azul: a paleta oficial
+  /* "Informativo" é propositalmente grafite/neutro, não azul: a paleta oficial
      da Acerto (ver acerto-docs) não tem azul, e azul é a cor de um concorrente
-     direto — nunca usar aqui, nem em gráficos (ver CHART_COLORS/CATEGORY_PALETTE
+     direto, então nunca usar aqui, nem em gráficos (ver CHART_COLORS/CATEGORY_PALETTE
      em src/components/dashboard/charts.tsx). */
   --info: #344054;
   --info-bg: #eef1f5;
@@ -40,7 +40,7 @@
   --shadow-md: 0 2px 8px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
   --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.10);
 
-  /* Escala de espaçamento — antes cada tela escolhia um px "por olho" no
+  /* Escala de espaçamento. Antes cada tela escolhia um px "por olho" no
      style inline (gap: 6, 8, 10, 12, 14...); usar os mesmos poucos degraus
      em todo lugar é o que faz o layout parecer desenhado, não improvisado. */
   --space-1: 4px;
@@ -57,7 +57,7 @@
 }
 
 /* ----------------------------------------------------------------------------
-   Dark mode — mesmos NOMES de token, valores diferentes. Toda tela já usa
+   Dark mode: mesmos NOMES de token, valores diferentes. Toda tela já usa
    var(--token) em vez de hex cru (checado nesta sessão), então isto se aplica
    automaticamente em qualquer lugar sem precisar tocar cada componente.
    Duas fontes possíveis, a mesma lista de tokens nas duas: a preferência do
@@ -152,10 +152,10 @@ a {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Acessibilidade (WCAG 2.2 AA) — Fase 5                                   */
+/* Acessibilidade (WCAG 2.2 AA), Fase 5                                    */
 /* ---------------------------------------------------------------------- */
 
-/* Anel de foco de marca — sem isso, links/botões/linhas de tabela clicáveis
+/* Anel de foco de marca. Sem isso, links/botões/linhas de tabela clicáveis
    dependiam só do anel padrão do navegador (fino, cor variável por browser,
    sem garantia de contraste no tema escuro). Não cobre .input/.command-
    palette-input, que já têm seu próprio destaque de foco (ver "Forms" acima). */
@@ -167,7 +167,7 @@ button:focus-visible,
   border-radius: 2px;
 }
 
-/* Pular para o conteúdo — invisível até receber foco por teclado (ver
+/* Pular para o conteúdo: invisível até receber foco por teclado (ver
    AppShell.tsx: primeiro elemento focável da página, antes da navegação
    lateral, para quem usa teclado não precisar tabular por 4-5 links de nav
    em toda página só para chegar ao conteúdo). */
@@ -243,7 +243,7 @@ button:focus-visible,
 }
 
 /* ---------------------------------------------------------------------- */
-/* Contratos — detalhe: header + faixa de renovação em destaque            */
+/* Contratos, detalhe: header + faixa de renovação em destaque             */
 /* ---------------------------------------------------------------------- */
 
 .contract-hero {
@@ -274,7 +274,7 @@ button:focus-visible,
   margin: 4px 0 0;
 }
 
-/* Quanto tempo falta pra vencer é o dado mais decisório da tela — merece
+/* Quanto tempo falta pra vencer é o dado mais decisório da tela, e merece
    uma faixa própria e destacada, não um campo a mais entre os 6 cards
    de identidade/financeiro/organização abaixo (mesmo raciocínio do
    .exec-stat-strip do Home). */
@@ -338,7 +338,7 @@ button:focus-visible,
 }
 
 /* ---------------------------------------------------------------------- */
-/* Top navigation (Chamados — Viagens/Facilities, ver ChamadoHeader.tsx)   */
+/* Top navigation (Chamados: Viagens/Facilities, ver ChamadoHeader.tsx)    */
 /* ---------------------------------------------------------------------- */
 
 .topbar {
@@ -400,7 +400,7 @@ button:focus-visible,
 }
 
 /* ---------------------------------------------------------------------- */
-/* Sidebar (Compras — ver AppShell.tsx)                                    */
+/* Sidebar (Compras, ver AppShell.tsx)                                     */
 /*                                                                          */
 /* Pedido do usuário: substitui a barra de topo por um menu lateral, padrão */
 /* mais comum em ferramentas internas com várias seções (Jira, Linear,     */
@@ -427,7 +427,7 @@ button:focus-visible,
   padding: 20px 14px;
 }
 
-/* Leva de volta ao menu de apps da Acerto (Compras, Chamados...) — só a logo,
+/* Leva de volta ao menu de apps da Acerto (Compras, Chamados...), só a logo,
    sem rótulo/ícone extra ao lado. */
 .sidebar-brand {
   display: flex;
@@ -447,7 +447,7 @@ button:focus-visible,
   display: block;
 }
 
-/* Sidebar é sempre estreita (240px) — cabe só o ícone da alAi, sem o
+/* Sidebar é sempre estreita (240px), então cabe só o ícone da alAi, sem o
    wordmark completo, ao lado da logo da Acerto. */
 .sidebar-alai-divider {
   width: 1px;
@@ -461,7 +461,7 @@ button:focus-visible,
   display: block;
 }
 
-/* Gatilho da Command Palette (Ctrl/Cmd+K — ver CommandPalette.tsx) */
+/* Gatilho da Command Palette (Ctrl/Cmd+K, ver CommandPalette.tsx) */
 .sidebar-search-trigger {
   display: flex;
   align-items: center;
@@ -483,7 +483,7 @@ button:focus-visible,
   color: var(--ink-soft);
 }
 .sidebar-search-kbd {
-  /* Sem caixa/preenchimento de propósito — uma "cápsula" com fundo (mesmo
+  /* Sem caixa/preenchimento de propósito, já que uma "cápsula" com fundo (mesmo
      sutil) chamava atenção demais para um hint discreto de atalho de
      teclado. Só o texto, direto sobre o fundo do botão, peso normal (não
      semi-negrito) e opacidade reduzida sobre --ink-muted: mal se nota até
@@ -496,7 +496,7 @@ button:focus-visible,
 }
 
 /* margin-top: auto empurra o botão (e o footer, que vem logo depois) para o
-   fim da barra lateral — fica colado acima de "Modo local"/"Sair". */
+   fim da barra lateral, colado acima de "Modo local"/"Sair". */
 .sidebar-cta {
   margin-top: auto;
   margin-bottom: 12px;
@@ -681,7 +681,7 @@ button:focus-visible,
 }
 
 /* Agrupamento visual dentro de um Panel/form de etapa (ex: RequestActions.tsx)
-   — quebra a "parede de campos" em blocos com um rótulo curto, sem precisar
+   que quebra a "parede de campos" em blocos com um rótulo curto, sem precisar
    de outro card por dentro do card. */
 .form-section {
   display: grid;
@@ -703,7 +703,7 @@ button:focus-visible,
 }
 
 /* Caixa de aviso/contexto dentro de um form (ex: "valor sem estimativa",
-   "cancelamento pula etapas") — variantes por cor semântica. */
+   "cancelamento pula etapas"), com variantes por cor semântica. */
 .hint-box {
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -749,7 +749,7 @@ button:focus-visible,
   margin-top: 1px;
 }
 
-/* Tela de login (src/app/login/page.tsx) — substitui a página genérica que
+/* Tela de login (src/app/login/page.tsx): substitui a página genérica que
    o NextAuth mostra sozinho quando não há pages.signIn configurado. */
 .login-page {
   min-height: 100vh;
@@ -798,7 +798,7 @@ button:focus-visible,
 }
 
 /* Ícone da alAi (check + centelha) usado como "assinatura" nos pontos de
-   ajuda/sugestão da IA no formulário — no lugar de um ícone genérico de
+   ajuda/sugestão da IA no formulário, no lugar de um ícone genérico de
    sparkle ou de um personagem/mascote à parte (ver NovaSolicitacaoForm.tsx). */
 .ai-assist-mark {
   width: 13px;
@@ -875,7 +875,7 @@ button:focus-visible,
   color: var(--ink-muted);
 }
 
-/* Painel do Assistente de IA (Claude + Gemini) — ver AiInsightPanel.tsx */
+/* Painel do Assistente de IA (Claude + Gemini), ver AiInsightPanel.tsx */
 .ai-panel {
   border: 1px solid var(--acerto-green-100);
   background: var(--acerto-green-50);
@@ -1025,7 +1025,7 @@ textarea.input:focus {
   background: #b42318;
 }
 
-/* Alternância de visualização (ex: Kanban/Lista em Solicitações) — pares de
+/* Alternância de visualização (ex: Kanban/Lista em Solicitações): pares de
    link estilo segmented control, tudo via searchParams (?view=). */
 .view-toggle {
   display: inline-flex;
@@ -1176,12 +1176,12 @@ a.table-row:hover {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Dashboard executivo — KPI cards, grids responsivos, painéis             */
+/* Dashboard executivo: KPI cards, grids responsivos, painéis              */
 /* ---------------------------------------------------------------------- */
 
 /* Uma parede única de métricas (borda/sombra só no container, divisores
    finos entre células) substitui o antigo grid de N cards individualmente
-   encaixotados — mesmo raciocínio do .exec-stat-strip do Home: números de
+   encaixotados, mesmo raciocínio do .exec-stat-strip do Home: números de
    referência devem ler como um painel coeso, não como cards concorrendo
    por atenção entre si. */
 .kpi-grid {
@@ -1304,7 +1304,7 @@ a.table-row:hover {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Command Palette (Ctrl/Cmd+K — ver src/components/CommandPalette.tsx)   */
+/* Command Palette (Ctrl/Cmd+K, ver src/components/CommandPalette.tsx)    */
 /* ---------------------------------------------------------------------- */
 
 .command-palette-overlay {
@@ -1387,7 +1387,7 @@ a.table-row:hover {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Home — painel executivo (launchpad estilo SAP Fiori / Oracle Cloud)     */
+/* Home: painel executivo (launchpad estilo SAP Fiori / Oracle Cloud)      */
 /* ---------------------------------------------------------------------- */
 
 .exec-home {
@@ -1420,7 +1420,7 @@ a.table-row:hover {
   height: 26px;
   background: var(--border);
 }
-/* Marca alAi ao lado da logo da Acerto — mesmo padrão de "logo cheia acima
+/* Marca alAi ao lado da logo da Acerto, mesmo padrão de "logo cheia acima
    de X px / só o ícone abaixo" reaproveitado no topbar de Chamados e na
    sidebar (ver .topbar-alai-* e .sidebar-alai-icon mais abaixo). */
 .exec-topbar-alai-full {
@@ -1444,7 +1444,7 @@ a.table-row:hover {
   margin: 0;
 }
 
-/* A busca global (CommandPalette) fica no topo da Home também — mesmo
+/* A busca global (CommandPalette) fica no topo da Home também, com o mesmo
    componente/atalho Ctrl+K de dentro do app, só com o gatilho visual
    adaptado (largura livre, sem a margem pensada para a barra lateral). */
 .exec-topbar-search {
@@ -1496,7 +1496,7 @@ a.table-row:hover {
   color: var(--acerto-green-dark);
 }
 /* ---------------------------------------------------------------------- */
-/* Menu único do usuário — Pendências, Comunicados, Tema, Acessos e Sair   */
+/* Menu único do usuário: Pendências, Comunicados, Tema, Acessos e Sair    */
 /* reunidos num só dropdown (gatilho: avatar/nome no topbar da Home)       */
 /* ---------------------------------------------------------------------- */
 
@@ -1631,7 +1631,7 @@ a.table-row:hover {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Avatar de usuário — foto de perfil ou iniciais                          */
+/* Avatar de usuário: foto de perfil ou iniciais                           */
 /* ---------------------------------------------------------------------- */
 
 .user-avatar-wrap {
@@ -1792,7 +1792,7 @@ a.table-row:hover {
   color: var(--ink);
 }
 /* Altura fixa (não só um teto): cartões de comunicados curtos e longos
-   ocupam sempre o mesmo espaço na lista — o texto que não couber nas 3
+   ocupam sempre o mesmo espaço na lista, e o texto que não couber nas 3
    linhas é cortado com reticências; clicar abre a mensagem inteira no modal
    (ver .announcement-modal-body). */
 .announcements-item-body {
@@ -1813,7 +1813,7 @@ a.table-row:hover {
   color: var(--ink-muted);
 }
 
-/* Modal de comunicado expandido — fundo verde claro ("quase sombreado")
+/* Modal de comunicado expandido: fundo verde claro ("quase sombreado")
    pra destacar do resto da tela, mesmo tom usado em outros realces do
    sistema (avatar, item ativo do Command Palette). */
 .announcement-modal-panel {
@@ -1878,7 +1878,7 @@ a.table-row:hover {
   color: var(--ink-soft);
   line-height: 1.55;
 }
-/* Data em formato de crachá discreto (não texto solto) — leitura mais "peça
+/* Data em formato de crachá discreto (não texto solto), leitura mais "peça
    de painel executivo" do que uma legenda qualquer. */
 .exec-welcome-banner-date {
   flex-shrink: 0;
@@ -1894,7 +1894,7 @@ a.table-row:hover {
   margin-top: 2px;
 }
 
-/* Faixa de indicadores DELIBERADAMENTE quieta — sem ícone, sem card
+/* Faixa de indicadores DELIBERADAMENTE quieta: sem ícone, sem card
    separado por número, sem cor. É informação de apoio, não o conteúdo
    principal da tela (isso agora é "Minha Atenção", acima). Uma faixa única
    com divisórias internas lê como dado de referência; três cards coloridos
@@ -1907,7 +1907,7 @@ a.table-row:hover {
   border-radius: var(--radius-md);
   margin-bottom: 40px;
   /* visible (não hidden): "Chamados abertos" abre um dropdown de hover que
-     precisa escapar os limites do card — os cantos arredondados são
+     precisa escapar os limites do card, e os cantos arredondados são
      garantidos abaixo, no primeiro/último item, em vez de via clip. */
   overflow: visible;
 }
@@ -1943,7 +1943,7 @@ a.table-row:hover {
   font-weight: 500;
 }
 
-/* "Chamados abertos" — sem link direto (o número é o agregado de 3
+/* "Chamados abertos" não tem link direto (o número é o agregado de 3
    categorias), mas passar o mouse revela a distribuição real, cada linha
    levando ao board certo. */
 .exec-stat-hoverable { cursor: default; }
@@ -2238,7 +2238,7 @@ a.table-row:hover {
 }
 .exec-brand-footer-inner {
   /* Pedido do usuário: bloco do rodapé centralizado na página (com respiro
-     visível dos dois lados em telas largas) — mais estreito que o container
+     visível dos dois lados em telas largas), mais estreito que o container
      de 1180px do resto da página, só o suficiente pra caber a fileira de
      links numa linha só. Links Úteis e a logo da Acerto ficam alinhados à
      esquerda DENTRO desse bloco centralizado (ver justify-content: flex-start
@@ -2256,7 +2256,7 @@ a.table-row:hover {
   text-align: left;
 }
 /* Pedido do usuário: "Links Úteis" alinhado à esquerda, no mesmo ponto de
-   partida do primeiro link abaixo — não mais centralizado sobre a fileira. */
+   partida do primeiro link abaixo, e não mais centralizado sobre a fileira. */
 .exec-brand-footer-links-title {
   text-align: left;
   font-size: 11px;
@@ -2268,7 +2268,7 @@ a.table-row:hover {
 }
 /* Pedido do usuário: título "Links Úteis" e os cards de link alinhados no
    mesmo início à esquerda (uma tentativa anterior centralizou os cards como
-   grupo, divergindo do título — revertida). Quebra em mais de uma linha
+   grupo, divergindo do título, foi revertida). Quebra em mais de uma linha
    quando não cabem; tentativa anterior de forçar tudo numa linha só com
    scroll horizontal (overflow-x: auto) também foi revertida por não ter
    agradado, e os cards foram encolhidos (ver .exec-footer-link) até caberem
@@ -2278,7 +2278,7 @@ a.table-row:hover {
   margin: 0;
 }
 /* Reskin dos mesmos .exec-footer-link (fundo claro) para o contexto de fundo
-   verde — mesma marcação/links, só a aparência muda aqui dentro. */
+   verde, com a mesma marcação/links, só a aparência muda aqui dentro. */
 .exec-brand-footer-links .exec-footer-link {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.3);
@@ -2294,7 +2294,7 @@ a.table-row:hover {
 }
 .exec-brand-footer-company {
   display: flex;
-  /* Pedido do usuário: texto em uma linha só, logo alinhada com ele — antes
+  /* Pedido do usuário: texto em uma linha só, logo alinhada com ele. Antes
      o texto quebrava em 2 linhas (por causa do max-width no <p>), o que
      forçava a logo a ficar no topo (flex-start vertical) para não boiar
      entre as duas linhas; sem quebra, center no eixo vertical (align-items)
