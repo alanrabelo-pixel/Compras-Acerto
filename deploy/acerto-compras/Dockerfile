@@ -41,6 +41,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Mesmo motivo do preinstall em "deps": o Query Engine do Prisma (musl)
+# precisa de libssl em runtime pra dar dlopen no .so.node -- esse estagio e
+# um "node:20-alpine" limpo, separado do "deps"/"builder", e nunca roda
+# npm ci/preinstall, so copia o build standalone. Sem isso aqui, o client
+# gerado corretamente em "deps" ainda falha ao carregar em produção
+# (PrismaClientInitializationError: "Error loading shared library
+# libssl.so.1.1: No such file or directory") -- só aparece numa request
+# real que toque o Prisma, não em build/test.
+RUN apk add --no-cache openssl
+
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 # output: standalone (next.config.js) — só os arquivos/node_modules de fato
