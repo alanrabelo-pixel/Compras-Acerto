@@ -18,13 +18,15 @@ import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestDat
  * desligada e getServerSession é mockado, que é o caminho real de produção.
  */
 
-const session = vi.hoisted(() => ({ current: null as { user: { id: string } } | null }));
+const session = vi.hoisted(() => ({
+  current: null as { user: { id: string; roles?: string[]; canViewBoard?: boolean } } | null,
+}));
 
 vi.mock("next-auth", () => ({
   getServerSession: async () => session.current,
 }));
 
-const { PATCH } = await import("./route");
+const { PATCH, POST } = await import("./route");
 
 function patchRequest(body: unknown) {
   return new NextRequest("http://localhost/api/requests/x/aprovacao", {
@@ -120,5 +122,81 @@ describe("PATCH /api/requests/[id]/aprovacao: autorização", () => {
     expect(after?.decision).toBe("PENDENTE");
     const req = await prisma.purchaseRequest.findUnique({ where: { id: request.id } });
     expect(req?.currentStage).toBe("APROVACAO");
+  });
+});
+
+/**
+ * Quem CRIA o lote de aprovação também precisava de checagem, e não tinha
+ * nenhuma. O requireRole do POST valida o papel de quem VAI RECEBER a
+ * aprovação (requireSelf false, porque é atribuição a terceiro), e ninguém
+ * olhava quem estava chamando: qualquer conta autenticada abria a aprovação de
+ * uma compra na etapa de Aprovação e, sem pool de alçada configurado, escolhia
+ * para quais aprovadores ela ia.
+ */
+describe("POST /api/requests/[id]/aprovacao: quem cria o lote", () => {
+  // O stubEnv do describe de cima não alcança este bloco: beforeEach é escopado
+  // ao describe onde é declarado. Sem repetir aqui, estes testes rodariam com
+  // LOCAL_BYPASS_AUTH ligado, a guarda devolveria null e o teste passaria sem
+  // exercer nada. Foi assim que ele falhou na primeira execução, o que é o
+  // comportamento certo do teste avisando que não estava testando.
+  beforeEach(() => {
+    vi.stubEnv("LOCAL_BYPASS_AUTH", "false");
+    session.current = null;
+  });
+
+  function postRequest(body: unknown) {
+    return new NextRequest("http://localhost/api/requests/x/aprovacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  async function cenarioDeCriacao() {
+    const requester = await createTestUser([]);
+    const gestor = await createTestUser(["APROVADOR"]);
+    const aprovador = await createTestUser(["APROVADOR"]);
+    const comprador = await createTestUser(["COMPRADOR"]);
+    const intruso = await createTestUser(["SOLICITANTE"]);
+    const cc = await createTestCostCenter();
+    const request = await createTestRequest({
+      requesterId: requester.id, approverManagerId: gestor.id, costCenterId: cc.id,
+      currentStage: "APROVACAO", estimatedValue: 10000,
+    });
+    // A criação exige declaração de conflito registrada e sem conflito.
+    await prisma.conflictOfInterestDeclaration.create({
+      data: { requestId: request.id, declaredBy: requester.id, hasConflict: false },
+    });
+    return { request, aprovador, comprador, intruso };
+  }
+
+  it("recusa quem não é comprador, mesmo indicando um aprovador válido", async () => {
+    const { request, aprovador, intruso } = await cenarioDeCriacao();
+    session.current = { user: { id: intruso.id, roles: ["SOLICITANTE"], canViewBoard: false } };
+
+    const res = await POST(postRequest({ approverId: aprovador.id }), { params: { id: request.id } });
+
+    expect(res.status).toBe(403);
+    expect(await prisma.approval.count({ where: { requestId: request.id } })).toBe(0);
+  });
+
+  it("recusa quando não há sessão nenhuma", async () => {
+    const { request, aprovador } = await cenarioDeCriacao();
+    session.current = null;
+
+    const res = await POST(postRequest({ approverId: aprovador.id }), { params: { id: request.id } });
+
+    expect(res.status).toBe(401);
+    expect(await prisma.approval.count({ where: { requestId: request.id } })).toBe(0);
+  });
+
+  it("deixa o comprador criar, que é quem roteia a alçada", async () => {
+    const { request, aprovador, comprador } = await cenarioDeCriacao();
+    session.current = { user: { id: comprador.id, roles: ["COMPRADOR"], canViewBoard: true } };
+
+    const res = await POST(postRequest({ approverId: aprovador.id }), { params: { id: request.id } });
+
+    expect(res.status).toBe(201);
+    expect(await prisma.approval.count({ where: { requestId: request.id } })).toBe(1);
   });
 });

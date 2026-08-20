@@ -11,6 +11,7 @@ import {
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { requireRole } from "@/lib/rbac";
+import { exigirPapel } from "@/lib/acesso";
 import { avancarEtapa } from "@/lib/etapa";
 import { logger } from "@/lib/logger";
 import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
@@ -26,6 +27,15 @@ import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
  * escalonamento automático.
  */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  // Quem CRIA o lote de aprovação é o comprador, roteando a solicitação para a
+  // alçada. Isso nunca foi verificado: o requireRole mais abaixo valida o papel
+  // de quem VAI RECEBER a aprovação, com requireSelf false, e ninguém olhava
+  // quem estava chamando. Qualquer conta autenticada abria a aprovação de uma
+  // compra na etapa de Aprovação e, quando a alçada não tem pool configurado,
+  // escolhia para quais aprovadores ela ia.
+  const barrado = await exigirPapel(["COMPRADOR"], "criar a aprovação desta solicitação");
+  if (barrado) return barrado;
+
   const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "APROVACAO") {
