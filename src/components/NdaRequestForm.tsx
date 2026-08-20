@@ -95,7 +95,7 @@ export function NdaRequestForm({ sessionRequester = null }: { sessionRequester?:
             <h2 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700 }}>Chamado aberto com sucesso!</h2>
             <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-muted)", lineHeight: 1.5 }}>
               Seu chamado <strong style={{ color: "var(--acerto-green-dark)" }}>{result.code}</strong> foi
-              registrada e já está disponível para acompanhamento. Você receberá um e-mail de confirmação em breve.
+              registrado e já está disponível para acompanhamento. Você receberá um e-mail de confirmação em breve.
             </p>
             <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
               <Button variant="primary" onClick={() => (window.location.href = `/chamados/nda/${result.id}`)}>

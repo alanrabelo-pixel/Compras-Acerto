@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireErpAuth } from "@/lib/erpAuth";
 import { STAGES } from "@/lib/workflow";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/erp/purchase-requests/[id]/confirm
@@ -49,15 +50,26 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       body: `Confirmado pelo ERP, id externo: ${erpExternalId}.${note ? ` Nota: ${note}` : ""}`,
     },
   });
-  await prisma.notification.create({
-    data: {
-      requestId: request.id,
-      channel: "ERP",
-      recipient: "erp-integration",
-      subject: `Confirmação de importação: ${request.code}`,
-      status: "ENVIADO",
-    },
-  });
+  // O registro da notificação não pode derrubar a confirmação: neste ponto o
+  // erpSyncedAt já está gravado, então uma exceção aqui devolvia erro ao ERP
+  // por uma sincronização que na verdade tinha dado certo, e o ERP tentava de
+  // novo. Foi o que aconteceu quando a constraint de canal passou a aceitar só
+  // EMAIL e SLACK: ela foi escrita a partir de um comentário desatualizado do
+  // modelo, sem conferir que esta rota grava ERP. A constraint é corrigida na
+  // migration 20260819230000_notification_canal_erp.
+  await prisma.notification
+    .create({
+      data: {
+        requestId: request.id,
+        channel: "ERP",
+        recipient: "erp-integration",
+        subject: `Confirmação de importação: ${request.code}`,
+        status: "ENVIADO",
+      },
+    })
+    .catch((erro) => {
+      logger.warn("notificacao_confirmacao_erp_falhou", { solicitacao: request.code, erro });
+    });
 
   return NextResponse.json({ status: "CONFIRMADO", erpSyncedAt: updated.erpSyncedAt, erpExternalId: updated.erpExternalId });
 }

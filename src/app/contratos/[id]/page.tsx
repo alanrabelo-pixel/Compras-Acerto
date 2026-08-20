@@ -161,7 +161,13 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           </div>
         </section>
 
-        <ContractActions contractId={contract.id} status={rotulo(CONTRACT_STATUS_LABEL, contract.status)} />
+        {/* status cru, não o rótulo. A varredura de rótulos legíveis passou aqui
+            e traduziu este valor junto, mas ele não é texto de tela: o
+            componente compara com "CANCELADO" para esconder o formulário. Com
+            "Cancelado" traduzido, a comparação falhava e um contrato já
+            cancelado voltava a oferecer o botão de cancelar, que reenviava
+            e-mail e Slack para a Tesouraria inteira. */}
+        <ContractActions contractId={contract.id} status={contract.status} />
 
         <section className="card section-gap">
           <h2 className="card-title">Alertas de renovação enviados</h2>
