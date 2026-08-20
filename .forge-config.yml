@@ -1,5 +1,7 @@
 stack: nodejs
 gitopsType: github-flow
+# trigger: forca um novo commit hash para testar se o Provider gera o
+# script atualizado (teoria: cache do Dynamic Pipelines por commit).
 
 # Desligados no primeiro deploy — revisar/habilitar depois de estabilizar
 # (mesmo motivo de bug conhecido do Sonar com Java 17 no golden-pipeline).
