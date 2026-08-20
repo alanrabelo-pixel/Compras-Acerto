@@ -27,7 +27,8 @@ const SECONDARY_SERVICES = [
   {
     href: "/chamados/viagens",
     title: "Viagens Acerto",
-    description: "Dúvidas de viagem, Uber Corporativo e reembolsos.",
+    description:
+      "Dúvidas de viagem, Uber Corporativo, reembolsos e solicitação de cadastros relacionados a viagens.",
     icon: <Plane size={16} strokeWidth={1.75} />,
   },
   {
