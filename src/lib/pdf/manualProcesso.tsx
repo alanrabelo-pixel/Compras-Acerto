@@ -464,8 +464,13 @@ export function ManualProcessoDocument() {
         <P>
           Compras que envolvem contrato (aluguel, prestação de serviço recorrente, licenciamento de
           ferramenta, etc.) são registradas na área de Contratos, com data de vigência e alertas automáticos
-          quando a renovação estiver se aproximando, para que ninguém seja pego de surpresa por um
-          contrato vencendo.
+          de renovação, para que ninguém seja pego de surpresa por um contrato vencendo.
+        </P>
+        <P>
+          O alerta vai para o gestor do contrato, por e-mail e por Slack, a partir de 3 meses antes da data
+          de renovação, e se repete uma vez por semana enquanto o contrato seguir Ativo. Marcar o contrato
+          como Renovação em andamento ou como Cancelado na área de Contratos encerra os avisos. O
+          histórico de alertas enviados fica registrado no próprio contrato.
         </P>
         <H2 icon={ASSETS.alvo}>Dashboards</H2>
         <P>

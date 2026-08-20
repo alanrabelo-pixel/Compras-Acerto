@@ -97,6 +97,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Informe a Linha do Orçamento, ou marque Orçamento Extra se não houver uma." }, { status: 400 });
   }
 
+  // Orçamento Extra: o comprovante de aprovação do FP&A NÃO é exigido aqui, e
+  // isso é decisão, não esquecimento. O anexo só pode existir depois que a
+  // solicitação existe, porque POST /api/requests/[id]/attachments precisa do
+  // id dela: o formulário cria a solicitação e só então faz uploadIfPresent
+  // (ver NovaSolicitacaoForm). Exigir o arquivo neste mesmo POST tornaria o
+  // formulário impossível de enviar.
+  //
+  // Marcar a solicitação como "pendente de comprovante" também foi descartado:
+  // exigiria uma coluna nova em PurchaseRequest (migração), e a informação já
+  // é derivável do que está gravado (extraBudget=true sem Attachment de
+  // categoria APROVACAO_EXTRA_ORCAMENTARIA).
+  //
+  // A cobrança fica na porta de saída seguinte, PATCH
+  // /api/requests/[id]/aprovacao-gestor, que é a primeira transição depois da
+  // criação, e nos dois ramos da Validação Orçamentária. Regra única em
+  // @/lib/orcamento-extra (checarComprovanteDoFpa).
+
   const costCenter = await prisma.costCenter.findUnique({
     where: { id: costCenterId },
     include: { managers: { select: USUARIO_PUBLICO, orderBy: { name: "asc" } } },

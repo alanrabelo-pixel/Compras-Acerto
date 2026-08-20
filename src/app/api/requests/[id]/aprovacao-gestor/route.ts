@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { nextAfterAprovacaoGestor } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { requireRole } from "@/lib/rbac";
+import { checarComprovanteDoFpa } from "@/lib/orcamento-extra";
 import { logger } from "@/lib/logger";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
@@ -69,6 +70,32 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const approved = decision === "APROVADO";
+
+  // Porta de saída do Orçamento Extra sem comprovante do FP&A.
+  //
+  // A criação da solicitação (POST /api/requests) aceita extraBudget=true sem
+  // anexo nenhum, e não tem como ser diferente: o arquivo só é enviável depois
+  // que a solicitação existe (o formulário faz create e só então
+  // uploadIfPresent, ver NovaSolicitacaoForm). Esta é a PRIMEIRA transição
+  // depois da criação, ou seja, o primeiro momento em que dá para cobrar o
+  // documento sem quebrar o formulário. Cobrar só na Validação Orçamentária
+  // deixava a solicitação circular por Aprovação do Gestor e Triagem sem ele,
+  // e o atalho de CANCELAMENTO na Triagem (que vai direto para o Jurídico)
+  // pulava a Validação Orçamentária inteira.
+  //
+  // Vale também para o ADMIN que personifica o gestor: a personificação é
+  // sobre QUEM decide, não sobre exigir ou não o documento.
+  //
+  // Só bloqueia a aprovação. Reprovar continua livre: recusar uma compra não
+  // depende de documento nenhum, e travar a recusa deixaria a solicitação sem
+  // saída quando o comprovante nunca vier.
+  if (approved) {
+    const checagem = await checarComprovanteDoFpa(request, "antes de aprovar a solicitação");
+    if (!checagem.ok) {
+      return NextResponse.json({ error: checagem.erro }, { status: 422 });
+    }
+  }
+
   const nextStage = nextAfterAprovacaoGestor({ approved });
 
   // Os cinco campos da decisão do gestor vão na MESMA transação do avanço.
