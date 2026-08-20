@@ -12,7 +12,11 @@ dev-stdout.log
 docs
 *.md
 sql
+# scripts/verify-prisma-engine.cjs roda no postinstall (dentro da imagem);
+# o resto da pasta (ex.: sync-migration-sql.ts, só usado localmente pelo
+# dev) continua fora.
 scripts
+!scripts/verify-prisma-engine.cjs
 .eslintrc.json
 vitest.config.ts
 src/**/*.test.ts

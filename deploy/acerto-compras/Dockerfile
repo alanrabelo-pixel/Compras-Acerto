@@ -8,6 +8,13 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# prisma/ e scripts/ ANTES do npm ci: o postinstall (`prisma generate &&
+# node scripts/verify-prisma-engine.cjs`) precisa dos dois pra rodar — sem
+# eles o postinstall falha ("Could not find Prisma Schema" ou
+# "Cannot find module .../verify-prisma-engine.cjs") e quebra o npm ci
+# inteiro (erros reais vistos na pipeline, não só avisos).
+COPY prisma ./prisma
+COPY scripts ./scripts
 RUN npm ci
 
 # ---------- build ----------
@@ -15,10 +22,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# prisma generate já roda no postinstall do "npm ci" acima, mas o schema
-# pode ter sido copiado depois (COPY . .) — gera de novo por garantia, é
-# barato e idempotente.
-RUN npx prisma generate
+# NÃO roda `prisma generate` de novo aqui: o client já veio corretamente
+# gerado dentro de node_modules/.prisma (via postinstall do "deps", que
+# tem preinstall/openssl) — regenerar aqui rodaria num node:20-alpine
+# limpo, SEM openssl (nenhum preinstall roda de novo neste estágio), e
+# arriscaria sobrescrever o client bom com um gerado com detecção de
+# libssl falha (mesmo bug que já mordeu essa pipeline mais de uma vez).
 RUN npm run build
 
 # ---------- runtime ----------
