@@ -134,6 +134,13 @@ describe("middleware: páginas", () => {
     expect(res.headers.get("location")).toContain("/login");
   });
 
+  it("preserva a query no callbackUrl, senão o link do e-mail perde o contrato de origem", async () => {
+    const res = await middleware(req("/solicitacoes/nova?origemContrato=abc123"));
+
+    const destino = new URL(res.headers.get("location") ?? "", "http://localhost");
+    expect(destino.searchParams.get("callbackUrl")).toBe("/solicitacoes/nova?origemContrato=abc123");
+  });
+
   it("manda quem não tem canViewBoard para a tela de sem acesso", async () => {
     token.current = { sub: "user-1", canViewBoard: false };
 

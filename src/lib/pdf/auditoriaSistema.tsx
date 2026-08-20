@@ -911,25 +911,25 @@ export function AuditoriaSistemaDocument() {
         <Finding n={2} severity="doc" situacao="resolvido" comoFoiResolvido="as 15 rotas de etapa passaram a usar um helper transacional que consulta o grafo antes de gravar." title="Grafo de transições válidas não é reforçado em produção">
           A função que valida se uma transição de etapa é permitida existe só para os testes automatizados. Cada rota de API faz sua própria checagem isolada da etapa atual, sem consultar esse grafo.
         </Finding>
-        <Finding n={3} severity="regra" title="Alerta de fracionamento não avisa ninguém de verdade">
+        <Finding n={3} severity="regra" situacao="resolvido" comoFoiResolvido="a Triagem passou a disparar e-mail e mensagem de Slack para a Controladoria quando sinaliza o risco, com a alçada isolada e a somada dos últimos 12 meses. O registro de notificação que afirmava um envio inexistente saiu: quem grava agora é o próprio envio, com ENVIADO ou FALHA conforme o resultado real." title="Alerta de fracionamento não avisa ninguém de verdade">
           Quando o sistema detecta risco de fracionamento na Triagem, ele grava um registro de notificação no banco. Diferente de todo outro alerta do sistema, não dispara e-mail nem Slack de fato. A Controladoria não é realmente avisada.
         </Finding>
         <Finding n={4} severity="regra" situacao="parcial" comoFoiResolvido="por decisão do time, a triagem sinaliza mas não bloqueia: a solicitação avisa quando o fornecedor escolhido está pendente ou reprovado, e há um campo de anexo opcional para a evidência da verificação, que o comprador faz fora do sistema. O bloqueio antes do Pedido de Compra fica para depois." title="Triagem básica de fornecedor é código morto">
           Existe uma função pronta e testada para exigir triagem básica de fornecedor novo (CNPJ ativo, listas restritivas). Ela nunca é chamada por nenhuma rota real. A regra está escrita, mas não está em vigor.
         </Finding>
-        <Finding n={5} severity="doc" title="Escalonamento de 3 dias é corrido, não útil">
+        <Finding n={5} severity="doc" situacao="resolvido" comoFoiResolvido="o prazo passou a ser calculado por uma função que pula sábado e domingo, então uma aprovação aberta na quinta vence na terça, não no domingo. Feriado ainda não é considerado, por falta de calendário de feriados no sistema." title="Escalonamento de 3 dias é corrido, não útil">
           O prazo de decisão do aprovador antes do lembrete automático é chamado de dias úteis no código, mas a conta real não pula fim de semana. São 3 dias corridos de fato.
         </Finding>
-        <Finding n={6} severity="doc" title="Mensagem de lembrete pode divergir do prazo real">
+        <Finding n={6} severity="doc" situacao="resolvido" comoFoiResolvido="o texto do lembrete passou a ler a mesma constante que calcula o prazo, e a variável de ambiente duplicada foi removida, então mensagem e prazo não têm mais como divergir." title="Mensagem de lembrete pode divergir do prazo real">
           O texto do lembrete de escalonamento lê uma variável de ambiente diferente da que de fato define o prazo. Mudar uma não muda a outra, o que pode deixar a mensagem incoerente com o prazo real aplicado.
         </Finding>
-        <Finding n={7} severity="doc" title="Comentários do schema ainda citam o papel de CEO">
+        <Finding n={7} severity="doc" situacao="resolvido" comoFoiResolvido="os dois comentários do modelo de dados foram corrigidos, e uma terceira menção que sobrou no cálculo da alçada, encontrada só na verificação posterior, também." title="Comentários do schema ainda citam o papel de CEO">
           O papel de CEO foi removido do sistema e não existe mais no cadastro de papéis. Dois comentários no modelo de dados ainda descrevem a alçada de nível 3 como envolvendo o CEO. É desatualização de documentação interna.
         </Finding>
-        <Finding n={8} severity="regra" title="Anexo obrigatório do Orçamento Extra só é exigido na tela">
+        <Finding n={8} severity="regra" situacao="parcial" comoFoiResolvido="a Validação Orçamentária recusa abrir a exceção de uma solicitação de Orçamento Extra sem o comprovante do FP&amp;A anexado, e o campo que marca a solicitação como extra-orçamentária passou a ser gravado. Faltam dois caminhos, apurados na verificação posterior: o de orçamento disponível, que avança a etapa sem checar o comprovante, e a criação da solicitação, que ainda aceita Orçamento Extra sem anexo." title="Anexo obrigatório do Orçamento Extra só é exigido na tela">
           O formulário impede o envio sem o anexo de validação do FP&amp;A quando Orçamento Extra é escolhido. A API que de fato cria a solicitação aceita a mesma opção sem checar se o anexo existe. Uma chamada direta à API contornaria essa exigência.
         </Finding>
-        <Finding n={9} severity="doc" title="Aprovação do gestor não notifica o lado positivo">
+        <Finding n={9} severity="doc" situacao="resolvido" comoFoiResolvido="o caminho aprovado deixou de ser silencioso e passou a usar o mesmo aviso das outras etapas, informando ao solicitante que a compra seguiu para Homologação e Triagem." title="Aprovação do gestor não notifica o lado positivo">
           Ao contrário de toda outra etapa, quando o gestor do centro de custo aprova a solicitação, nenhum e-mail é enviado ao solicitante. Só a reprovação gera notificação.
         </Finding>
         <Finding n={10} severity="doc" title="Alerta de renovação de contrato não garante cadência semanal">
@@ -938,10 +938,10 @@ export function AuditoriaSistemaDocument() {
         <Finding n={11} severity="doc" situacao="resolvido" comoFoiResolvido="o canal gravado passou a refletir os dois meios, e a tela do contrato traduz o valor." title="Registro de alerta de contrato subestima o canal usado">
           O log de alerta de renovação sempre grava o canal como e-mail, mesmo nas execuções em que um Slack também foi enviado. O registro não reflete os dois canais reais usados.
         </Finding>
-        <Finding n={12} severity="regra" title="Link de pré-preenchimento a partir de contrato não funciona">
+        <Finding n={12} severity="regra" situacao="resolvido" comoFoiResolvido="o formulário passou a ler o contrato de origem e abrir preenchido com fornecedor, tipo de demanda, descrição, diretoria e centro de custo. A primeira correção resolvia só metade: quem clicava no e-mail sem sessão viva era mandado ao login e voltava sem o parâmetro, caindo no mesmo formulário em branco, porque o redirecionamento descartava a query. Corrigido depois, com teste." title="Link de pré-preenchimento a partir de contrato não funciona">
           O e-mail de alerta de renovação leva a um link que promete pré-preencher uma nova solicitação a partir do contrato vencendo. Esse parâmetro não é lido em lugar nenhum do formulário. O link abre um formulário em branco.
         </Finding>
-        <Finding n={13} severity="admin" title="6 dos 11 papéis não têm tela de gestão">
+        <Finding n={13} severity="admin" situacao="resolvido" comoFoiResolvido="os seis papéis de etapa ganharam botão próprio na tela de acessos, e a rota que grava passou a aceitar os 11, na mesma tabela que a checagem de permissão consulta. Conceder Fiscal ou Tesouraria não exige mais mexer no banco." title="6 dos 11 papéis não têm tela de gestão">
           A página de Acessos só concede ou revoga 5 papéis. Os outros 6 (Tesouraria, Fiscal, Jurídico, Privacidade, Coordenação, Gerente F&amp;NC) têm poder real sobre dinheiro ou aspectos jurídicos, mas só aparecem como filtro. Não existe caminho pela interface pra tornar alguém, por exemplo, Fiscal ou Tesouraria. Só via banco de dados diretamente.
         </Finding>
         <Finding n={14} severity="seg" situacao="parcial" comoFoiResolvido="a rota passou a exigir sessão, pelo middleware, e a validar tipo e tamanho do arquivo. Falta a checagem de vínculo com o chamado." title="Anexo de chamado sem checagem de quem está anexando">

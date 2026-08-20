@@ -239,7 +239,7 @@ export const BUDGET_EXCEPTION_LEVEL_LABEL: Record<1 | 2 | 3, string> = {
 export function approvalLevel(estimatedValue: number): 1 | 2 | 3 {
   if (estimatedValue <= 50000) return 1; // Coordenação F&NC c/ procuração ou Gerente F&NC
   if (estimatedValue <= 500000) return 2; // Gerente F&NC
-  return 3; // Gerente F&NC + CEO
+  return 3; // Gerente F&NC (o papel de CEO não existe no sistema, ver linha 221)
 }
 
 // Pedido do usuário: Nível 1 exige 1 aprovador; Níveis 2 e 3 exigem 2

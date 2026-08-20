@@ -99,7 +99,14 @@ export async function middleware(req: NextRequest) {
 
 function signInRedirect(req: NextRequest) {
   const signInUrl = new URL("/login", req.url);
-  signInUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+  // pathname + search, não só pathname. O e-mail de renovação de contrato manda
+  // para /solicitacoes/nova?origemContrato=<id>, prometendo o formulário já
+  // preenchido. Quem clica vindo do Gmail costuma estar sem sessão viva, e a
+  // query era descartada aqui: depois do login a pessoa aterrissava no
+  // formulário em branco, que é exatamente o defeito que o pré-preenchimento
+  // tinha ido corrigir. Continua sendo caminho relativo, então o NextAuth
+  // mantém a checagem de mesma origem.
+  signInUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
   return NextResponse.redirect(signInUrl);
 }
 
