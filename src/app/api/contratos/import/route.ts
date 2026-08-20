@@ -26,14 +26,27 @@ const TEMPLATE_COLUMNS = [
   "Diretoria", "Área", "Centro de Custo", "E-mail do Gestor",
 ];
 
+// Linha de exemplo da planilha modelo. Tudo aqui é fictício de propósito, e
+// isso vale principalmente para o e-mail: quem baixa o modelo costuma editar
+// só as colunas que lhe interessam, e um endereço @acerto.com.br de exemplo
+// sobrevive à edição, entra na importação e vira gestor de contrato de
+// mentira, que é destinatário de aviso de renovação por e-mail e Slack.
+// @exemplo.invalid não resolve em DNS (TLD reservado pela RFC 2606), então o
+// mesmo descuido morre antes de virar mensagem. O gestor de verdade precisa
+// ser o e-mail corporativo de alguém que já tenha logado ao menos uma vez
+// (a busca por User acontece no POST, mais abaixo).
+//
+// O centro de custo também é genérico: antes vinha "Data Intelligence", um
+// centro real, e a linha de exemplo importada por engano ficava indistinguível
+// de contrato de verdade no dashboard daquele centro.
 const TEMPLATE_EXAMPLE = {
   "Razão Social": "Fornecedor Exemplo Ltda", "Nome Fantasia": "Fornecedor Exemplo", "CNPJ": "00.000.000/0001-00",
   "Tipo de Documento": "Contrato de Prestação de Serviço", "Status": "ATIVO",
   "Objeto do Contrato": "Licenciamento de software X", "Prazo": "12 meses, renovação automática",
   "Início da Vigência": "01/01/2026", "Fim da Vigência": "31/12/2026", "Renovação Prevista": "31/12/2026",
   "Cláusula de Renovação e Rescisão": "Renovação automática por 12 meses, rescisão com aviso de 30 dias",
-  "Condição de Pagamento": "Mensal, boleto", "Diretoria": "TECNOLOGIA", "Área": "Tecnologia",
-  "Centro de Custo": "Data Intelligence", "E-mail do Gestor": "nome.sobrenome@acerto.com.br",
+  "Condição de Pagamento": "Mensal, boleto", "Diretoria": "TECNOLOGIA", "Área": "Área Exemplo",
+  "Centro de Custo": "Centro de Custo Exemplo", "E-mail do Gestor": "nome.sobrenome@exemplo.invalid",
 };
 
 /** GET /api/contratos/import: planilha modelo para importação em massa. */

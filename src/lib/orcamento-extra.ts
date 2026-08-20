@@ -1,4 +1,4 @@
-import type { Attachment } from "@prisma/client";
+import type { Attachment, AttachmentCategory } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 /**
@@ -21,6 +21,14 @@ import { prisma } from "@/lib/db";
  * Este helper concentra a regra para os três pontos não divergirem.
  */
 
+/**
+ * Categoria do anexo que serve de comprovante. Exportada porque a tela da
+ * solicitação também precisa dela (para separar o painel desse documento dos
+ * demais anexos, ver src/app/solicitacoes/[id]/page.tsx) e "qual anexo conta"
+ * tem que continuar sendo uma decisão de um lugar só.
+ */
+export const CATEGORIA_COMPROVANTE_FPA: AttachmentCategory = "APROVACAO_EXTRA_ORCAMENTARIA";
+
 export type ChecagemDoComprovante =
   | { ok: true; comprovante: Attachment | null }
   | { ok: false; erro: string };
@@ -42,7 +50,7 @@ export async function checarComprovanteDoFpa(
   // de orçamento informada, e a exceção orçamentária vincula o documento
   // quando ele existe. Só a EXIGÊNCIA é condicionada a extraBudget.
   const comprovante = await prisma.attachment.findFirst({
-    where: { requestId: request.id, category: "APROVACAO_EXTRA_ORCAMENTARIA" },
+    where: { requestId: request.id, category: CATEGORIA_COMPROVANTE_FPA },
     orderBy: { createdAt: "desc" },
   });
 

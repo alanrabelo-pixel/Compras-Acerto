@@ -1,3 +1,4 @@
+import { ambienteAtual } from "@/lib/ambiente";
 /**
  * Log estruturado mínimo, sem dependência externa.
  *
@@ -42,6 +43,19 @@ function emitir(nivel: Nivel, evento: string, dados: Record<string, unknown> = {
     nivel,
     evento,
     momento: new Date().toISOString(),
+    // Carimbo de ambiente. Sem ele, Produção e Sandbox mandando log para o
+    // mesmo lugar produzem linhas indistinguíveis, e é exatamente ali que a
+    // troca de ambiente seria percebida.
+    //
+    // Usa ambienteAtual() e não uma comparação própria. A versão anterior
+    // comparava `process.env.APP_ENV === "producao"` direto, sem aparar espaço
+    // nem normalizar caixa, e divergia da função em todo valor que ela aceita
+    // por tolerância: com APP_ENV="Producao" ou com um "\n" colado do painel,
+    // o ambiente MANDAVA e-mail de verdade e se identificava como sandbox em
+    // toda linha de log, inclusive nas que registram bloqueio de envio. A
+    // justificativa antiga para não importar, risco de dependência circular,
+    // era falsa: src/lib/ambiente.ts não importa nada.
+    ambiente: ambienteAtual(),
     ...limpar(dados),
   });
   if (nivel === "error") console.error(linha);

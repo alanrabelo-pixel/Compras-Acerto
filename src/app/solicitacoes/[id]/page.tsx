@@ -13,6 +13,7 @@ import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
+import { checarComprovanteDoFpa, CATEGORIA_COMPROVANTE_FPA } from "@/lib/orcamento-extra";
 import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
@@ -78,14 +79,38 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     : [];
   const declaredByNames = Object.fromEntries(declaredByUsers.map((u) => [u.id, u.name]));
 
+  const expectativaDaEtapaAtual = expectativaDaEtapa(request.currentStage, request.diretoria);
+
+  // Extra-orçamentária: a tela não dizia nem que a solicitação foi aberta sem
+  // linha de orçamento, nem que falta o comprovante do FP&A. O gestor só
+  // descobria clicando em aprovar e tomando um 422 de uma regra que ninguém
+  // tinha mostrado a ele. A checagem é a MESMA das portas de saída
+  // (src/lib/orcamento-extra.ts), chamada aqui de propósito: se a regra mudar,
+  // o que a tela avisa e o que a API cobra mudam juntos.
+  //
+  // Também não havia caminho para resolver: o painel "Anexos" genérico envia
+  // sem categoria (vira GERAL, ver POST /api/requests/[id]/attachments), e a
+  // única tela que gravava APROVACAO_EXTRA_ORCAMENTARIA era o formulário de
+  // abertura. Quem não anexou na criação ficava sem lugar para anexar depois.
+  // Daí o painel dedicado abaixo, mesmo padrão do painel de triagem.
+  const checagemDoComprovante = await checarComprovanteDoFpa(request, "antes de aprovar a solicitação");
+  const comprovanteDoFpa = checagemDoComprovante.ok ? checagemDoComprovante.comprovante : null;
+  const faltaComprovanteDoFpa = !checagemDoComprovante.ok;
+
+  const anexosDoFpa = request.attachments.filter((a) => a.category === CATEGORIA_COMPROVANTE_FPA);
+  // Mostrado também quando extraBudget é false mas o documento existe (o
+  // formulário envia o anexo sempre que a pessoa escolhe um arquivo): sem
+  // isso, o painel sumiria e o arquivo junto, já que ele sai de "Anexos".
+  const mostrarComprovanteDoFpa = request.extraBudget || anexosDoFpa.length > 0;
+
   // O painel de triagem só faz sentido depois que existe um fornecedor a
   // triar: da negociação em diante, ou assim que alguém já anexou a evidência
   // (caso a solicitação tenha voltado de etapa). Separamos os anexos para o
   // mesmo arquivo não aparecer duas vezes na tela.
-  const expectativaDaEtapaAtual = expectativaDaEtapa(request.currentStage, request.diretoria);
-
   const anexosDeTriagem = request.attachments.filter((a) => a.category === "TRIAGEM_FORNECEDOR");
-  const outrosAnexos = request.attachments.filter((a) => a.category !== "TRIAGEM_FORNECEDOR");
+  const outrosAnexos = request.attachments.filter(
+    (a) => a.category !== "TRIAGEM_FORNECEDOR" && !(mostrarComprovanteDoFpa && a.category === CATEGORIA_COMPROVANTE_FPA)
+  );
   const ETAPAS_COM_FORNECEDOR_DEFINIDO: string[] = [
     "COTACAO", "MAPA_COTACAO", "APROVACAO", "JURIDICO", "PEDIDO_COMPRA",
     "AGUARDANDO_ENTREGA", "MEDICAO", "FISCAL", "TESOURARIA",
@@ -126,6 +151,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {request.extraBudget && <Badge variant="warning">Orçamento Extra</Badge>}
             <Badge variant={PRIORITY_BADGE_VARIANT[request.priority] ?? "neutral"}>{rotulo(PRIORITY_LABEL, request.priority)}</Badge>
             <Badge variant="green">{STAGES[request.currentStage].label}</Badge>
           </div>
@@ -159,6 +185,17 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           />
         </div>
 
+        {faltaComprovanteDoFpa && (
+          <WarningNotice className="section-gap">
+            <strong>Orçamento Extra sem o comprovante de aprovação do FP&amp;A.</strong> Esta solicitação foi aberta
+            sem linha de orçamento, então o documento do FP&amp;A é obrigatório para ela seguir. O que fazer: pedir a
+            aprovação ao FP&amp;A e anexar o arquivo no painel &quot;Comprovante de aprovação do FP&amp;A&quot; mais
+            abaixo nesta página. Quem faz: o solicitante ({request.requester.name}) ou o comprador
+            {request.buyer ? ` (${request.buyer.name})` : " responsável"}. Enquanto o comprovante não estiver
+            anexado, a Aprovação do Gestor e a Validação Orçamentária não avançam.
+          </WarningNotice>
+        )}
+
         {request.fragmentationFlag && (
           <WarningNotice className="section-gap">
             Sinalizada por risco de fracionamento: a soma das compras deste fornecedor nos últimos 12 meses ultrapassa a alçada individual desta solicitação. Revisão da Controladoria recomendada.
@@ -178,6 +215,14 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             <p style={{ margin: 0 }}><span className="text-muted">Gestor do centro de custo:</span> {request.approverManager?.name ?? "sem gestor definido"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Comprador:</span> {request.buyer?.name ?? "não atribuído"}</p>
             <p style={{ margin: 0 }}><span className="text-muted">Aprovado pela liderança na abertura:</span> {request.leadershipPreApproved ? "Sim" : "Não"}</p>
+            {request.extraBudget && (
+              <p style={{ margin: 0 }}>
+                <span className="text-muted">Orçamento Extra:</span>{" "}
+                {comprovanteDoFpa
+                  ? `Sim, com comprovante do FP&A anexado (${comprovanteDoFpa.fileName})`
+                  : "Sim, comprovante do FP&A pendente"}
+              </p>
+            )}
             <p style={{ margin: 0 }}><span className="text-muted">Data limite sugerida (solicitante):</span> {formatDateOnly(request.suggestedDeadline)}</p>
           </div>
           <hr className="divider" />
@@ -196,6 +241,22 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
         </section>
 
         <RequestActions request={serializableRequest} sessionActor={sessionActor} declaredByNames={declaredByNames} />
+
+        {/* Comprovante de aprovação do FP&A: painel próprio porque este anexo
+            tem categoria própria (é ele que as portas de saída procuram, ver
+            @/lib/orcamento-extra) e o painel genérico de Anexos grava tudo
+            como GERAL, que não conta para a regra. */}
+        {mostrarComprovanteDoFpa && (
+          <AttachmentsPanel
+            requestId={request.id}
+            attachments={anexosDoFpa.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+            uploaderId={request.requesterId}
+            sessionActor={sessionActor}
+            category={CATEGORIA_COMPROVANTE_FPA}
+            title="Comprovante de aprovação do FP&A"
+            emptyLabel="Nenhum comprovante anexado. Esta compra é extra-orçamentária: anexe aqui a aprovação do FP&A. Sem este arquivo, o gestor não consegue aprovar e a Validação Orçamentária não avança."
+          />
+        )}
 
         {/* Triagem do fornecedor: a verificação (CNPJ ativo, listas restritivas)
             é feita fora do sistema pelo comprador. O painel serve só para a

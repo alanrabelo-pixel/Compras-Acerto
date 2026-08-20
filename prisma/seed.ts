@@ -1,4 +1,18 @@
 import { PrismaClient } from "@prisma/client";
+import { exigirBancoLocal } from "../src/lib/guarda-banco";
+
+// Primeira linha executável do arquivo, de propósito: o seed escreve (upsert
+// de usuários, papéis, centros de custo e orçamento) e lê o DATABASE_URL do
+// ambiente sem perguntar nada. Se a string de conexão apontar para Produção ou
+// Sandbox, isto para aqui, antes de qualquer escrita. Ver src/lib/guarda-banco.ts.
+//
+// Roda depois dos imports, e é isso que faz `npm run prisma:seed` continuar
+// funcionando com o DATABASE_URL vindo só do .env: importar @prisma/client
+// carrega o .env para process.env, e todo import é avaliado antes do corpo do
+// módulo. Verificado em 2026-08-19 rodando tsx neste projeto. Se algum dia o
+// Prisma parar de carregar o .env sozinho, a guarda barra por ausência de
+// DATABASE_URL, que é ruído visível, e não escrita no banco errado.
+exigirBancoLocal("O seed (npm run prisma:seed)");
 
 const prisma = new PrismaClient();
 
@@ -14,26 +28,50 @@ const COST_CENTERS = [
   "Vendas e Sucesso do Cliente", "Foundation",
 ];
 
+// PESSOAS DESTE ARQUIVO SÃO FICTÍCIAS, E ISSO É REQUISITO, NÃO DESCUIDO.
+//
+// Até 2026-08-19 este seed cadastrava 22 colegas reais da Acerto, com nome e
+// e-mail @acerto.com.br verdadeiros. Assim que Slack ou Gmail estiverem
+// configurados, qualquer teste de fluxo (aprovação de gestor, aviso de
+// renovação, mensagem de chamado) dispara notificação de verdade para essas
+// pessoas, em nome do sistema. Não há como cancelar um e-mail enviado.
+//
+// O domínio é @exemplo.invalid: o TLD .invalid é reservado pela RFC 2606 e
+// nunca resolve em DNS nenhum, então um envio acidental morre na resolução de
+// nome, antes de sair. NÃO troque por acerto.com.br (são pessoas reais) nem
+// por example.com (domínio que existe e tem dono).
+//
+// Os nomes de CENTRO DE CUSTO continuam reais: são estrutura da empresa, não
+// destinatário de mensagem, e o produto depende deles para casar solicitação
+// com alçada.
+//
 // Gestor que aprova solicitações de cada centro de custo logo após o envio
 // (etapa APROVACAO_GESTOR), a pedido do usuário (2026-08-11). Todo centro de
-// custo hoje tem um líder definido (ver comentário acima).
+// custo hoje tem um líder definido (ver comentário acima). São 11, um por
+// centro, mesma quantidade e mesma distribuição da lista anterior.
 const COST_CENTER_MANAGERS = [
-  { costCenter: "Comitê de IA", name: "Afonso Borsoi", email: "afonso.borsoi@acerto.com.br" },
-  { costCenter: "Gestão", name: "Bárbara Juliana", email: "barbara.juliana@acerto.com.br" },
-  { costCenter: "F&NC", name: "Carolina Bacha", email: "carolina.bacha@acerto.com.br" },
-  { costCenter: "Atração e Fidelização de Consumidores", name: "Guilherme Prates", email: "guilherme.prates@acerto.com.br" },
-  { costCenter: "Produto", name: "Gustavo Santos", email: "gustavo.santos@acerto.com.br" },
-  { costCenter: "CRM, Design, Conteúdo e EO", name: "Taciana Esselin", email: "taciana.esselin@acerto.com.br" },
-  { costCenter: "Pessoas e Cultura", name: "Natália Alves", email: "natalia.alves@acerto.com.br" },
-  { costCenter: "Foundation", name: "Rafael Vicentini", email: "rafael.vicentini@acerto.com.br" },
-  { costCenter: "Tecnologia", name: "Rafael Lima", email: "rafael.lima@acerto.com.br" },
-  { costCenter: "Data Intelligence", name: "Thomaz Campos", email: "thomaz.campos@acerto.com.br" },
-  { costCenter: "Vendas e Sucesso do Cliente", name: "Pedro", email: "pedro@acerto.com.br" },
+  { costCenter: "Comitê de IA", name: "Alice Andrade", email: "alice.andrade@exemplo.invalid" },
+  { costCenter: "Gestão", name: "Bruno Barreto", email: "bruno.barreto@exemplo.invalid" },
+  { costCenter: "F&NC", name: "Camila Cardoso", email: "camila.cardoso@exemplo.invalid" },
+  { costCenter: "Atração e Fidelização de Consumidores", name: "Diego Duarte", email: "diego.duarte@exemplo.invalid" },
+  { costCenter: "Produto", name: "Elisa Esteves", email: "elisa.esteves@exemplo.invalid" },
+  { costCenter: "CRM, Design, Conteúdo e EO", name: "Fábio Furtado", email: "fabio.furtado@exemplo.invalid" },
+  { costCenter: "Pessoas e Cultura", name: "Gabriela Guedes", email: "gabriela.guedes@exemplo.invalid" },
+  { costCenter: "Foundation", name: "Helena Holanda", email: "helena.holanda@exemplo.invalid" },
+  { costCenter: "Tecnologia", name: "Ivan Iglesias", email: "ivan.iglesias@exemplo.invalid" },
+  { costCenter: "Data Intelligence", name: "Júlia Junqueira", email: "julia.junqueira@exemplo.invalid" },
+  { costCenter: "Vendas e Sucesso do Cliente", name: "Lucas Lacerda", email: "lucas.lacerda@exemplo.invalid" },
 ];
 
 // Linhas de orçamento: dados de exemplo para desenvolvimento local. O
 // mecanismo real de importação mensal (planilha/API do FP&A) ainda não está
 // definido (ver README, seção "Assunções não verificadas").
+//
+// Conferido em 2026-08-19 junto com a troca das pessoas por gente fictícia:
+// estes três registros já eram sintéticos. Códigos inventados (BL-2026-00x),
+// valores redondos e descrições que só repetem as três diretorias do enum
+// (Corporativo, Revenue, Tecnologia). Não há aqui verba real, fornecedor real
+// nem pessoa, então nada a substituir.
 const BUDGET_LINES = [
   { externalCode: "BL-2026-001", description: "Tecnologia - Infraestrutura", monthRef: "2026-07", available: 150000 },
   { externalCode: "BL-2026-002", description: "Revenue - Ferramentas Comerciais", monthRef: "2026-07", available: 80000 },
@@ -63,29 +101,38 @@ async function main() {
     await prisma.costCenter.update({ where: { name: m.costCenter }, data: { managers: { connect: { id: manager.id } } } });
   }
 
-  // Usuários-chave citados no documento (memória de contexto Acerto). Ajustar
-  // e-mails/roles reais antes de rodar em produção.
+  // Elenco fictício que cobre um papel de cada área do fluxo, para o sistema
+  // ficar navegável em desenvolvimento. Mesma quantidade (11) e mesma
+  // distribuição de papéis da lista de pessoas reais que existia aqui antes,
+  // e o mesmo domínio inexistente explicado no topo do arquivo.
+  //
+  // O primeiro da lista é ADMIN porque o CHECKLIST-GOOGLE-OAUTH.md manda ter
+  // pelo menos um administrador no banco antes do primeiro login com SSO. Não
+  // remova o `admin: true`. Atenção, porém: este administrador é FICTÍCIO e
+  // serve só para desenvolvimento local, já que ninguém consegue logar com um
+  // e-mail @exemplo.invalid (o login exige @acerto.com.br, ver src/lib/auth.ts).
+  // Promover a primeira pessoa real a ADMIN em Produção é passo manual, e está
+  // descrito na seção 3 do CHECKLIST-GOOGLE-OAUTH.md.
   //
   // canViewBoard: dado de exemplo para desenvolvimento local (libera o
   // Quadro/Contratos/Dashboards para essas pessoas). Em produção, isso é
   // gerenciado manualmente em /admin/acessos (ADMIN), não pelo seed.
   // extraRoles: papéis de alçada da exceção orçamentária (Coordenação/Gerente
-  // F&NC, ver budgetExceptionApproverRole em workflow.ts). ASSUNÇÃO NÃO
-  // VERIFICADA: são placeholders sobre pessoas já seedadas, só para o fluxo
-  // ficar testável; quem de fato ocupa cada papel precisa ser validado com o
-  // time de Compras | F&NC antes de produção.
+  // F&NC, ver budgetExceptionApproverRole em workflow.ts), aqui só para o fluxo
+  // ficar testável. Quem de fato ocupa cada papel na Acerto é definido em
+  // /admin/acessos, com gente real, e nunca por este arquivo.
   const seedUsers = [
-    { email: "alan.rabelo@acerto.com.br", name: "Alan Rabelo", role: "COMPRADOR" as const, admin: true, canViewBoard: true },
-    { email: "mariane.gomes@acerto.com.br", name: "Mariane Gomes", role: "COMPRADOR" as const, canViewBoard: true },
-    { email: "mariana.flores@acerto.com.br", name: "Mariana Flores", role: "COMPRADOR" as const, canViewBoard: true },
-    { email: "vinicius.vieira@acerto.com.br", name: "Vinícius Vieira", role: "JURIDICO" as const, canViewBoard: true },
-    { email: "monalisa.tomaz@acerto.com.br", name: "Monalisa Tomaz", role: "TESOURARIA" as const, canViewBoard: true },
-    { email: "alcyelle.pereira@acerto.com.br", name: "Alcyelle Pereira", role: "TESOURARIA" as const, canViewBoard: false },
-    { email: "ana.reis@acerto.com.br", name: "Ana Reis", role: "CONTROLADORIA" as const, canViewBoard: true, extraRoles: ["COORDENACAO"] as const },
-    { email: "jessica.oliveira@acerto.com.br", name: "Jessica Oliveira", role: "CONTROLADORIA" as const, canViewBoard: false, extraRoles: ["GERENTE_FNC"] as const },
-    { email: "carolina.horta@acerto.com.br", name: "Carolina Horta", role: "APROVADOR" as const, canViewBoard: true },
-    { email: "rafael.martins@acerto.com.br", name: "Rafael Martins", role: "PRIVACIDADE" as const, canViewBoard: false },
-    { email: "fiscal@acerto.com.br", name: "Time Fiscal", role: "FISCAL" as const, canViewBoard: false },
+    { email: "marina.macedo@exemplo.invalid", name: "Marina Macedo", role: "COMPRADOR" as const, admin: true, canViewBoard: true },
+    { email: "nelson.nogueira@exemplo.invalid", name: "Nelson Nogueira", role: "COMPRADOR" as const, canViewBoard: true },
+    { email: "olivia.osorio@exemplo.invalid", name: "Olívia Osório", role: "COMPRADOR" as const, canViewBoard: true },
+    { email: "paulo.pacheco@exemplo.invalid", name: "Paulo Pacheco", role: "JURIDICO" as const, canViewBoard: true },
+    { email: "renata.rangel@exemplo.invalid", name: "Renata Rangel", role: "TESOURARIA" as const, canViewBoard: true },
+    { email: "sergio.salgado@exemplo.invalid", name: "Sérgio Salgado", role: "TESOURARIA" as const, canViewBoard: false },
+    { email: "tatiana.teixeira@exemplo.invalid", name: "Tatiana Teixeira", role: "CONTROLADORIA" as const, canViewBoard: true, extraRoles: ["COORDENACAO"] as const },
+    { email: "ulisses.uchoa@exemplo.invalid", name: "Ulisses Uchôa", role: "CONTROLADORIA" as const, canViewBoard: false, extraRoles: ["GERENTE_FNC"] as const },
+    { email: "vera.valadares@exemplo.invalid", name: "Vera Valadares", role: "APROVADOR" as const, canViewBoard: true },
+    { email: "wagner.wolff@exemplo.invalid", name: "Wagner Wolff", role: "PRIVACIDADE" as const, canViewBoard: false },
+    { email: "fiscal@exemplo.invalid", name: "Time Fiscal", role: "FISCAL" as const, canViewBoard: false },
   ];
 
   for (const u of seedUsers) {

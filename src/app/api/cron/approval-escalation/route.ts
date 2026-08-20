@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ehProducao } from "@/lib/ambiente";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { verificarTokenDeMaquina } from "@/lib/segredos";
 import { APPROVAL_ESCALATION_BUSINESS_DAYS } from "@/lib/workflow";
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
 
   let escalated = 0;
   let falhasDeAviso = 0;
+  let simulados = 0;
   for (const approval of overdue) {
     // O aviso é best-effort de propósito: se o Slack estiver fora, o
     // escalonamento ainda precisa ser marcado. Mas a falha agora fica
@@ -51,10 +53,21 @@ export async function GET(req: NextRequest) {
       logger.warn("cron_escalonamento_slack_falhou", { destino: "controladoria", solicitacao: approval.request.code, erro });
     });
 
-    await prisma.approval.update({ where: { id: approval.id }, data: { escalatedAt: new Date() } });
-    escalated++;
+    // Fora de produção NÃO marca. A trava de envio bloqueia sem lançar, então
+    // o .catch acima não roda e este update diria que o aprovador foi
+    // lembrado sem nada ter saído. Aqui a supressão é pior que no alerta de
+    // contrato: o filtro desta rota é `escalatedAt: null`, então a marcação
+    // falsa do Sandbox tira aquela aprovação do escalonamento PARA SEMPRE, não
+    // por uma semana. Com banco compartilhado, o aprovador de verdade nunca
+    // mais é cobrado por aquele atraso.
+    if (ehProducao()) {
+      await prisma.approval.update({ where: { id: approval.id }, data: { escalatedAt: new Date() } });
+      escalated++;
+    } else {
+      simulados++;
+    }
   }
 
-  logger.info("cron_escalonamento_concluido", { escalonadas: escalated, falhasDeAviso });
-  return NextResponse.json({ escalated, falhasDeAviso });
+  logger.info("cron_escalonamento_concluido", { escalonadas: escalated, simulados, falhasDeAviso });
+  return NextResponse.json({ escalated, simulados, falhasDeAviso });
 }

@@ -21,7 +21,7 @@ describe("validarAmbiente", () => {
 
   it("não exige o resto fora de produção, para não travar o desenvolvimento", () => {
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("DATABASE_URL", "postgresql://x");
+    vi.stubEnv("DATABASE_URL", "postgresql://u:p@localhost:5433/acerto");
     vi.stubEnv("NEXTAUTH_SECRET", undefined);
     vi.stubEnv("GOOGLE_CLIENT_ID", undefined);
 
@@ -30,7 +30,7 @@ describe("validarAmbiente", () => {
 
   it("derruba o boot em produção sem os segredos de autenticação", () => {
     vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("DATABASE_URL", "postgresql://x");
+    vi.stubEnv("DATABASE_URL", "postgresql://u:p@localhost:5433/acerto");
     vi.stubEnv("NEXTAUTH_SECRET", undefined);
 
     expect(() => validarAmbiente()).toThrowError(/NEXTAUTH_SECRET/);
@@ -38,7 +38,7 @@ describe("validarAmbiente", () => {
 
   it("lista todas as ausentes de uma vez, em vez de uma por deploy", () => {
     vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("DATABASE_URL", "postgresql://x");
+    vi.stubEnv("DATABASE_URL", "postgresql://u:p@localhost:5433/acerto");
     vi.stubEnv("NEXTAUTH_SECRET", undefined);
     vi.stubEnv("GOOGLE_CLIENT_ID", undefined);
     vi.stubEnv("APP_URL", undefined);
@@ -56,9 +56,14 @@ describe("validarAmbiente", () => {
 
   it("apenas avisa sobre credencial de integração, sem derrubar o boot", () => {
     vi.stubEnv("NODE_ENV", "production");
-    for (const nome of ["DATABASE_URL", "NEXTAUTH_SECRET", "NEXTAUTH_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AI_KEY_ENCRYPTION_SECRET", "APP_URL"]) {
+    // APP_ENV explícito e uma URL de banco coerente com ele: sem isso, a
+    // checagem de coerência (ambiente x banco) barra antes de chegar na parte
+    // que este teste quer exercer, e o teste passaria a medir outra coisa.
+    vi.stubEnv("APP_ENV", "producao");
+    for (const nome of ["NEXTAUTH_SECRET", "NEXTAUTH_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AI_KEY_ENCRYPTION_SECRET", "APP_URL"]) {
       vi.stubEnv(nome, "valor");
     }
+    vi.stubEnv("DATABASE_URL", "postgresql://u:p@db.provedor.com:5432/acerto");
     // Integração ausente degrada uma funcionalidade, e o sistema foi desenhado
     // para que integração falhe em silêncio sem travar o fluxo de compras.
     vi.stubEnv("SLACK_BOT_TOKEN", undefined);

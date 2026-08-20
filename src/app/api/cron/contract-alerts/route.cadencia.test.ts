@@ -97,6 +97,11 @@ describe("GET /api/cron/contract-alerts: cadência semanal", () => {
   beforeEach(() => {
     vi.stubEnv("LOCAL_BYPASS_AUTH", "false");
     vi.stubEnv("CRON_SECRET", SEGREDO);
+    // A cadência é comportamento de PRODUÇÃO: fora dela o cron simula, não
+    // grava ContractAlert, e é justamente o registro do alerta que define a
+    // janela semanal. Sem declarar o ambiente, este arquivo mediria o caminho
+    // simulado e afirmaria coisas sobre uma cadência que não aconteceu.
+    vi.stubEnv("APP_ENV", "producao");
     emailsEnviados.length = 0;
     slacksEnviados.length = 0;
   });

@@ -651,6 +651,84 @@ button:focus-visible,
 }
 
 /* ---------------------------------------------------------------------- */
+/* Faixa de ambiente (ver src/lib/ambiente.ts e AppShell.tsx)              */
+/*                                                                          */
+/* Só existe fora de produção; em produção o elemento nem é renderizado, e  */
+/* a casca fica exatamente como era. Fixa no alto da janela, não rolando    */
+/* com a página: um aviso que some no primeiro scroll para de avisar        */
+/* justamente quando a pessoa está no meio de uma tela achando que é        */
+/* produção. Por ser fixed, ela sai do fluxo e não entra na linha do flex   */
+/* da casca, então não desloca a barra lateral nem o conteúdo. O espaço     */
+/* dela é devolvido em três lugares a partir da MESMA variável, para não    */
+/* cobrir conteúdo nem empurrar a página para além da janela.               */
+/* ---------------------------------------------------------------------- */
+
+.app-shell.com-faixa-de-ambiente {
+  --faixa-ambiente-h: 30px;
+  padding-top: var(--faixa-ambiente-h);
+}
+/* Sem isto, os 30px de padding somariam à altura mínima de 100vh e toda tela
+   ganharia uma barra de rolagem de 30px sem conteúdo nenhum. */
+.app-shell.com-faixa-de-ambiente .sidebar {
+  top: var(--faixa-ambiente-h);
+  height: calc(100vh - var(--faixa-ambiente-h));
+}
+
+.faixa-ambiente {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--faixa-ambiente-h, 30px);
+  /* Acima da barra de topo (20) e do widget de chat (60), abaixo do modal
+     (1000) e da Command Palette (1100): a faixa não deve tapar um diálogo
+     aberto, e esses são transitórios. */
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-bottom: 1px solid var(--warning);
+  font-size: 11.5px;
+  line-height: 1;
+  /* Altura fixa: o texto trunca em vez de quebrar em duas linhas, senão a
+     compensação de espaço acima ficaria errada em telas estreitas. */
+  white-space: nowrap;
+  overflow: hidden;
+}
+.faixa-ambiente-rotulo {
+  background: var(--warning);
+  color: var(--warning-bg);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.faixa-ambiente-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 860px) {
+  /* A barra lateral vira uma linha no topo (posição estática, altura
+     automática), então as compensações de altura acima não valem aqui. O
+     padding-top da casca continua valendo, que é o que impede a faixa de
+     cobrir a barra. */
+  .app-shell.com-faixa-de-ambiente .sidebar {
+    top: auto;
+    height: auto;
+  }
+  /* Espaço só para o rótulo: a frase inteira não cabe e viraria reticências. */
+  .faixa-ambiente-texto {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Cards & sections                                                        */
 /* ---------------------------------------------------------------------- */
 

@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { ambienteAtual } from "@/lib/ambiente";
 
 /**
  * Conferência das variáveis de ambiente na inicialização.
@@ -53,12 +54,93 @@ const CONSEQUENCIA: Record<string, string> = {
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "nenhum e-mail é enviado",
 };
 
+/**
+ * Marcas que indicam banco local. Um ambiente que se declara produção e aponta
+ * para um Postgres na própria máquina é erro de configuração, não uma escolha.
+ */
+function bancoEhLocal(url: string): boolean {
+  return /@(localhost|127\.0\.0\.1)[:/]/.test(url);
+}
+
+/**
+ * Marca obrigatória no NOME do banco do Sandbox.
+ *
+ * Existe porque a checagem que importa não é verificável de outro jeito. Um
+ * agente adversarial demonstrou o buraco: a validação original só recusava
+ * "produção apontando para banco local", e a combinação inversa, Sandbox
+ * apontando para o banco de PRODUÇÃO, subia em silêncio. É justamente a que
+ * acontece, porque provisionar um ambiente copiando as variáveis do outro é o
+ * caminho de menor esforço.
+ *
+ * E com o banco compartilhado o Sandbox nem precisa de credencial de envio: a
+ * solicitação de teste nasce na base de produção, e o cron da PRODUÇÃO, esse
+ * com a trava liberada, manda o Slack real para o aprovador real. A trava de
+ * envio não protege contra isso, porque quem envia é o outro processo.
+ *
+ * Nenhum código consegue olhar uma URL e saber se aquilo é o banco de
+ * produção. O que dá para exigir é uma convenção de nome, e é o runbook que a
+ * estabelece: o banco do Sandbox tem "sandbox" ou "sbx" no nome. Convenção
+ * sozinha não vale nada, mas convenção conferida no boot vale.
+ */
+const MARCA_DE_SANDBOX = /(sandbox|sbx)/i;
+
+function nomeDoBanco(url: string): string {
+  // Pega o caminho depois do último "/", sem query string. Falha silenciosa
+  // devolvendo vazio: a checagem que usa isso trata vazio como "não sei", e
+  // não como "está tudo certo".
+  const semQuery = url.split("?")[0];
+  const partes = semQuery.split("/");
+  return partes.length > 3 ? partes[partes.length - 1] : "";
+}
+
 export function validarAmbiente(): void {
   const producao = process.env.NODE_ENV === "production";
 
   // DATABASE_URL vale em qualquer ambiente: sem ela nada funciona.
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL não está definida. O sistema não tem como acessar o banco de dados.");
+  }
+
+  // Coerência entre o que o ambiente DIZ que é e para onde ele APONTA.
+  //
+  // Roda em qualquer NODE_ENV de propósito: o Sandbox compilado como produção
+  // é o caso normal, não a exceção.
+  const ambiente = ambienteAtual();
+  const url = process.env.DATABASE_URL;
+  const bancoLocal = bancoEhLocal(url);
+  const banco = nomeDoBanco(url);
+  const bancoParecSandbox = MARCA_DE_SANDBOX.test(banco);
+
+  if (ambiente === "producao" && bancoLocal) {
+    throw new Error(
+      "APP_ENV=producao com DATABASE_URL apontando para um banco local. " +
+        "Ou este ambiente não é produção e a variável está errada, ou é produção " +
+        "e está ligada ao banco errado. O boot foi interrompido nos dois casos."
+    );
+  }
+
+  if (ambiente === "producao" && bancoParecSandbox) {
+    throw new Error(
+      `APP_ENV=producao com DATABASE_URL apontando para o banco "${banco}", cujo ` +
+        "nome tem marca de Sandbox. Produção gravando na base de teste apaga o " +
+        "histórico de compras de verdade sem ninguém perceber na hora."
+    );
+  }
+
+  // O caso que mais importa, e o que estava faltando: Sandbox ligado a um banco
+  // remoto que não se identifica como Sandbox. Não dá para provar que aquilo é
+  // a produção, então o critério é o inverso: para gravar em banco remoto, o
+  // Sandbox tem que estar num banco que se declara Sandbox pelo nome. Banco
+  // local segue liberado, que é o desenvolvimento de todo dia.
+  if (ambiente === "sandbox" && !bancoLocal && !bancoParecSandbox) {
+    throw new Error(
+      `APP_ENV=sandbox com DATABASE_URL apontando para o banco remoto "${banco}", ` +
+        "que não tem marca de Sandbox no nome. Se este banco for o de produção, o " +
+        "Sandbox grava solicitações reais e o cron da Produção manda as mensagens " +
+        "delas para pessoas de verdade, mesmo com a trava de envio ligada aqui. " +
+        "Renomeie o banco do Sandbox incluindo \"sandbox\" ou \"sbx\", ou aponte " +
+        "para o banco certo. Ver docs/runbook-ambientes.md."
+    );
   }
 
   if (!producao) return;
@@ -75,5 +157,20 @@ export function validarAmbiente(): void {
   const ausentes = RECOMENDADAS_EM_PRODUCAO.filter((nome) => !process.env[nome]);
   for (const nome of ausentes) {
     logger.warn("variavel_de_ambiente_ausente", { variavel: nome, consequencia: CONSEQUENCIA[nome] });
+  }
+
+  // Só a partir daqui: NODE_ENV é produção. Se APP_ENV não disser que este é o
+  // ambiente de produção, o mais provável é que seja o Sandbox rodando com
+  // paridade real, que é o desejado. O que não pode passar em silêncio é o
+  // caso inverso: produção de verdade sem se declarar, porque aí a trava de
+  // envio de src/lib/integrations trata tudo como sandbox e o sistema fica mudo
+  // sem ninguém entender por quê.
+  if (ambiente !== "producao") {
+    logger.warn("ambiente_nao_declarado_como_producao", {
+      appEnv: process.env.APP_ENV ?? "(ausente)",
+      efeito:
+        "e-mail e Slack não serão enviados, e a interface mostra a faixa de Sandbox. " +
+        "Se este É o ambiente de produção, defina APP_ENV=producao.",
+    });
   }
 }

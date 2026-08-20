@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ehProducao } from "@/lib/ambiente";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { formatDateOnly } from "@/lib/format";
@@ -74,6 +75,8 @@ export async function GET(req: NextRequest) {
 
   let sent = 0;
   let falhasDeAviso = 0;
+  // Contados à parte: fora de produção o aviso é simulado, nada é gravado.
+  let simulados = 0;
   for (const contract of contracts) {
     const { subject, html } = templates.alertaRenovacaoContrato(
       contract.contractManager.name,
@@ -95,15 +98,29 @@ export async function GET(req: NextRequest) {
 
     // O canal registrado era sempre EMAIL, mesmo quando o Slack também saía,
     // então o histórico de alertas não refletia por onde a pessoa foi avisada.
-    await prisma.contractAlert.create({
-      data: { contractId: contract.id, channel: slackEnviado ? "EMAIL_E_SLACK" : "EMAIL" },
-    });
-    sent++;
+    //
+    // Fora de produção NÃO grava. A trava de envio bloqueia a mensagem sem
+    // lançar, de propósito, então o .catch acima nunca roda e este registro
+    // sairia afirmando que o gestor foi avisado quando nada saiu. Isso é o
+    // mesmo defeito que o alerta de fracionamento já teve e que foi corrigido
+    // em 19/08, reintroduzido por outro caminho. E aqui é pior: o filtro
+    // semântico lá em cima ignora contratos que já têm alerta na semana, então
+    // a linha falsa do Sandbox SUPRIME o alerta verdadeiro da Produção quando
+    // os dois compartilham banco.
+    if (ehProducao()) {
+      await prisma.contractAlert.create({
+        data: { contractId: contract.id, channel: slackEnviado ? "EMAIL_E_SLACK" : "EMAIL" },
+      });
+      sent++;
+    } else {
+      simulados++;
+    }
   }
 
-  logger.info("cron_alerta_contrato_concluido", { alertados: sent, falhasDeAviso });
+  logger.info("cron_alerta_contrato_concluido", { alertados: sent, simulados, falhasDeAviso });
   return NextResponse.json({
     contractsAlerted: sent,
+    simulados,
     falhasDeAviso,
     jaAvisadosNaSemana: contratosAVencer - contracts.length,
   });

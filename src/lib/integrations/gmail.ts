@@ -15,17 +15,40 @@
 
 import { google } from "googleapis";
 import { prisma } from "../db";
+import { ehProducao } from "../ambiente";
+import { logger } from "../logger";
 
-const SENDER = "compras@acerto.com.br";
+/**
+ * Remetente das mensagens.
+ *
+ * Era uma constante fixa no código. Com dois ambientes na Vercel isso vira um
+ * problema: qualquer deploy que conseguisse autenticar mandaria e-mail
+ * ASSINADO como a caixa real de Compras, e quem recebesse não teria como
+ * distinguir um teste de Sandbox de uma comunicação oficial.
+ *
+ * Agora vem de GMAIL_SENDER. O padrão histórico só vale em produção, de
+ * propósito: fora dela, sem a variável declarada, o valor é um endereço em
+ * domínio reservado (.invalid, RFC 2606) que não existe e não pode ser
+ * entregue por ninguém. Isso é rede de segurança, não a proteção principal: a
+ * proteção é a trava de sendPurchaseEmail, que não envia fora de produção.
+ */
+const SENDER_PRODUCAO = "compras@acerto.com.br";
+const SENDER_SEM_ENTREGA = "nao-enviar@sandbox.invalid";
+
+export function remetente(): string {
+  const configurado = process.env.GMAIL_SENDER?.trim();
+  if (configurado) return configurado;
+  return ehProducao() ? SENDER_PRODUCAO : SENDER_SEM_ENTREGA;
+}
 
 function getGmailClient() {
   // Assunção: credenciais de conta de serviço em variável de ambiente (JSON),
-  // com domain-wide delegation habilitada para SENDER.
+  // com domain-wide delegation habilitada para o remetente.
   const auth = new google.auth.JWT({
     email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     scopes: ["https://www.googleapis.com/auth/gmail.send"],
-    subject: SENDER,
+    subject: remetente(),
   });
   return google.gmail({ version: "v1", auth });
 }
@@ -33,7 +56,7 @@ function getGmailClient() {
 function buildRawMessage(to: string, subject: string, html: string) {
   const message = [
     `To: ${to}`,
-    `From: Time de Compras | F&NC <${SENDER}>`,
+    `From: Time de Compras | F&NC <${remetente()}>`,
     `Subject: ${subject}`,
     "Content-Type: text/html; charset=utf-8",
     "",
@@ -47,12 +70,80 @@ function buildRawMessage(to: string, subject: string, html: string) {
     .replace(/=+$/, "");
 }
 
+/**
+ * Marcador gravado em Notification.subject quando a trava barra o envio.
+ *
+ * Não existe status próprio para "bloqueado": a CHECK do banco
+ * (Notification_status_valido) só aceita ENVIADO e FALHA, e inventar um
+ * terceiro valor exigiria migration. Entre os dois, FALHA é o único honesto:
+ * nada saiu. ENVIADO seria pior que não registrar, porque afirmaria uma
+ * entrega que não houve, que é exatamente o defeito que o alerta de
+ * fracionamento tinha antes. O motivo fica no subject e no log.
+ */
+const MOTIVO_BLOQUEIO = "BLOQUEADO_FORA_DE_PRODUCAO";
+
+/** Recorta o corpo para o log: o HTML inteiro polui a linha sem acrescentar nada. */
+function previaDoCorpo(html: string, limite = 280): string {
+  const texto = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return texto.length > limite ? `${texto.slice(0, limite)}...` : texto;
+}
+
+/**
+ * Registra um envio que a trava barrou. NUNCA lança, nem quando o próprio
+ * registro falha: sendPurchaseEmail é chamada sem .catch em várias rotas
+ * (ex: src/app/api/tickets/route.ts), e uma exceção aqui derrubaria no
+ * Sandbox um fluxo que funciona em produção.
+ */
+async function registrarEnvioBloqueado(params: {
+  to: string;
+  subject: string;
+  html: string;
+  requestId?: string;
+}) {
+  logger.warn("email_bloqueado_fora_de_producao", {
+    motivo: MOTIVO_BLOQUEIO,
+    destinatario: params.to,
+    remetente: remetente(),
+    assunto: params.subject,
+    requestId: params.requestId,
+    previaDoCorpo: previaDoCorpo(params.html),
+  });
+
+  try {
+    await prisma.notification.create({
+      data: {
+        requestId: params.requestId,
+        channel: "EMAIL",
+        recipient: params.to,
+        subject: `[${MOTIVO_BLOQUEIO}] ${params.subject}`,
+        status: "FALHA",
+      },
+    });
+  } catch (err) {
+    logger.error("falha_ao_registrar_email_bloqueado", { destinatario: params.to, erro: err as Error });
+  }
+}
+
 export async function sendPurchaseEmail(params: {
   to: string;
   subject: string;
   html: string;
   requestId?: string;
 }) {
+  // Trava de ambiente. Fora de produção não sai e-mail para lugar nenhum:
+  // nem para o destinatário real, nem para um endereço alternativo. Falha
+  // fechada, antes de qualquer chamada ao Gmail, e sem lançar.
+  //
+  // A checagem é de APP_ENV (src/lib/ambiente.ts), não de credencial e não de
+  // NODE_ENV. Credencial presente não é permissão para enviar: o Sandbox pode
+  // acabar com uma cópia legítima das credenciais do Workspace, e um Sandbox
+  // rodando `next start` é NODE_ENV=production. Ambiente que não se declarou
+  // cai em sandbox, que é o lado que não manda nada.
+  if (!ehProducao()) {
+    await registrarEnvioBloqueado(params);
+    return;
+  }
+
   try {
     const gmail = getGmailClient();
     await gmail.users.messages.send({

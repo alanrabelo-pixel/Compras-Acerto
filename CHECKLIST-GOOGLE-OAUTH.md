@@ -35,14 +35,52 @@ Preencher no ambiente de produção (Railway/Render/etc.), e nunca commitar:
 
 Sem isso, ninguém consegue acessar `/admin/acessos` para liberar as outras pessoas depois do primeiro login.
 
-- `prisma/seed.ts` já cadastra pessoas reais da Acerto com papéis reais (ex:
-  `alan.rabelo@acerto.com.br` como `ADMIN`). Rodar `npm run prisma:seed`
-  contra o banco de produção **antes** do primeiro login cobre isso
-  automaticamente (é um `upsert` por e-mail, seguro rodar mais de uma vez).
-- Revisar essa lista antes de rodar em produção, porque hoje são pessoas/papéis
-  citados no documento de referência, não confirmados como definitivos (ver
-  também os `extraRoles` de Coordenação/Gerente F&NC, marcados como
-  assunção não verificada).
+**Mudou em 19/08/2026, leia antes de seguir instrução antiga.** Até esta data,
+`prisma/seed.ts` cadastrava 22 colegas reais da Acerto, e este checklist mandava
+rodar `npm run prisma:seed` contra o banco de produção para criar o `ADMIN`.
+As duas coisas acabaram:
+
+- O seed agora só cria **pessoas fictícias** em `@exemplo.invalid`, para que
+  nenhum teste de Slack ou de e-mail alcance gente de verdade. Ele continua
+  criando um `ADMIN`, mas um administrador fictício, útil apenas em
+  desenvolvimento local: ninguém consegue logar com `@exemplo.invalid`, já que
+  o SSO só aceita `@acerto.com.br`.
+- O seed também passou a **recusar banco que não seja local** (`localhost` /
+  `127.0.0.1`, ver `src/lib/guarda-banco.ts`). Apontado para Produção ou
+  Sandbox, ele para antes de escrever qualquer linha. Isso é proposital: seed
+  em banco de produção é escrita em massa sem desfazer.
+
+O primeiro administrador real de Produção passa a ser um **passo manual e
+consciente**, feito uma vez:
+
+1. Deixar `LOCAL_BYPASS_AUTH` desligado e fazer o **primeiro login** com a conta
+   `@acerto.com.br` que vai administrar. O callback de `signIn`
+   (`src/lib/auth.ts`) cria o `User` sozinho, com o papel `SOLICITANTE` e mais
+   nada: papel elevado nunca é concedido pelo login.
+2. Conceder `ADMIN` a esse usuário direto no banco de produção. Pelo Prisma
+   Studio (`DATABASE_URL` de produção no ambiente do comando, tabela
+   `UserRole`, criar a linha com o `userId` da pessoa e `role = ADMIN`), ou por
+   SQL:
+
+   ```sql
+   INSERT INTO "UserRole" (id, "userId", role)
+   SELECT gen_random_uuid()::text, u.id, 'ADMIN'
+   FROM "User" u
+   WHERE u.email = 'pessoa.responsavel@acerto.com.br'
+   ON CONFLICT ("userId", role) DO NOTHING;
+   ```
+
+   (`gen_random_uuid()` é nativo do PostgreSQL 13+. Em versão anterior, gerar o
+   `id` por fora e passar como literal.)
+3. Confirmar entrando em `/admin/acessos` com essa conta. Daí para frente todo
+   papel, inclusive novos `ADMIN`, é concedido por lá, na interface, com
+   registro de auditoria, e nunca mais por seed.
+
+Nota sobre os papéis de alçada da exceção orçamentária (`COORDENACAO` e
+`GERENTE_FNC`, ver `budgetExceptionApproverRole` em `workflow.ts`): no seed eles
+estão em pessoas fictícias, só para o fluxo ficar testável em desenvolvimento.
+Quem de fato ocupa cada um precisa ser confirmado com Compras | F&NC e marcado
+em `/admin/acessos`.
 
 ## 4. Teste do fluxo completo (antes de desligar o bypass em definitivo)
 

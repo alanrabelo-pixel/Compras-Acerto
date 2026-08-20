@@ -1,6 +1,7 @@
 import { defineConfig } from "vitest/config";
 import path from "path";
 import fs from "fs";
+import { exigirBancoLocal } from "./src/lib/guarda-banco";
 
 // Carrega .env manualmente (sem dep extra) para os testes de integração das
 // rotas de API, já que elas importam @/lib/db (Prisma real) no topo, e
@@ -16,6 +17,14 @@ if (fs.existsSync(envPath)) {
     if (!process.env[key]) process.env[key] = value;
   }
 }
+
+// Depois de carregar o .env (é ele quem costuma trazer o DATABASE_URL) e antes
+// de qualquer teste subir. A suíte é de integração de verdade: cria registros
+// no Postgres e, no cleanup, roda deleteMany por prefixo
+// (src/test-helpers/fixtures.ts). Apontada para Produção ou Sandbox, ela grava
+// e apaga lá, sem desfazer. Lançar aqui aborta a corrida inteira ainda na
+// leitura da configuração. Ver src/lib/guarda-banco.ts.
+exigirBancoLocal("A suíte de testes (vitest)");
 
 export default defineConfig({
   // O tsconfig do app usa jsx:"preserve" (o build do Next.js faz essa parte via
