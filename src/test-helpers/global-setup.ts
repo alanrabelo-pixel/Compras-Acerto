@@ -36,6 +36,16 @@ export default async function setup() {
     { stdio: "inherit" },
   );
 
+  // Mesma checagem do postinstall (scripts/verify-prisma-engine.cjs),
+  // repetida aqui de propósito: o "Run Tests" e o "Install Dependencies"
+  // são containers separados na Golden Pipeline, e o cache de
+  // node_modules restaurado num pode não refletir o que o outro acabou
+  // de gerar (visto na prática: o postinstall confirmou o engine OK, mas
+  // o "Run Tests" mesmo assim recebeu um node_modules sem o
+  // linux-musl-openssl-3.0.x). Rodar de novo aqui garante o engine certo
+  // independente de qual node_modules foi restaurado neste step.
+  execSync("node scripts/verify-prisma-engine.cjs", { stdio: "inherit" });
+
   // `db push` (não `migrate deploy`): banco efêmero e descartável não
   // precisa de histórico de migration, só do schema atual aplicado direto —
   // é a abordagem recomendada pela própria documentação do Prisma pra
