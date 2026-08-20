@@ -902,8 +902,17 @@ function AprovacaoForm({
             <p style={{ fontSize: 11, fontWeight: 700, marginBottom: 8 }}>
               Declaração de conflito de interesse obrigatória antes de criar a aprovação.
             </p>
-            <label className="label" htmlFor="aprovacao-declared-by">Quem declara (solicitante ou comprador)</label>
-            <UserPicker id="aprovacao-declared-by" value={declaredBy} onChange={setDeclaredBy} placeholder="Selecione o declarante" />
+            {/* ActorField em vez do seletor solto: com SSO ligado a rota grava
+                quem está logado, e um seletor aberto deixava a pessoa escolher
+                um nome e salvar outro. Sem sessão (desenvolvimento local) ele
+                volta a ser o seletor de antes. */}
+            <ActorField
+              label="Quem declara (solicitante ou comprador)"
+              sessionActor={sessionActor}
+              value={declaredBy}
+              onChange={setDeclaredBy}
+              placeholder="Selecione o declarante"
+            />
             <label style={{ fontSize: 12, display: "block", marginTop: 8 }}>
               <input type="checkbox" checked={hasConflict} onChange={(e) => setHasConflict(e.target.checked)} /> Tenho relação pessoal/familiar/financeira com o fornecedor
             </label>

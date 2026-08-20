@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { ContractActions } from "@/components/ContractActions";
 import { AttachmentsPanel } from "@/components/AttachmentsPanel";
 import { formatDateOnly, formatDateTime } from "@/lib/format";
@@ -42,6 +44,18 @@ export default async function ContractDetailPage({ params }: { params: { id: str
     include: { contractManager: { select: USUARIO_PUBLICO }, alerts: { orderBy: { sentAt: "desc" } }, request: true },
   });
   if (!contract) notFound();
+
+  // Quem está logado, para o painel de anexo mostrar o nome real em vez de um
+  // seletor: a rota de upload grava o autor a partir da sessão, então escolher
+  // outra pessoa na tela não teria efeito nenhum. Sem SSO real fica null e o
+  // seletor volta, como em desenvolvimento.
+  const sessao = await getServerSession(authOptions);
+  const quemEstaLogado = sessao?.user?.email
+    ? await prisma.user.findUnique({
+        where: { email: sessao.user.email },
+        select: { id: true, name: true, email: true },
+      })
+    : null;
 
   // Contrato assinado: reaproveita o mecanismo de Attachment da solicitação
   // de origem (ver AttachmentCategory.CONTRATO_ASSINADO no schema), em vez de
@@ -97,6 +111,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
             requestId={contract.requestId}
             attachments={signedContractFiles.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
             uploaderId={contract.contractManagerId}
+            sessionActor={quemEstaLogado}
             category="CONTRATO_ASSINADO"
             title="Contrato Assinado"
             emptyLabel="Nenhum contrato assinado anexado ainda. Anexe o PDF assinado abaixo."

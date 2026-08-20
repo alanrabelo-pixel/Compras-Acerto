@@ -8,6 +8,7 @@ type Attachment = { id: string; fileName: string; uploadedBy: string; stage: str
 
 export function AttachmentsPanel({
   requestId, attachments, uploaderId, category, title = "Anexos", emptyLabel = "Nenhum anexo ainda. Use o campo abaixo para enviar um arquivo.",
+  sessionActor = null,
 }: {
   requestId: string;
   attachments: Attachment[];
@@ -15,10 +16,15 @@ export function AttachmentsPanel({
   category?: string;
   title?: string;
   emptyLabel?: string;
+  // Quem está logado, quando há SSO real. A rota de upload grava o autor a
+  // partir da sessão, então deixar um seletor aberto aqui fazia a pessoa
+  // escolher um nome e salvar outro. Havendo sessão, mostramos o nome e
+  // escondemos a escolha; sem sessão (desenvolvimento local) nada muda.
+  sessionActor?: { id: string; name: string; email: string } | null;
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [uploadedBy, setUploadedBy] = useState(uploaderId ?? "");
+  const [uploadedBy, setUploadedBy] = useState(sessionActor?.id ?? uploaderId ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +63,13 @@ export function AttachmentsPanel({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10, marginTop: 14, alignItems: "end" }}>
         <div>
           <label className="label">Enviado por</label>
-          <UserPicker value={uploadedBy} onChange={setUploadedBy} placeholder="Selecione quem envia" />
+          {sessionActor ? (
+            <p style={{ fontSize: 12.5, margin: "4px 0 0" }}>
+              {sessionActor.name} <span style={{ color: "var(--ink-muted)" }}>({sessionActor.email})</span>
+            </p>
+          ) : (
+            <UserPicker value={uploadedBy} onChange={setUploadedBy} placeholder="Selecione quem envia" />
+          )}
         </div>
         <input ref={fileRef} type="file" className="input" style={{ padding: 6 }} />
         <button className="btn btn-primary" disabled={loading || !uploadedBy} onClick={upload}>Enviar</button>

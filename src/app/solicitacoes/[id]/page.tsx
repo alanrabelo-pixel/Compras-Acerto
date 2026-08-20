@@ -207,6 +207,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             requestId={request.id}
             attachments={anexosDeTriagem.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
             uploaderId={request.buyerId ?? request.requesterId}
+            sessionActor={sessionActor}
             category="TRIAGEM_FORNECEDOR"
             title="Triagem do fornecedor (opcional)"
             emptyLabel="Nenhuma evidência anexada. Se você já verificou CNPJ e listas restritivas, anexe o comprovante aqui. O envio não é obrigatório."
@@ -217,6 +218,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           requestId={request.id}
           attachments={outrosAnexos.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
           uploaderId={request.buyerId ?? request.requesterId}
+            sessionActor={sessionActor}
         />
 
         <HistoryTimeline stageEvents={request.stageEvents} request={serializableRequest} declaredByNames={declaredByNames} />
