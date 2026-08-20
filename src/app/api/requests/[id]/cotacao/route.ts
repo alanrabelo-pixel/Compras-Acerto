@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { minimumQuotesRequired } from "@/lib/workflow";
 import { requireRole } from "@/lib/rbac";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * POST /api/requests/[id]/cotacao: adiciona uma cotação (uma chamada por
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true },
+    include: { requester: { select: USUARIO_PUBLICO } },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "COTACAO") {

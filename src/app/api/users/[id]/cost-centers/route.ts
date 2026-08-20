@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/users/[id]/cost-centers (painel /admin/centros-de-custo), visão
@@ -30,7 +31,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const user = await prisma.user.update({
     where: { id: params.id },
     data: { costCentersManaged: { set: body.costCenterIds.map((id: string) => ({ id })) } },
-    include: { costCentersManaged: true },
+    // O model raiz aqui é User, então o recorte tem que vir por select na raiz:
+    // um include só de costCentersManaged ainda traria todas as colunas do
+    // usuário, chaves de API inclusive.
+    select: { ...USUARIO_PUBLICO, costCentersManaged: true },
   });
 
   return NextResponse.json(user);

@@ -4,6 +4,7 @@ import { budgetExceptionLevel, budgetExceptionApproverRole, nextAfterValidacaoOr
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/requests/[id]/validacao-orcamentaria
@@ -19,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true },
+    include: { requester: { select: USUARIO_PUBLICO } },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "VALIDACAO_ORCAMENTARIA") {

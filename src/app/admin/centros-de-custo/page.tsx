@@ -8,6 +8,7 @@ import { ApprovalLevelPicker } from "@/components/ApprovalLevelPicker";
 import { ApproverCostCentersPicker } from "@/components/ApproverCostCentersPicker";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { TableWrap, TableHeadRow, TableRow, TableEmpty, Tabs } from "@/components/ui";
+import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
 
@@ -33,15 +34,15 @@ export default async function CentrosDeCustoPage({
 
   const costCenters = await prisma.costCenter.findMany({
     where,
-    include: { managers: true, _count: { select: { requests: true } } },
+    include: { managers: { select: USUARIO_PUBLICO }, _count: { select: { requests: true } } },
     orderBy: { name: "asc" },
   });
 
-  const levelRows = await prisma.approvalLevelApprover.findMany({ include: { user: true } });
+  const levelRows = await prisma.approvalLevelApprover.findMany({ include: { user: { select: USUARIO_PUBLICO } } });
 
   const approvers = await prisma.user.findMany({
     where: { roles: { some: { role: "APROVADOR" } } },
-    include: { costCentersManaged: true },
+    select: { ...USUARIO_RESUMIDO, costCentersManaged: true },
     orderBy: { name: "asc" },
   });
 

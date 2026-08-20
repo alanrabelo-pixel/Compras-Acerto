@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/rbac";
 import { sendPurchaseEmail } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { logger } from "@/lib/logger";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/contracts/[id]
@@ -69,7 +70,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const contract = await prisma.contract.findUnique({
     where: { id: params.id },
-    include: { contractManager: true, alerts: true, request: true },
+    include: { contractManager: { select: USUARIO_PUBLICO }, alerts: true, request: true },
   });
   if (!contract) return NextResponse.json({ error: "Contrato não encontrado" }, { status: 404 });
   return NextResponse.json(contract);

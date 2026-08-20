@@ -7,6 +7,7 @@ import { TableWrap, TableHeadRow, TableRow, TableEmpty, Badge } from "@/componen
 import type { Prisma, Diretoria } from "@prisma/client";
 import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
 import { CONTRACT_STATUS_LABEL, rotulo } from "@/lib/rotulos";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function ContratosPage({
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const contracts = await prisma.contract.findMany({
     where,
-    include: { contractManager: true, request: true },
+    include: { contractManager: { select: USUARIO_PUBLICO }, request: true },
     orderBy: { renewalDate: "asc" },
     skip: (Math.min(page, totalPages) - 1) * PAGE_SIZE,
     take: PAGE_SIZE,

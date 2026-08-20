@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
 import { registrarMudancaDePermissao, comoTexto } from "@/lib/auditoria-permissao";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/approval-levels/[level]: troca o(s) aprovador(es) padrão de
@@ -74,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { level: str
   }
 
   const users = approverIds.length > 0
-    ? await prisma.user.findMany({ where: { id: { in: approverIds } } })
+    ? await prisma.user.findMany({ where: { id: { in: approverIds } }, select: USUARIO_PUBLICO })
     : [];
   return NextResponse.json({ level, approvers: users });
 }

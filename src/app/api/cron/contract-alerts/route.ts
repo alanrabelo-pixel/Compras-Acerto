@@ -5,6 +5,7 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { formatDateOnly } from "@/lib/format";
 import { verificarTokenDeMaquina } from "@/lib/segredos";
 import { logger } from "@/lib/logger";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * Alerta de renovação de contrato: seleciona os contratos ativos cuja renovação
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
       status: "ATIVO",
       renewalDate: { lte: threeMonthsFromNow },
     },
-    include: { contractManager: true },
+    include: { contractManager: { select: USUARIO_PUBLICO } },
   });
 
   logger.info("cron_alerta_contrato_iniciado", { contratosAVencer: contracts.length });

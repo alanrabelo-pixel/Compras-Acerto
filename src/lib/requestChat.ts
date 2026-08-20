@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { sendSlackThreadDM } from "@/lib/integrations/slack";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * Chat flutuante comprador ↔ solicitante (widget "nuvem" no canto inferior
@@ -30,7 +31,7 @@ export async function createAppChatMessage(params: {
 
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.requestId },
-    include: { requester: true, buyer: true },
+    include: { requester: { select: USUARIO_PUBLICO }, buyer: { select: USUARIO_PUBLICO } },
   });
   if (!request) return message;
 
@@ -82,7 +83,9 @@ export async function resolveChatFromSlackEvent(params: {
   if (params.threadTs) {
     const match = await prisma.requestChatMessage.findFirst({
       where: { slackThreadTs: params.threadTs },
-      include: { request: { include: { requester: true, buyer: true } } },
+      include: {
+        request: { include: { requester: { select: USUARIO_PUBLICO }, buyer: { select: USUARIO_PUBLICO } } },
+      },
     });
     if (match) return roleFor(match.request, params.senderEmail);
   }
@@ -90,7 +93,9 @@ export async function resolveChatFromSlackEvent(params: {
   const fallback = await prisma.requestChatMessage.findFirst({
     where: { slackChannelId: params.channel },
     orderBy: { createdAt: "desc" },
-    include: { request: { include: { requester: true, buyer: true } } },
+    include: {
+      request: { include: { requester: { select: USUARIO_PUBLICO }, buyer: { select: USUARIO_PUBLICO } } },
+    },
   });
   if (fallback) return roleFor(fallback.request, params.senderEmail);
 

@@ -5,13 +5,18 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
 import { campo } from "@/lib/rotulos";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 // GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
   const stage = req.nextUrl.searchParams.get("stage");
   const requests = await prisma.purchaseRequest.findMany({
     where: stage ? { currentStage: stage as never } : undefined,
-    include: { requester: true, costCenter: true, approverManager: true },
+    include: {
+      requester: { select: USUARIO_PUBLICO },
+      costCenter: true,
+      approverManager: { select: USUARIO_PUBLICO },
+    },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(requests);
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
 
   const costCenter = await prisma.costCenter.findUnique({
     where: { id: costCenterId },
-    include: { managers: { orderBy: { name: "asc" } } },
+    include: { managers: { select: USUARIO_PUBLICO, orderBy: { name: "asc" } } },
   });
   if (!costCenter) return NextResponse.json({ error: "Centro de custo não encontrado" }, { status: 404 });
   // Mais de um gestor pode estar configurado (pedido do usuário): o primeiro
@@ -114,7 +119,10 @@ export async function POST(req: NextRequest) {
       currentStage: "SOLICITACAO",
       slaDeadline,
     },
-    include: { requester: true, approverManager: true },
+    include: {
+      requester: { select: USUARIO_PUBLICO },
+      approverManager: { select: USUARIO_PUBLICO },
+    },
   });
 
   await prisma.stageEvent.create({

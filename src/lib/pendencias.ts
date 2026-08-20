@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { budgetExceptionLevel, budgetExceptionApproverRole } from "@/lib/workflow";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 import type { RoleName, Stage } from "@prisma/client";
 
 /**
@@ -31,7 +32,13 @@ export async function loadPendingRequestsForUser(userId: string, myRoles: RoleNa
 
   const requests = await prisma.purchaseRequest.findMany({
     where: { currentStage: { notIn: ["SOLICITACAO", "CONCLUIDO", "CANCELADO"] } },
-    include: { requester: true, costCenter: { include: { managers: true } }, approvals: true, budgetException: true },
+    include: {
+      requester: { select: USUARIO_PUBLICO },
+      // CostCenter.managers é User[]: precisa do mesmo select da requester.
+      costCenter: { include: { managers: { select: USUARIO_PUBLICO } } },
+      approvals: true,
+      budgetException: true,
+    },
     orderBy: { updatedAt: "asc" },
   });
 

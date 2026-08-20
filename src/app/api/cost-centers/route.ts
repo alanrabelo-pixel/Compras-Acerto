@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 // GET /api/cost-centers: lista centros de custo ativos, para o formulário de
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   const costCenter = await prisma.costCenter.create({
     data: { name, managers: { connect: managerIds.map((id) => ({ id })) } },
-    include: { managers: true },
+    include: { managers: { select: USUARIO_PUBLICO } },
   });
 
   return NextResponse.json(costCenter, { status: 201 });

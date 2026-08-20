@@ -13,6 +13,7 @@ import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
+import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
 
@@ -20,16 +21,16 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
     include: {
-      requester: true,
-      approverManager: true,
-      buyer: true,
-      costCenter: { include: { managers: true } },
+      requester: { select: USUARIO_PUBLICO },
+      approverManager: { select: USUARIO_PUBLICO },
+      buyer: { select: USUARIO_PUBLICO },
+      costCenter: { include: { managers: { select: USUARIO_PUBLICO } } },
       budgetLine: true,
       budgetException: { include: { attachment: true } },
       dueDiligence: true,
       conflictDeclarations: { orderBy: { createdAt: "desc" } },
       quotes: { orderBy: { createdAt: "asc" } },
-      approvals: { include: { approver: true } },
+      approvals: { include: { approver: { select: USUARIO_PUBLICO } } },
       legalReview: true,
       purchaseOrder: { include: { items: { orderBy: { order: "asc" } }, supplier: true } },
       measurement: true,
@@ -38,8 +39,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       contract: true,
       supplierEvaluation: true,
       attachments: { orderBy: { createdAt: "desc" } },
-      stageEvents: { orderBy: { createdAt: "asc" }, include: { actor: true } },
-      comments: { include: { author: true }, orderBy: { createdAt: "desc" } },
+      stageEvents: { orderBy: { createdAt: "asc" }, include: { actor: { select: USUARIO_PUBLICO } } },
+      comments: { include: { author: { select: USUARIO_PUBLICO } }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -73,7 +74,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     ...(request.managerApprovalActorId ? [request.managerApprovalActorId] : []),
   ];
   const declaredByUsers = declaredByIds.length > 0
-    ? await prisma.user.findMany({ where: { id: { in: declaredByIds } } })
+    ? await prisma.user.findMany({ where: { id: { in: declaredByIds } }, select: USUARIO_RESUMIDO })
     : [];
   const declaredByNames = Object.fromEntries(declaredByUsers.map((u) => [u.id, u.name]));
 

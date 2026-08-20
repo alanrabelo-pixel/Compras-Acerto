@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 const LEVELS = [1, 2, 3];
 
@@ -12,7 +13,7 @@ const LEVELS = [1, 2, 3];
 export async function GET() {
   const rows = await prisma.approvalLevelApprover.findMany({
     where: { level: { in: LEVELS } },
-    include: { user: true },
+    include: { user: { select: USUARIO_PUBLICO } },
   });
   const levels = LEVELS.map((level) => ({
     level,

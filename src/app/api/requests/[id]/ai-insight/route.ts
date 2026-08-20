@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { decryptSecret } from "@/lib/crypto";
 import { approvalLevel, STAGES } from "@/lib/workflow";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 import {
   generateInsight,
   buildTriagemPrompt,
@@ -39,7 +40,7 @@ const STAGE_ROLE: Partial<Record<string, RoleName[]>> = {
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const insights = await prisma.aiInsight.findMany({
     where: { requestId: params.id },
-    include: { requestedBy: true },
+    include: { requestedBy: { select: USUARIO_PUBLICO } },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(insights);
@@ -48,7 +49,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { quotes: true, costCenter: true, requester: true, conflictDeclarations: true, approvals: true },
+    include: {
+      quotes: true,
+      costCenter: true,
+      requester: { select: USUARIO_PUBLICO },
+      conflictDeclarations: true,
+      approvals: true,
+    },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
 
@@ -200,7 +207,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       geminiModel: gemini.model,
       geminiError: gemini.error,
     },
-    include: { requestedBy: true },
+    include: { requestedBy: { select: USUARIO_PUBLICO } },
   });
 
   const bothFailed = !anthropic.payload && !gemini.payload;

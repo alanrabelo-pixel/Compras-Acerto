@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
 import { buildDashboardWhere } from "@/lib/dashboard-data";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
 
   const requests = await prisma.purchaseRequest.findMany({
     where,
-    include: { costCenter: true, requester: true, buyer: true },
+    include: { costCenter: true, requester: { select: USUARIO_PUBLICO }, buyer: { select: USUARIO_PUBLICO } },
     orderBy: { createdAt: "desc" },
   });
   const requestIds = requests.map((r) => r.id);
@@ -43,9 +44,9 @@ export async function GET(req: NextRequest) {
 
   const [purchaseOrders, contracts, budgetExceptions, approvals] = await Promise.all([
     prisma.purchaseOrder.findMany({ where: { requestId: { in: requestIds } } }),
-    prisma.contract.findMany({ where: { requestId: { in: requestIds } }, include: { contractManager: true } }),
+    prisma.contract.findMany({ where: { requestId: { in: requestIds } }, include: { contractManager: { select: USUARIO_PUBLICO } } }),
     prisma.budgetException.findMany({ where: { requestId: { in: requestIds } } }),
-    prisma.approval.findMany({ where: { requestId: { in: requestIds } }, include: { approver: true } }),
+    prisma.approval.findMany({ where: { requestId: { in: requestIds } }, include: { approver: { select: USUARIO_PUBLICO } } }),
   ]);
 
   const wb = XLSX.utils.book_new();

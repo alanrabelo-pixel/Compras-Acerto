@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { isValidTransition, STAGES } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { logger } from "@/lib/logger";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * Avanço de etapa da Solicitação de Compra, atômico e validado.
@@ -37,7 +38,9 @@ export type ResultadoDeAvanco =
   | { ok: true; solicitacao: SolicitacaoComSolicitante }
   | { ok: false; status: 409 | 422; erro: string };
 
-type SolicitacaoComSolicitante = Prisma.PurchaseRequestGetPayload<{ include: { requester: true } }>;
+type SolicitacaoComSolicitante = Prisma.PurchaseRequestGetPayload<{
+  include: { requester: { select: typeof USUARIO_PUBLICO } };
+}>;
 
 export async function avancarEtapa(params: {
   requestId: string;
@@ -85,9 +88,12 @@ export async function avancarEtapa(params: {
         data: { requestId, fromStage: de, toStage: para, actorId: actorId ?? null, comment: comentario ?? null },
       });
 
+      // select em vez do include cru: este objeto é devolvido no corpo da
+      // resposta por 14 rotas de etapa, e `requester: true` estava mandando o
+      // User inteiro junto, com as duas chaves de IA da pessoa dentro.
       return tx.purchaseRequest.findUniqueOrThrow({
         where: { id: requestId },
-        include: { requester: true },
+        include: { requester: { select: USUARIO_PUBLICO } },
       });
     });
 

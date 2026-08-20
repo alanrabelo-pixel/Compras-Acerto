@@ -13,6 +13,7 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { requireRole } from "@/lib/rbac";
 import { avancarEtapa } from "@/lib/etapa";
 import { logger } from "@/lib/logger";
+import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
 
 /**
  * POST /api/requests/[id]/aprovacao
@@ -42,7 +43,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // suficiente configurada, cai no fallback antigo: o comprador informa
   // manualmente `approverIds` (ou `approverId`, quando required=1) com
   // exatamente `required` pessoas DISTINTAS.
-  const levelPool = await prisma.approvalLevelApprover.findMany({ where: { level }, include: { user: true } });
+  const levelPool = await prisma.approvalLevelApprover.findMany({
+    where: { level },
+    include: { user: { select: USUARIO_PUBLICO } },
+  });
   levelPool.sort((a, b) => a.user.name.localeCompare(b.user.name));
   const poolIds = levelPool.map((p) => p.userId);
 
@@ -122,7 +126,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true },
+    include: { requester: { select: USUARIO_PUBLICO } },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
 
@@ -182,7 +186,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Se personificado, notifica o aprovador real (transparência; não substitui a auditoria)
   if (personifiedBy) {
-    const approver = await prisma.user.findUnique({ where: { id: approval.approverId } });
+    const approver = await prisma.user.findUnique({
+      where: { id: approval.approverId },
+      select: USUARIO_RESUMIDO,
+    });
     if (approver) {
       await sendSlackDM({
         slackUserEmail: approver.email,

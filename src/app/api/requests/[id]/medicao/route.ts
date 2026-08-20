@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/requests/[id]/medicao
@@ -13,7 +14,7 @@ import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true },
+    include: { requester: { select: USUARIO_PUBLICO } },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "MEDICAO") {

@@ -5,6 +5,7 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { requireRole } from "@/lib/rbac";
 import { logger } from "@/lib/logger";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/requests/[id]/aprovacao-gestor
@@ -34,7 +35,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true, costCenter: { include: { managers: true } } },
+    include: {
+      requester: { select: USUARIO_PUBLICO },
+      costCenter: { include: { managers: { select: USUARIO_PUBLICO } } },
+    },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "APROVACAO_GESTOR") {

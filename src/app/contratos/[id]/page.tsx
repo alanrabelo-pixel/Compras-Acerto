@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge } from "@/components/ui";
 import { CONTRACT_STATUS_BADGE_VARIANT } from "@/lib/badge-variants";
 import { CONTRACT_STATUS_LABEL, rotulo } from "@/lib/rotulos";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ const CANAL_DO_ALERTA: Record<string, string> = {
 export default async function ContractDetailPage({ params }: { params: { id: string } }) {
   const contract = await prisma.contract.findUnique({
     where: { id: params.id },
-    include: { contractManager: true, alerts: { orderBy: { sentAt: "desc" } }, request: true },
+    include: { contractManager: { select: USUARIO_PUBLICO }, alerts: { orderBy: { sentAt: "desc" } }, request: true },
   });
   if (!contract) notFound();
 

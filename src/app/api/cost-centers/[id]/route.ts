@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * PATCH /api/cost-centers/[id] (painel /admin/centros-de-custo): troca o(s)
@@ -46,7 +47,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const costCenter = await prisma.costCenter.update({
     where: { id: params.id },
     data,
-    include: { managers: true },
+    include: { managers: { select: USUARIO_PUBLICO } },
   });
 
   if ("managerIds" in body) {

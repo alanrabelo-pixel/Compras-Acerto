@@ -7,6 +7,7 @@ import { Badge, TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/componen
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { LayoutGrid, List } from "lucide-react";
 import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export default async function SolicitacoesPage({
     ];
   }
 
-  const include = { requester: true, costCenter: true } as const;
+  const include = { requester: { select: USUARIO_PUBLICO }, costCenter: true } as const;
   const stageOrder = (Object.keys(STAGES) as Stage[]).filter((s) => s !== "CANCELADO");
 
   const [totalCount, costCenters] = await Promise.all([

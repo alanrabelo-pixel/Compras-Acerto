@@ -6,6 +6,7 @@ import { avancarEtapa } from "@/lib/etapa";
 import { type PedidoCompraItem } from "@/lib/pdf/pedidoCompra";
 import { campo } from "@/lib/rotulos";
 import { normalizarCnpj } from "@/lib/cnpj";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * POST /api/requests/[id]/pedido-compra
@@ -18,7 +19,7 @@ import { normalizarCnpj } from "@/lib/cnpj";
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true },
+    include: { requester: { select: USUARIO_PUBLICO } },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "PEDIDO_COMPRA") {

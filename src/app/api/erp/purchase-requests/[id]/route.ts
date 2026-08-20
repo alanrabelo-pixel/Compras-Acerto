@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireErpAuth } from "@/lib/erpAuth";
 import { STAGES } from "@/lib/workflow";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * GET /api/erp/purchase-requests/[id]
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
     include: {
-      requester: true,
+      requester: { select: USUARIO_PUBLICO },
       costCenter: true,
       budgetLine: true,
       purchaseOrder: { include: { items: { orderBy: { order: "asc" } } } },

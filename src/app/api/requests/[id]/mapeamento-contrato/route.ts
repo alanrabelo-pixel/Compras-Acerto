@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/rbac";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { campo } from "@/lib/rotulos";
 import { normalizarCnpj } from "@/lib/cnpj";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * POST /api/requests/[id]/mapeamento-contrato
@@ -15,7 +16,7 @@ import { normalizarCnpj } from "@/lib/cnpj";
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
-    include: { requester: true, costCenter: true },
+    include: { requester: { select: USUARIO_PUBLICO }, costCenter: true },
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "MAPEAMENTO_CONTRATO") {

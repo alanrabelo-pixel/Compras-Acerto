@@ -5,6 +5,7 @@ import { verificarTokenDeMaquina } from "@/lib/segredos";
 import { APPROVAL_ESCALATION_BUSINESS_DAYS } from "@/lib/workflow";
 import { logger } from "@/lib/logger";
 import { DESTINO_CONTROLADORIA } from "@/lib/destinatarios";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
  * Escalonamento por SLA (revisão v1.1). Roda diariamente: para toda Approval
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   const overdue = await prisma.approval.findMany({
     where: { decision: "PENDENTE", dueAt: { lte: new Date() }, escalatedAt: null },
-    include: { approver: true, request: true },
+    include: { approver: { select: USUARIO_PUBLICO }, request: true },
   });
 
   logger.info("cron_escalonamento_iniciado", { aprovacoesEmAtraso: overdue.length });

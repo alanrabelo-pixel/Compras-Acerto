@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
+import { USUARIO_RESUMIDO } from "@/lib/usuario";
 
 export type SearchResult = {
   type: "solicitacao" | "contrato";
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
           { requester: { name: { contains: q, mode: "insensitive" } } },
         ],
       },
-      include: { requester: true },
+      include: { requester: { select: USUARIO_RESUMIDO } },
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
