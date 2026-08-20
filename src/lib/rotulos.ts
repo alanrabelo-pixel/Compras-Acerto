@@ -42,6 +42,13 @@ export const CONTRACT_STATUS_LABEL: Record<string, string> = {
   CANCELADO: "Cancelado",
 };
 
+/** Risco cadastral do fornecedor (Supplier.riskTier). */
+export const RISK_TIER_LABEL: Record<string, string> = {
+  BAIXO: "Risco baixo",
+  MEDIO: "Risco médio",
+  ALTO: "Risco alto",
+};
+
 export const PAYMENT_STATUS_LABEL: Record<string, string> = {
   PROGRAMADO: "Programado",
   PAGO: "Pago",

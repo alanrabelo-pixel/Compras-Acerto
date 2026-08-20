@@ -2602,3 +2602,165 @@ a.table-row:hover {
 .dashboard-filters-row .input {
   min-width: 120px;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Expansão de painel do dashboard (ver PainelExpansivel.tsx).             */
+/*                                                                          */
+/* O botão só aparece no hover e no foco: doze botões visíveis o tempo todo */
+/* competiriam com o dado, que é o que a tela existe para mostrar. No foco  */
+/* ele aparece sempre, senão quem navega por teclado não sabe que existe.   */
+/* ---------------------------------------------------------------------- */
+
+.painel-expansivel {
+  position: relative;
+  height: 100%;
+}
+
+.painel-expansivel-botao {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.painel-expansivel:hover .painel-expansivel-botao,
+.painel-expansivel-botao:focus-visible {
+  opacity: 1;
+}
+
+.painel-expansivel-botao:hover {
+  color: var(--acerto-green-dark);
+  border-color: var(--acerto-green-dark);
+}
+
+/* Sem hover (toque), o botão fica sempre visível: não existe estado
+   intermediário no dedo, e escondido ele seria inalcançável. */
+@media (hover: none) {
+  .painel-expansivel-botao {
+    opacity: 1;
+  }
+}
+
+.painel-expandido-fundo {
+  position: fixed;
+  inset: 0;
+  /* A faixa de ambiente NÃO pode ser encoberta: ela existe justamente para
+     dizer que aquilo não é produção, e um painel em tela cheia por cima dela
+     desfaria o aviso no momento em que a tela ocupa tudo. Por isso o fundo
+     começa abaixo dela quando ela existe. */
+  z-index: 1050;
+  display: flex;
+  padding: 24px;
+  background: rgb(0 0 0 / 0.45);
+  animation: painel-expandido-entrada 120ms ease-out;
+}
+
+body.com-faixa-de-ambiente .painel-expandido-fundo {
+  top: var(--faixa-ambiente-h);
+}
+
+@keyframes painel-expandido-entrada {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .painel-expandido-fundo {
+    animation: none;
+  }
+}
+
+.painel-expandido {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1400px;
+  margin: auto;
+  max-height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg, 0 20px 60px rgb(0 0 0 / 0.3));
+  overflow: hidden;
+}
+
+.painel-expandido-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.painel-expandido-titulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.painel-expandido-fechar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.painel-expandido-fechar:hover {
+  color: var(--ink);
+  border-color: var(--ink-muted);
+}
+
+/* A rolagem é aqui dentro, não na página: o fundo está travado enquanto o
+   painel está aberto. */
+.painel-expandido-conteudo {
+  padding: 20px;
+  overflow: auto;
+}
+
+/* Dentro da tela cheia o painel já tem a moldura do próprio diálogo, então o
+   cartão interno perde a dele para não desenhar duas bordas concêntricas. */
+.painel-expandido-conteudo .card {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+@media (max-width: 860px) {
+  .painel-expandido-fundo {
+    padding: 0;
+  }
+  .painel-expandido {
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    max-height: 100%;
+    height: 100%;
+  }
+  /* No celular o rótulo do botão de fechar some e sobra o X, que já é
+     entendido e libera a largura para o título. */
+  .painel-expandido-fechar span {
+    display: none;
+  }
+}
