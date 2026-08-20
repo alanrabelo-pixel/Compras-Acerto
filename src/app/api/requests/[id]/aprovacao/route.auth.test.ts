@@ -200,3 +200,106 @@ describe("POST /api/requests/[id]/aprovacao: quem cria o lote", () => {
     expect(await prisma.approval.count({ where: { requestId: request.id } })).toBe(1);
   });
 });
+
+/**
+ * A alçada é o controle financeiro central do produto, e tinha dois furos que
+ * não eram de autenticação e por isso não apareceram na primeira auditoria.
+ *
+ * 1. O nível saía do valor ESTIMADO declarado na Triagem e nunca era
+ *    reconferido contra o que a empresa vai pagar de fato.
+ * 2. A tabela de aprovadores por alçada estava com ZERO linhas nos três
+ *    níveis, o que fazia do caminho manual o único existente: o comprador
+ *    escolhia quem aprova a própria compra.
+ */
+describe("Alçada: de onde sai o nível e o que acontece sem pool", () => {
+  beforeEach(() => {
+    vi.stubEnv("LOCAL_BYPASS_AUTH", "false");
+    session.current = null;
+  });
+
+  function postRequest(body: unknown) {
+    return new NextRequest("http://localhost/api/requests/x/aprovacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  /** Solicitação em APROVACAO, com conflito declarado e sem conflito. */
+  async function pronta(estimado: number, negociado?: number) {
+    const requester = await createTestUser([]);
+    const gestor = await createTestUser(["APROVADOR"]);
+    const comprador = await createTestUser(["COMPRADOR"]);
+    const cc = await createTestCostCenter();
+    const request = await createTestRequest({
+      requesterId: requester.id, approverManagerId: gestor.id, costCenterId: cc.id,
+      currentStage: "APROVACAO", estimatedValue: estimado,
+    });
+    await prisma.conflictOfInterestDeclaration.create({
+      data: { requestId: request.id, declaredBy: requester.id, hasConflict: false },
+    });
+    if (negociado !== undefined) {
+      await prisma.quote.create({
+        data: {
+          requestId: request.id, supplierName: "Fornecedor de teste",
+          initialValue: estimado, negotiatedValue: negociado,
+          paymentCondition: "30 dias", selected: true,
+        },
+      });
+    }
+    return { request, comprador };
+  }
+
+  it("usa a cotação vencedora, e não o estimado, para definir o nível", async () => {
+    // Estimado de R$ 40 mil cairia no Nível 1, com uma assinatura só. A
+    // cotação vencedora de R$ 700 mil é Nível 3, que exige duas.
+    const { request, comprador } = await pronta(40000, 700000);
+    const a = await createTestUser(["APROVADOR"]);
+    const b = await createTestUser(["APROVADOR"]);
+    session.current = { user: { id: comprador.id, roles: ["COMPRADOR"], canViewBoard: true } };
+
+    const res = await POST(postRequest({ approverIds: [a.id, b.id] }), { params: { id: request.id } });
+
+    expect(res.status).toBe(201);
+    const criadas = await prisma.approval.findMany({ where: { requestId: request.id } });
+    expect(criadas).toHaveLength(2);
+    expect(criadas[0].level).toBe(3);
+  });
+
+  it("sem cotação vencedora, continua usando o valor estimado", async () => {
+    const { request, comprador } = await pronta(700000);
+    const a = await createTestUser(["APROVADOR"]);
+    const b = await createTestUser(["APROVADOR"]);
+    session.current = { user: { id: comprador.id, roles: ["COMPRADOR"], canViewBoard: true } };
+
+    const res = await POST(postRequest({ approverIds: [a.id, b.id] }), { params: { id: request.id } });
+
+    expect(res.status).toBe(201);
+    expect((await prisma.approval.findFirst({ where: { requestId: request.id } }))?.level).toBe(3);
+  });
+
+  it("em produção, recusa criar aprovação sem aprovadores configurados na alçada", async () => {
+    vi.stubEnv("APP_ENV", "producao");
+    const { request, comprador } = await pronta(700000);
+    const a = await createTestUser(["APROVADOR"]);
+    const b = await createTestUser(["APROVADOR"]);
+    session.current = { user: { id: comprador.id, roles: ["COMPRADOR"], canViewBoard: true } };
+
+    const res = await POST(postRequest({ approverIds: [a.id, b.id] }), { params: { id: request.id } });
+
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(await res.json())).toContain("não tem aprovadores configurados");
+    expect(await prisma.approval.count({ where: { requestId: request.id } })).toBe(0);
+  });
+
+  it("fora de produção o caminho manual continua, senão não dá para exercitar no Sandbox", async () => {
+    vi.stubEnv("APP_ENV", "sandbox");
+    const { request, comprador } = await pronta(10000);
+    const a = await createTestUser(["APROVADOR"]);
+    session.current = { user: { id: comprador.id, roles: ["COMPRADOR"], canViewBoard: true } };
+
+    const res = await POST(postRequest({ approverId: a.id }), { params: { id: request.id } });
+
+    expect(res.status).toBe(201);
+  });
+});

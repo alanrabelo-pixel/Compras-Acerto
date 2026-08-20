@@ -12,6 +12,7 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { requireRole } from "@/lib/rbac";
 import { exigirPapel } from "@/lib/acesso";
+import { ehProducao } from "@/lib/ambiente";
 import { avancarEtapa } from "@/lib/etapa";
 import { logger } from "@/lib/logger";
 import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
@@ -44,7 +45,31 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const body = await req.json();
 
-  const level = approvalLevel(Number(request.estimatedValue));
+  // A alçada saía do valor ESTIMADO declarado na Triagem e nunca era
+  // reconferida. Uma compra estimada em R$ 40 mil que fechasse em R$ 700 mil
+  // era aprovada como Nível 1, por uma assinatura só, porque o valor que a
+  // empresa de fato vai pagar não entrava na conta em lugar nenhum.
+  //
+  // A fonte do valor negociado nesta etapa é a cotação vencedora escolhida no
+  // Mapa de Cotação (Quote.selected). O Pedido de Compra ainda não existe
+  // aqui: ele é emitido depois da aprovação.
+  //
+  // DECISÃO DO DONO DO SISTEMA: quando existe cotação vencedora, ela manda,
+  // mesmo que o valor tenha CAÍDO e a alçada desça junto. O raciocínio é que a
+  // alçada deve refletir o que a empresa paga. O risco aceito, registrado aqui
+  // para quem revisar: uma compra estimada logo acima de uma faixa pode descer
+  // de faixa ao ser negociada e perder a segunda assinatura. É pequeno, porque
+  // negociar para baixo é o comportamento desejado, mas não é nulo.
+  const cotacaoVencedora = await prisma.quote.findFirst({
+    where: { requestId: request.id, selected: true },
+    select: { negotiatedValue: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const valorDaAlcada = cotacaoVencedora
+    ? Number(cotacaoVencedora.negotiatedValue)
+    : Number(request.estimatedValue);
+
+  const level = approvalLevel(valorDaAlcada);
   const required = approvalsRequiredForLevel(level);
 
   // Aprovador(es) padrão da alçada (ApprovalLevelApprover, ver
@@ -63,6 +88,29 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   let approverIds: string[];
   if (poolIds.length >= required) {
     approverIds = poolIds.slice(0, required);
+  } else if (ehProducao()) {
+    // DECISÃO DO DONO DO SISTEMA: em produção, sem pool configurado a
+    // aprovação não é criada.
+    //
+    // O caminho manual abaixo existe desde o começo como recurso para quando a
+    // alçada ainda não foi cadastrada, e em 20/08/2026 a tabela estava com ZERO
+    // aprovadores nos três níveis, o que fazia dele o único caminho existente.
+    // Na prática, o comprador escolhia quem aprova a própria compra. As
+    // proteções que sobravam (o alvo precisa ter o papel Aprovador, e os níveis
+    // 2 e 3 exigem duas pessoas distintas) são reais, mas nenhuma delas impede
+    // a escolha de um aprovador conveniente.
+    //
+    // Fora de produção ele continua valendo, senão não há como exercitar o
+    // fluxo no Sandbox antes de a configuração existir.
+    return NextResponse.json(
+      {
+        error:
+          `A alçada de Nível ${level} não tem aprovadores configurados, e em produção a ` +
+          "aprovação não pode ser criada escolhendo aprovador caso a caso. Configure os " +
+          "aprovadores em Administração, Centros de Custo, antes de seguir.",
+      },
+      { status: 422 }
+    );
   } else {
     const manual: unknown = body.approverIds ?? (body.approverId ? [body.approverId] : []);
     if (!Array.isArray(manual) || manual.length !== required || !manual.every((id) => typeof id === "string")) {
