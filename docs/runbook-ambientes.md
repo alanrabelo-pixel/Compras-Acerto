@@ -8,6 +8,48 @@ A ordem importa: cada bloco produz um valor que o bloco seguinte consome.
 
 ---
 
+## LEIA ANTES: este documento assume Vercel, e o destino mudou para AWS
+
+Este runbook foi escrito em 20/08/2026 assumindo deploy na Vercel, que era a
+plataforma sugerida pelo próprio repositório (`BLOB_READ_WRITE_TOKEN` no
+`.env.example`). Depois disso o time definiu **AWS** como destino. O documento
+não foi reescrito, então separe o que vale do que não vale.
+
+**O que vale igual, independente de plataforma.** É a maior parte, e é o que
+protege os dois ambientes um do outro:
+
+- `APP_ENV` com dois valores, padrão `sandbox` quando ausente
+- a convenção de nome do banco (`sandbox` ou `sbx`), que o boot confere
+- segredo novo para cada variável, sem reaproveitar nenhum valor
+- credenciais de envio VAZIAS no Sandbox
+- `AI_KEY_ENCRYPTION_SECRET` diferente por ambiente
+- a tabela de variáveis da seção 4, coluna a coluna
+- a lista de conferência da seção 7, inteira
+
+**O que muda, e um item é bloqueante.**
+
+1. **Armazenamento de arquivos é código, não configuração.**
+   `src/lib/storage.ts` importa `put` de `@vercel/blob`, que é a única
+   dependência de plataforma no projeto inteiro. Em AWS essa chamada não
+   funciona, e o código cai silenciosamente para disco local, que é efêmero na
+   maioria dos runtimes. O upload parece dar certo, o anexo é gravado no banco,
+   e o arquivo some no próximo deploy. **Trocar por S3 é trabalho de código, com
+   teste, antes do primeiro anexo real.** Não dá para resolver no painel.
+2. Dois projetos Vercel viram duas contas ou dois ambientes isolados na AWS. O
+   motivo do conselho continua: o que se quer evitar é armazenamento e segredo
+   compartilhados por padrão entre os dois.
+3. `BLOB_READ_WRITE_TOKEN` some da tabela e entra o que o S3 exigir.
+4. Agendador: onde o documento diz Vercel Cron, leia EventBridge ou equivalente,
+   apontado só para a Produção. As rotas de cron já se autenticam por
+   `CRON_SECRET`, isso não muda.
+5. A validação de boot depende de `NODE_ENV=production` para neutralizar o
+   desvio de autenticação. Confirme que o runtime escolhido define isso.
+
+Os clientes OAuth do Google (seção 2) não mudam: o que importa é a URL de
+callback bater com o domínio de cada ambiente.
+
+---
+
 ## Antes de começar
 
 **Dois projetos, não dois ambientes de um projeto.** A Vercel injeta o token de

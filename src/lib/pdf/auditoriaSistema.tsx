@@ -926,7 +926,7 @@ export function AuditoriaSistemaDocument() {
         <Finding n={7} severity="doc" situacao="resolvido" comoFoiResolvido="os dois comentários do modelo de dados foram corrigidos, e uma terceira menção que sobrou no cálculo da alçada, encontrada só na verificação posterior, também." title="Comentários do schema ainda citam o papel de CEO">
           O papel de CEO foi removido do sistema e não existe mais no cadastro de papéis. Dois comentários no modelo de dados ainda descrevem a alçada de nível 3 como envolvendo o CEO. É desatualização de documentação interna.
         </Finding>
-        <Finding n={8} severity="regra" situacao="parcial" comoFoiResolvido="a Validação Orçamentária recusa abrir a exceção de uma solicitação de Orçamento Extra sem o comprovante do FP&amp;A anexado, e o campo que marca a solicitação como extra-orçamentária passou a ser gravado. Faltam dois caminhos, apurados na verificação posterior: o de orçamento disponível, que avança a etapa sem checar o comprovante, e a criação da solicitação, que ainda aceita Orçamento Extra sem anexo." title="Anexo obrigatório do Orçamento Extra só é exigido na tela">
+        <Finding n={8} severity="regra" situacao="resolvido" comoFoiResolvido="fechado em três pontos: os dois ramos da Validação Orçamentária e a Aprovação do Gestor. Um agente adversarial ainda encontrou o caminho mais fácil de todos, que era o controle inteiro depender de um booleano declarado pelo próprio solicitante na criação: bastava digitar qualquer coisa no campo Linha do Orçamento para desligá-lo nos três pontos de uma vez. Hoje abrir a exceção por indisponibilidade de orçamento marca a solicitação como extra-orçamentária, corrigindo o registro, e APROVAR a exceção exige o comprovante independente do que foi marcado na abertura. Reprovar segue livre, senão a solicitação fica presa esperando um documento que pode nunca chegar. O que sobra: a criação ainda aceita Orçamento Extra sem anexo." title="Anexo obrigatório do Orçamento Extra só é exigido na tela">
           O formulário impede o envio sem o anexo de validação do FP&amp;A quando Orçamento Extra é escolhido. A API que de fato cria a solicitação aceita a mesma opção sem checar se o anexo existe. Uma chamada direta à API contornaria essa exigência.
         </Finding>
         <Finding n={9} severity="doc" situacao="resolvido" comoFoiResolvido="o caminho aprovado deixou de ser silencioso e passou a usar o mesmo aviso das outras etapas, informando ao solicitante que a compra seguiu para Homologação e Triagem." title="Aprovação do gestor não notifica o lado positivo">
@@ -944,7 +944,7 @@ export function AuditoriaSistemaDocument() {
         <Finding n={13} severity="admin" situacao="resolvido" comoFoiResolvido="os seis papéis de etapa ganharam botão próprio na tela de acessos, e a rota que grava passou a aceitar os 11, na mesma tabela que a checagem de permissão consulta. Conceder Fiscal ou Tesouraria não exige mais mexer no banco." title="6 dos 11 papéis não têm tela de gestão">
           A página de Acessos só concede ou revoga 5 papéis. Os outros 6 (Tesouraria, Fiscal, Jurídico, Privacidade, Coordenação, Gerente F&amp;NC) têm poder real sobre dinheiro ou aspectos jurídicos, mas só aparecem como filtro. Não existe caminho pela interface pra tornar alguém, por exemplo, Fiscal ou Tesouraria. Só via banco de dados diretamente.
         </Finding>
-        <Finding n={14} severity="seg" situacao="parcial" comoFoiResolvido="a rota passou a exigir sessão, pelo middleware, e a validar tipo e tamanho do arquivo. Falta a checagem de vínculo com o chamado." title="Anexo de chamado sem checagem de quem está anexando">
+        <Finding n={14} severity="seg" situacao="resolvido" comoFoiResolvido="a checagem de vínculo que faltava foi feita em 20/08: as duas rotas de anexo de chamado passaram a exigir que quem chama seja o dono do chamado ou tenha acesso ao quadro, e a identidade de quem anexa vem da sessão em vez do corpo da requisição." title="Anexo de chamado sem checagem de quem está anexando">
           Ao contrário do endpoint de mensagens, que confere se quem está agindo é o solicitante ou tem acesso ao quadro, o endpoint de anexar arquivo a um chamado aceita qualquer chamada que souber o identificador do chamado, sem checar identidade.
         </Finding>
         <Finding n={15} severity="seg" situacao="parcial" comoFoiResolvido="a mudança de etapa e o registro de auditoria passaram a ser atômicos. O recálculo simplificado de status segue como está." title="Override administrativo pode reabrir o que já foi encerrado">
@@ -953,6 +953,44 @@ export function AuditoriaSistemaDocument() {
         <Finding n={16} severity="seg" title="Chave de criptografia de IA é única e compartilhada">
           As chaves de API de IA de cada pessoa são guardadas criptografadas no banco, mas a chave que criptografa todas elas vem de uma única variável de ambiente. Não é um cofre de segredos gerenciado, nem uma chave por usuário. O próprio código já sinaliza isso como algo a revisar antes de produção.
         </Finding>
+
+        <H2>Encontrado depois: esta auditoria olhou escrita e não olhou leitura</H2>
+        <P>
+          Os 16 achados acima saíram de uma leitura concentrada em quem pode ALTERAR o sistema. No dia
+          seguinte, um inventário das 74 rotas mostrou que o outro lado nunca tinha sido olhado: 37 delas não
+          exigiam nada além de uma sessão qualquer, e 16 eram de risco alto. Entre elas, o download de
+          qualquer anexo, a carteira inteira de contratos e a exportação completa da base em Excel.
+        </P>
+        <P>
+          Junto veio um vazamento que ninguém decidiu: 24 rotas devolviam as chaves de IA pessoais no corpo
+          da resposta. A causa era sempre a mesma, um include escrito para pegar o nome de quem pediu e o
+          banco entregando todas as colunas junto. Um único ponto, o helper de avanço de etapa, respondia por
+          14 delas.
+        </P>
+        <P>
+          A alçada, que é o controle financeiro central, tinha dois furos que não eram de autenticação e por
+          isso escaparam desta auditoria inteira: o nível saía do valor estimado na Triagem e nunca era
+          reconferido contra a cotação vencedora, e a tabela de aprovadores estava vazia nos três níveis, o
+          que fazia do caminho manual o único existente. Na prática, o comprador escolhia quem aprova a
+          própria compra.
+        </P>
+        <P>
+          A lição de método vale mais que os itens. Quase tudo isso foi encontrado por um agente adversarial
+          atacando trabalho recém-concluído, não pela leitura que o produziu, e vários furos estavam no
+          código escrito horas antes no mesmo dia, incluindo comentários que afirmavam uma cobertura que o
+          código não tinha. Existe agora uma trava automatizada que reprova rota nova sem decisão de acesso,
+          para o próximo esquecimento falhar sozinho em vez de esperar a próxima auditoria.
+        </P>
+
+        <H2>Este documento descreve o código, não o ambiente</H2>
+        <P>
+          Um achado marcado como resolvido significa que o código mudou e que existe teste cobrindo. Não
+          significa que o sistema está configurado nem que foi exercido. Em 20/08/2026 a tabela de
+          aprovadores por alçada estava vazia, o caminho autenticado nunca tinha sido percorrido por uma
+          pessoa (toda verificação em navegador rodou com o desvio de autenticação de desenvolvimento
+          ligado, e os testes simulam a sessão), e não existia deploy nem integração contínua. Ler os selos
+          acima como atestado de prontidão para produção seria erro de interpretação.
+        </P>
       </Page>
     </Document>
   );
