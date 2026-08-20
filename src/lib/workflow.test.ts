@@ -322,8 +322,20 @@ describe("expectativaDaEtapa", () => {
     expect(expectativaDaEtapa("JURIDICO", null)).toBe(20);
   });
 
-  it("devolve null nas etapas que ainda não têm tempo definido, sem inventar número", () => {
-    expect(expectativaDaEtapa("PEDIDO_COMPRA", "CORPORATIVO")).toBeNull();
-    expect(expectativaDaEtapa("TESOURARIA", "TECNOLOGIA")).toBeNull();
+  it("cobre as etapas de execução, definidas com o time depois da auditoria", () => {
+    expect(expectativaDaEtapa("MAPA_COTACAO", "CORPORATIVO")).toBe(1);
+    expect(expectativaDaEtapa("MAPA_COTACAO", "TECNOLOGIA")).toBe(2);
+    expect(expectativaDaEtapa("PEDIDO_COMPRA", "CORPORATIVO")).toBe(1);
+    expect(expectativaDaEtapa("TESOURARIA", "TECNOLOGIA")).toBe(3);
+    expect(expectativaDaEtapa("MAPEAMENTO_CONTRATO", "REVENUE")).toBe(2);
+  });
+
+  it("não inventa tempo onde a espera não depende do processo interno", () => {
+    // Solicitação é o próprio formulário; Aguardando Entrega depende do
+    // fornecedor; Concluído e Cancelado são estados finais.
+    expect(expectativaDaEtapa("SOLICITACAO", "CORPORATIVO")).toBeNull();
+    expect(expectativaDaEtapa("AGUARDANDO_ENTREGA", "CORPORATIVO")).toBeNull();
+    expect(expectativaDaEtapa("CONCLUIDO", "TECNOLOGIA")).toBeNull();
+    expect(expectativaDaEtapa("CANCELADO", "TECNOLOGIA")).toBeNull();
   });
 });

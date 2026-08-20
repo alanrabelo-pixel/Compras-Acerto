@@ -22,6 +22,12 @@ export type StageDefinition = {
   // solicitação inteira (slaDeadline, ver slaDaysForDiretoria abaixo). Etapas
   // sem valor definido ficam sem os dois campos, e a tela simplesmente não
   // mostra expectativa nenhuma, em vez de inventar um número.
+  //
+  // Origem dos números: as etapas até Jurídico vieram do desenho original do
+  // fluxo; as de Mapa de Cotação em diante foram estimadas junto com o time em
+  // ago/2026, sem medição de histórico (o sistema ainda não tinha ciclo
+  // fechado para medir). Revisar quando houver dado real de duração por etapa,
+  // que os painéis já coletam via StageEvent.
   slaDaysCorporativo?: number;
   slaDaysTecnologiaRevenue?: number;
 };
@@ -30,6 +36,7 @@ export const STAGES: Record<Stage, StageDefinition> = {
   SOLICITACAO: {
     stage: "SOLICITACAO",
     label: "Solicitação de Compra",
+    // Sem tempo de referência: é o próprio formulário, não existe espera.
     nextStages: ["APROVACAO_GESTOR"],
   },
   APROVACAO_GESTOR: {
@@ -78,6 +85,8 @@ export const STAGES: Record<Stage, StageDefinition> = {
     stage: "MAPA_COTACAO",
     label: "Mapa de Cotação",
     nextStages: ["APROVACAO"],
+    slaDaysCorporativo: 1,
+    slaDaysTecnologiaRevenue: 2,
   },
   APROVACAO: {
     stage: "APROVACAO",
@@ -102,32 +111,45 @@ export const STAGES: Record<Stage, StageDefinition> = {
     stage: "PEDIDO_COMPRA",
     label: "Pedido de Compra",
     nextStages: ["AGUARDANDO_ENTREGA"],
+    slaDaysCorporativo: 1,
+    slaDaysTecnologiaRevenue: 1,
   },
   AGUARDANDO_ENTREGA: {
     stage: "AGUARDANDO_ENTREGA",
     label: "Aguardando Entrega/Conclusão",
     // Se precisa de medição -> Medição; senão -> Mapeamento de Contrato (se aplicável) ou Concluído
+    // Sem tempo de referência de propósito: quem manda aqui é o prazo de
+    // entrega combinado com o fornecedor, que varia a cada compra. Um número
+    // fixo aqui seria expectativa falsa.
     nextStages: ["MEDICAO", "MAPEAMENTO_CONTRATO", "CONCLUIDO"],
   },
   MEDICAO: {
     stage: "MEDICAO",
     label: "Medição e Aprovação Financeira",
     nextStages: ["FISCAL"],
+    slaDaysCorporativo: 2,
+    slaDaysTecnologiaRevenue: 2,
   },
   FISCAL: {
     stage: "FISCAL",
     label: "Validação Fiscal",
     nextStages: ["TESOURARIA"],
+    slaDaysCorporativo: 2,
+    slaDaysTecnologiaRevenue: 2,
   },
   TESOURARIA: {
     stage: "TESOURARIA",
     label: "Tesouraria (Pagamento)",
     nextStages: ["MAPEAMENTO_CONTRATO", "CONCLUIDO"],
+    slaDaysCorporativo: 3,
+    slaDaysTecnologiaRevenue: 3,
   },
   MAPEAMENTO_CONTRATO: {
     stage: "MAPEAMENTO_CONTRATO",
     label: "Mapeamento de Contrato",
     nextStages: ["CONCLUIDO"],
+    slaDaysCorporativo: 2,
+    slaDaysTecnologiaRevenue: 2,
   },
   CONCLUIDO: {
     stage: "CONCLUIDO",

@@ -280,15 +280,15 @@ export function ManualProcessoDocument() {
         <Stage n={4} label="Validação Orçamentária" desc="Verificamos se existe orçamento disponível na linha informada. Se não houver, a solicitação entra em um fluxo de exceção orçamentária até uma decisão (veja seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
         <Stage n={5} label="Due Diligence (Privacidade)" desc="Só acontece para contratação de ferramenta nova ou que lide com dados pessoais: avaliação de privacidade e segurança antes de cotar." sla="2 dias úteis" />
         <Stage n={6} label="Cotação" desc="O time de Compras busca propostas com fornecedores. O número mínimo de cotações depende do valor da compra (veja seção 4)." sla="5 dias úteis (Corporativo) · 7 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={7} label="Mapa de Cotação" desc="As propostas recebidas são organizadas lado a lado para comparação e escolha do fornecedor." />
+        <Stage n={7} label="Mapa de Cotação" desc="As propostas recebidas são organizadas lado a lado para comparação e escolha do fornecedor." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
         <Stage n={8} label="Aprovação" desc="A solicitação segue para quem tem alçada de aprovar aquele valor (veja a tabela de alçadas na seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
         <Stage n={9} label="Jurídico" desc="Quando a compra exige contrato formal, o Jurídico revisa e valida as cláusulas antes de seguir." sla="20 dias úteis (Corporativo) · 30 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={10} label="Pedido de Compra" desc="Emitimos o Pedido de Compra oficial em PDF, com dados do fornecedor, itens, valores e condições de pagamento." />
+        <Stage n={10} label="Pedido de Compra" desc="Emitimos o Pedido de Compra oficial em PDF, com dados do fornecedor, itens, valores e condições de pagamento." sla="1 dia útil" />
         <Stage n={11} label="Aguardando Entrega/Conclusão" desc="Aguardamos a entrega do produto ou a execução do serviço contratado." />
-        <Stage n={12} label="Medição e Aprovação Financeira" desc="Para compras que exigem medição (ex.: serviços recorrentes, obras), validamos o quanto foi efetivamente entregue antes do pagamento." />
-        <Stage n={13} label="Validação Fiscal" desc="Conferência fiscal da nota/documento antes de liberar o pagamento." />
-        <Stage n={14} label="Tesouraria (Pagamento)" desc="Efetivação do pagamento ao fornecedor." />
-        <Stage n={15} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." />
+        <Stage n={12} label="Medição e Aprovação Financeira" desc="Para compras que exigem medição (ex.: serviços recorrentes, obras), validamos o quanto foi efetivamente entregue antes do pagamento." sla="2 dias úteis" />
+        <Stage n={13} label="Validação Fiscal" desc="Conferência fiscal da nota/documento antes de liberar o pagamento." sla="2 dias úteis" />
+        <Stage n={14} label="Tesouraria (Pagamento)" desc="Efetivação do pagamento ao fornecedor." sla="3 dias úteis" />
+        <Stage n={15} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." sla="2 dias úteis" />
         <Stage n={16} label="Concluído" desc="A solicitação é encerrada." />
         <Card title="Cancelamento">
           A solicitação pode ser cancelada em praticamente qualquer etapa do fluxo, por exemplo, se o
@@ -437,8 +437,8 @@ export function ManualProcessoDocument() {
         <P>
           Os tempos por etapa da seção 2 são referência de expectativa: dizem quanto a etapa costuma
           levar, e aparecem na tela da solicitação para quem está esperando. Eles não travam nada e não
-          marcam a etapa como atrasada. Nem toda etapa tem um tempo de referência definido; quando não
-          tem, a tela não mostra nenhum.
+          marcam a etapa como atrasada. Aguardando Entrega não tem tempo de referência de propósito:
+          quem manda ali é o prazo combinado com o fornecedor, que muda a cada compra.
         </P>
         <P>
           O prazo que o sistema de fato acompanha é o da solicitação inteira, calculado na criação a

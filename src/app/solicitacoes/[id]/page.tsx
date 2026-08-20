@@ -134,19 +134,19 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             prazo total já era calculado na criação e só aparecia nos painéis
             gerenciais: quem estava esperando a própria compra não via nem um
             nem outro. */}
-        <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 10, marginBottom: 0 }}>
-          {expectativaDaEtapaAtual !== null && (
-            <>
-              Esta etapa costuma levar {expectativaDaEtapaAtual}{" "}
-              {expectativaDaEtapaAtual === 1 ? "dia" : "dias"}
-              {request.slaDeadline ? " · " : ""}
-            </>
-          )}
-          {request.slaDeadline && <>Previsão de conclusão da solicitação: {formatDateOnly(request.slaDeadline)}</>}
-          {(expectativaDaEtapaAtual !== null || request.slaDeadline) && (
+        {(expectativaDaEtapaAtual !== null || request.slaDeadline) && (
+          <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: 10, marginBottom: 0 }}>
+            {expectativaDaEtapaAtual !== null && (
+              <>
+                Esta etapa costuma levar {expectativaDaEtapaAtual}{" "}
+                {expectativaDaEtapaAtual === 1 ? "dia útil" : "dias úteis"}
+                {request.slaDeadline ? " · " : ""}
+              </>
+            )}
+            {request.slaDeadline && <>Previsão de conclusão da solicitação: {formatDateOnly(request.slaDeadline)}</>}
             <> · tempos de referência, não travam nada</>
-          )}
-        </p>
+          </p>
+        )}
 
         <div style={{ marginTop: 10 }}>
           <StageOverrideControls
