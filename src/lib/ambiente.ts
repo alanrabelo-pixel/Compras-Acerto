@@ -39,3 +39,16 @@ export function ehProducao(): boolean {
 export function rotuloDoAmbiente(): string | null {
   return ehProducao() ? null : "SANDBOX";
 }
+
+/**
+ * Título da aba do navegador. A faixa só resolve depois que a pessoa já está
+ * olhando a tela; escolher entre duas abas acontece antes disso, e com
+ * Produção e Sandbox abertos lado a lado as duas se chamavam exatamente
+ * "Acerto Compras". O rótulo vai na frente porque é o fim do título que some
+ * quando há muitas abas abertas, e em produção o título fica intocado, pela
+ * mesma razão de rotuloDoAmbiente(): marca permanente vira paisagem.
+ */
+export function tituloDaAba(base: string): string {
+  const rotulo = rotuloDoAmbiente();
+  return rotulo ? `[${rotulo}] ${base}` : base;
+}

@@ -1,5 +1,12 @@
 import { logger } from "@/lib/logger";
 import { ambienteAtual } from "@/lib/ambiente";
+// Uma definição só de "banco local" no repositório inteiro. Este arquivo tinha
+// a sua, /@(localhost|127\.0\.0\.1)[:/]/, que exigia arroba e portanto exigia
+// credenciais na string: `postgresql://localhost:5433/acerto` era local para a
+// guarda e remoto aqui. Nessa discordância cabia um buraco inteiro, porque a
+// mesma URL levava as duas barreiras a conclusões opostas sobre o mesmo banco.
+// Ver src/lib/guarda-banco.ts, inclusive sobre o que "local" não cobre (túnel).
+import { bancoEhLocal } from "@/lib/guarda-banco";
 
 /**
  * Conferência das variáveis de ambiente na inicialização.
@@ -55,14 +62,6 @@ const CONSEQUENCIA: Record<string, string> = {
 };
 
 /**
- * Marcas que indicam banco local. Um ambiente que se declara produção e aponta
- * para um Postgres na própria máquina é erro de configuração, não uma escolha.
- */
-function bancoEhLocal(url: string): boolean {
-  return /@(localhost|127\.0\.0\.1)[:/]/.test(url);
-}
-
-/**
  * Marca obrigatória no NOME do banco do Sandbox.
  *
  * Existe porque a checagem que importa não é verificável de outro jeito. Um
@@ -107,6 +106,8 @@ export function validarAmbiente(): void {
   // é o caso normal, não a exceção.
   const ambiente = ambienteAtual();
   const url = process.env.DATABASE_URL;
+  // Um ambiente que se declara produção e aponta para um Postgres na própria
+  // máquina é erro de configuração, não escolha.
   const bancoLocal = bancoEhLocal(url);
   const banco = nomeDoBanco(url);
   const bancoParecSandbox = MARCA_DE_SANDBOX.test(banco);

@@ -10,9 +10,12 @@ import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestDat
  * 1. QUE AMBIENTE É ESTE. Com Produção e Sandbox em dois projetos separados na
  *    Vercel, as duas telas são idênticas. Quem abre a errada não tem como
  *    saber, e o Sandbox é justamente o ambiente onde nada sai (nem e-mail nem
- *    Slack, ver src/lib/ambiente.ts). A faixa fica na casca de todas as telas
- *    internas (AppShell) e some em produção, onde um rótulo permanente viraria
- *    paisagem.
+ *    Slack, ver src/lib/ambiente.ts). A faixa nasceu aqui, na casca das telas
+ *    de Compras (AppShell), e de lá alcançava 11 das 17 telas. Hoje ela mora
+ *    no RootLayout, que alcança todas; o que sobrou deste lado é a garantia de
+ *    que a casca NÃO a desenha de novo, senão as telas de Compras teriam duas.
+ *    O comportamento da faixa está em
+ *    src/app/faixa-de-ambiente-em-todas-as-telas.test.ts.
  *
  * 2. QUE A SOLICITAÇÃO É EXTRA-ORÇAMENTÁRIA e que falta o comprovante do FP&A.
  *    A regra já era cobrada nas portas de saída (aprovação do gestor e os dois
@@ -65,40 +68,33 @@ function elementosDaArvore(no: unknown, acumulado: Elemento[] = []): Elemento[] 
   return acumulado;
 }
 
-describe("Faixa de ambiente na casca das telas internas", () => {
+describe("A casca de Compras não redesenha a faixa de ambiente", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("mostra o rótulo do ambiente quando APP_ENV=sandbox", async () => {
+  it("não desenha faixa nenhuma no Sandbox: quem desenha é o RootLayout", async () => {
     vi.stubEnv("APP_ENV", "sandbox");
 
     const arvore = await AppShell({ children: null });
     const texto = textoDaArvore(arvore);
 
-    expect(texto).toContain("SANDBOX");
-    expect(texto).toContain("não é produção");
-    // A compensação de espaço da faixa depende desta classe (ver globals.css):
-    // sem ela a faixa cobriria o topo da barra lateral.
-    expect((arvore as Elemento).props.className).toContain("com-faixa-de-ambiente");
+    // Se voltar a desenhar aqui, as 11 telas de Compras mostram duas faixas
+    // empilhadas, e a de baixo tapa o topo do conteúdo (a de cima é fixed e a
+    // compensação de espaço só devolve a altura de uma).
+    expect(texto).not.toContain("SANDBOX");
+    expect(texto).not.toContain("não é produção");
+    // A compensação de espaço agora vem da classe que o RootLayout põe no
+    // <body>; a casca voltou a ter uma classe só (ver globals.css).
+    expect((arvore as Elemento).props.className).toBe("app-shell");
   });
 
-  it("mostra a faixa também quando APP_ENV não foi declarada, que é o padrão seguro", async () => {
-    vi.stubEnv("APP_ENV", "");
-
-    const texto = textoDaArvore(await AppShell({ children: null }));
-
-    expect(texto).toContain("SANDBOX");
-  });
-
-  it("não mostra nada em produção: rótulo permanente vira paisagem e para de avisar", async () => {
+  it("continua sem faixa em produção, onde ela não existe em lugar nenhum", async () => {
     vi.stubEnv("APP_ENV", "producao");
 
     const arvore = await AppShell({ children: null });
-    const texto = textoDaArvore(arvore);
 
-    expect(texto).not.toContain("SANDBOX");
-    expect(texto).not.toContain("não é produção");
+    expect(textoDaArvore(arvore)).not.toContain("SANDBOX");
     expect((arvore as Elemento).props.className).toBe("app-shell");
   });
 

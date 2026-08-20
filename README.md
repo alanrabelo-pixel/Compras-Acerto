@@ -79,10 +79,18 @@ de prioridade sugerida:
 ```bash
 npm install
 cp .env.example .env        # preencher com credenciais reais
-npx prisma migrate dev      # cria as tabelas
+npm run prisma:migrate      # cria as tabelas
 npm run prisma:seed         # popula centros de custo e usuários-base
 npm run dev
 ```
+
+Use os scripts de npm, e não `npx prisma ...` direto: `prisma:migrate`,
+`prisma:push`, `prisma:reset` e `prisma:studio` passam pela guarda de banco
+(`src/lib/guarda-banco.ts`), que recusa rodar contra qualquer host que não seja
+`localhost` ou `127.0.0.1`. Chamado direto, o `prisma` aplica a migração no
+banco que estiver no `DATABASE_URL`, inclusive o de Produção. A exceção é
+`npm run prisma:deploy` (`prisma migrate deploy`), que é justamente o comando
+que a Vercel roda contra o banco remoto e por isso não é guardado.
 
 ## Integração com o futuro ERP
 

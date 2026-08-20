@@ -651,27 +651,45 @@ button:focus-visible,
 }
 
 /* ---------------------------------------------------------------------- */
-/* Faixa de ambiente (ver src/lib/ambiente.ts e AppShell.tsx)              */
+/* Faixa de ambiente (ver src/lib/ambiente.ts e src/app/layout.tsx)        */
 /*                                                                          */
-/* Só existe fora de produção; em produção o elemento nem é renderizado, e  */
-/* a casca fica exatamente como era. Fixa no alto da janela, não rolando    */
-/* com a página: um aviso que some no primeiro scroll para de avisar        */
-/* justamente quando a pessoa está no meio de uma tela achando que é        */
-/* produção. Por ser fixed, ela sai do fluxo e não entra na linha do flex   */
-/* da casca, então não desloca a barra lateral nem o conteúdo. O espaço     */
-/* dela é devolvido em três lugares a partir da MESMA variável, para não    */
-/* cobrir conteúdo nem empurrar a página para além da janela.               */
+/* Só existe fora de produção; em produção nem o elemento nem a classe do   */
+/* <body> são renderizados, e todas as telas ficam exatamente como eram.    */
+/* Fixa no alto da janela, não rolando com a página: um aviso que some no   */
+/* primeiro scroll para de avisar justamente quando a pessoa está no meio   */
+/* de uma tela achando que é produção. Por ser fixed, ela sai do fluxo e    */
+/* não entra na linha do flex de casca nenhuma, então não desloca a barra   */
+/* lateral nem o conteúdo. O espaço dela é devolvido a partir da MESMA      */
+/* variável, para não cobrir conteúdo nem empurrar a página para além da    */
+/* janela.                                                                  */
+/*                                                                          */
+/* A âncora é o <body> (e não .app-shell) porque a faixa vale para as 17    */
+/* telas, e seis delas (início, login, sem-acesso e as três de Chamados)    */
+/* não passam pelo AppShell.                                                */
 /* ---------------------------------------------------------------------- */
 
-.app-shell.com-faixa-de-ambiente {
+body.com-faixa-de-ambiente {
   --faixa-ambiente-h: 30px;
   padding-top: var(--faixa-ambiente-h);
 }
-/* Sem isto, os 30px de padding somariam à altura mínima de 100vh e toda tela
-   ganharia uma barra de rolagem de 30px sem conteúdo nenhum. */
-.app-shell.com-faixa-de-ambiente .sidebar {
+/* As duas telas que esticam até o fim da janela. Sem descontar a faixa, os
+   30px de padding somariam à altura mínima de 100vh e elas ganhariam uma
+   barra de rolagem de 30px sem conteúdo nenhum. */
+body.com-faixa-de-ambiente .app-shell,
+body.com-faixa-de-ambiente .login-page {
+  min-height: calc(100vh - var(--faixa-ambiente-h));
+}
+/* Barra lateral de Compras: gruda no alto da janela (sticky) e tem altura de
+   janela cheia, então precisa dos dois ajustes. */
+body.com-faixa-de-ambiente .sidebar {
   top: var(--faixa-ambiente-h);
   height: calc(100vh - var(--faixa-ambiente-h));
+}
+/* Barra de topo de Chamados: também gruda no alto ao rolar (sticky, top: 0), e
+   o alto da janela agora é da faixa. Sem descer o ponto de parada, ela
+   começaria certa e passaria a ficar meio escondida no primeiro scroll. */
+body.com-faixa-de-ambiente .topbar {
+  top: var(--faixa-ambiente-h);
 }
 
 .faixa-ambiente {
@@ -716,9 +734,9 @@ button:focus-visible,
 @media (max-width: 860px) {
   /* A barra lateral vira uma linha no topo (posição estática, altura
      automática), então as compensações de altura acima não valem aqui. O
-     padding-top da casca continua valendo, que é o que impede a faixa de
+     padding-top do <body> continua valendo, que é o que impede a faixa de
      cobrir a barra. */
-  .app-shell.com-faixa-de-ambiente .sidebar {
+  body.com-faixa-de-ambiente .sidebar {
     top: auto;
     height: auto;
   }

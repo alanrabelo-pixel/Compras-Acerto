@@ -8,9 +8,8 @@ import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { canViewBoard } from "@/lib/roles";
-import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, Building2, AlertTriangle, type LucideIcon } from "lucide-react";
+import { LayoutGrid, ListChecks, FileText, LayoutDashboard, Settings, Building2, type LucideIcon } from "lucide-react";
 import { bypassAuthAtivo } from "@/lib/bypass";
-import { rotuloDoAmbiente } from "@/lib/ambiente";
 
 const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
 
@@ -60,28 +59,13 @@ export async function AppShell({ active, children }: { active?: string; children
     countRecentAnnouncements(),
   ]);
 
-  // Faixa de ambiente: null em produção, "SANDBOX" em qualquer outro lugar
-  // (inclusive quando APP_ENV não foi declarada, ver src/lib/ambiente.ts).
-  // Como AppShell é a casca de todas as telas internas, é aqui que a
-  // identificação fica em todas elas de uma vez. Server Component (função
-  // async, sem "use client"), então ler process.env por rotuloDoAmbiente()
-  // acontece no servidor, como tem que ser.
-  const rotuloAmbiente = rotuloDoAmbiente();
-
+  // A faixa de ambiente NÃO fica aqui: ela subiu para o RootLayout
+  // (src/app/layout.tsx), que é o único ponto por onde passam as 17 telas.
+  // Renderizá-la também aqui a duplicaria em todas as telas de Compras. A
+  // compensação de espaço desta casca (padding e altura da barra lateral) vem
+  // da classe que o RootLayout põe no <body>, ver globals.css.
   return (
-    <div className={`app-shell${rotuloAmbiente ? " com-faixa-de-ambiente" : ""}`}>
-      {/* Fora do fluxo (position: fixed, ver globals.css), então não entra na
-          linha do flex e não mexe na barra lateral nem no conteúdo; o espaço
-          dela é devolvido pelo padding-top da própria casca. */}
-      {rotuloAmbiente && (
-        <div className="faixa-ambiente" title={`${rotuloAmbiente}: ambiente de testes, não é produção.`}>
-          <AlertTriangle size={13} strokeWidth={2.25} aria-hidden />
-          <strong className="faixa-ambiente-rotulo">{rotuloAmbiente}</strong>
-          <span className="faixa-ambiente-texto">
-            Ambiente de testes, não é produção. Nada aqui gera e-mail ou mensagem no Slack, e nada aqui vale como registro oficial.
-          </span>
-        </div>
-      )}
+    <div className="app-shell">
       <a href="#main-content" className="skip-link">Pular para o conteúdo</a>
       <aside className="sidebar">
         <Link href="/" className="sidebar-brand" title="Voltar ao menu de apps da Acerto">

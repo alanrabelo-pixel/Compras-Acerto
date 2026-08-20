@@ -12,24 +12,60 @@ para o SSO real via Google Workspace, restrito a `@acerto.com.br`
    - Preencher nome do app, e-mail de suporte, domínio.
 3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
    - Application type: **Web application**.
-   - **Authorized redirect URIs**: adicionar uma entrada por ambiente que vai existir.
+   - Criar **um client por ambiente**, cada um com o seu próprio redirect URI. É
+     o que [`docs/runbook-ambientes.md`](docs/runbook-ambientes.md) assume, e
+     mantém a regra de não reaproveitar segredo entre Produção e Sandbox.
      - Produção: `https://<seu-domínio-de-produção>/api/auth/callback/google`
-     - Staging (se houver): `https://<seu-domínio-de-staging>/api/auth/callback/google`
+     - Sandbox: `https://<seu-domínio-de-sandbox>/api/auth/callback/google`
      - Local (dev, opcional, só quem for testar SSO localmente): `http://localhost:3000/api/auth/callback/google`
-   - Salvar → copiar **Client ID** e **Client Secret**.
+   - Salvar → copiar o **Client ID** e o **Client Secret** de cada um.
 
-## 2. Variáveis de ambiente (produção)
+## 2. Variáveis de ambiente (Produção e Sandbox)
 
-Preencher no ambiente de produção (Railway/Render/etc.), e nunca commitar:
+São dois projetos com painéis de variáveis separados. Preencher em cada um, e
+nunca commitar.
 
-| Variável | Valor |
-|---|---|
-| `GOOGLE_CLIENT_ID` | do passo 1 |
-| `GOOGLE_CLIENT_SECRET` | do passo 1 |
-| `NEXTAUTH_URL` | URL pública real, ex: `https://compras.acerto.com.br` |
-| `APP_URL` | mesma URL pública |
-| `NEXTAUTH_SECRET` | gerar um valor **novo e único** para produção com `openssl rand -base64 32`. Nunca reaproveitar o de dev |
-| `LOCAL_BYPASS_AUTH` | **remover a variável ou definir como `"false"`**, pois é isso que liga o SSO de verdade (ver `src/middleware.ts`) |
+A matriz completa das duas colunas está em
+[`docs/runbook-ambientes.md`](docs/runbook-ambientes.md), e é ela que vale em
+caso de divergência. Aqui ficam só as variáveis que dizem respeito ao SSO, mais
+`APP_ENV`, que é a que decide se o ambiente é a Produção. `.env.example`
+explica cada uma em detalhe.
+
+| Variável | Produção | Sandbox |
+|---|---|---|
+| `APP_ENV` | `producao` | `sandbox` |
+| `GOOGLE_CLIENT_ID` | client de Produção (passo 1) | client do Sandbox (passo 1) |
+| `GOOGLE_CLIENT_SECRET` | idem | idem |
+| `NEXTAUTH_URL` | URL pública real, ex: `https://compras.acerto.com.br` | URL pública do Sandbox |
+| `APP_URL` | mesma URL pública | mesma URL pública do Sandbox |
+| `NEXTAUTH_SECRET` | valor **novo e único**, gerado com `openssl rand -base64 32`. Nunca reaproveitar o de dev | **outro valor**, diferente do de Produção: com o mesmo segredo, um cookie de sessão emitido pelo Sandbox é aceito pela Produção |
+| `DATABASE_URL` | banco de Produção | banco do Sandbox, com **`sandbox` ou `sbx` no nome** |
+| `LOCAL_BYPASS_AUTH` | **não definir**, pois é a ausência dela que liga o SSO de verdade (ver `src/middleware.ts`) | **não definir**: o Sandbox é onde o SSO é testado, e com o bypass ligado não há SSO para testar |
+
+**`APP_ENV` é a que mais dói esquecer.** Ausente, o valor é `sandbox`
+(`src/lib/ambiente.ts`). Uma Produção que subir sem ela não manda e-mail nem
+Slack, nunca, e exibe a faixa "SANDBOX" para todo mundo. Como o Sandbox exibe a
+mesma faixa, ela deixa de distinguir um ambiente do outro, que é a única coisa
+que ela faz. Declare a variável nos dois projetos, inclusive no Sandbox, onde o
+valor coincide com o padrão. Se `NODE_ENV=production` e `APP_ENV` não disser
+`producao`, o boot registra o aviso `ambiente_nao_declarado_como_producao`
+(`src/lib/env.ts`): vale conferir esse log no primeiro deploy de Produção.
+
+**Duas variáveis de e-mail não aparecem na tabela porque resolvem sozinhas.**
+`GMAIL_SENDER` (remetente das mensagens) e `EMAIL_CONTROLADORIA` (destino dos
+alertas de fracionamento e de escalonamento) seguem `APP_ENV` quando estão
+vazias: em produção caem nas caixas reais, `compras@acerto.com.br` e
+`controladoria@acerto.com.br`, sem precisar declarar nada; fora dela caem em
+endereços `.invalid`, que não existem e não podem ser entregues por ninguém. No
+Sandbox as duas ficam **vazias**, e isso é configuração, não esquecimento:
+preencher qualquer uma delas ali com uma caixa real desfaz a proteção.
+
+`DATABASE_URL` do Sandbox precisa da marca no nome porque o boot confere isso
+(`src/lib/env.ts`) e recusa subir sem ela. O motivo é o erro mais provável ao
+criar o segundo projeto, que é copiar as variáveis do primeiro: aí o Sandbox
+grava solicitações na base real, e é o cron da **Produção**, esse com o envio
+liberado, que manda as mensagens delas para pessoas de verdade. A trava de
+envio do Sandbox não protege contra isso, porque quem envia é o outro processo.
 
 ## 3. Garantir pelo menos um ADMIN antes de desligar o bypass
 
@@ -84,12 +120,18 @@ em `/admin/acessos`.
 
 ## 4. Teste do fluxo completo (antes de desligar o bypass em definitivo)
 
-1. Com `LOCAL_BYPASS_AUTH="false"` num ambiente de staging (não produção direto):
+1. Com `LOCAL_BYPASS_AUTH="false"` no Sandbox (não em produção direto):
    - Login com uma conta `@acerto.com.br` → deve criar/reconhecer o `User` (signIn callback em `src/lib/auth.ts`).
    - Login com uma conta fora do domínio → deve ser recusado (checar `hd`/validação do e-mail no callback).
    - Conta desativada (`User.active = false`) → deve ser bloqueada mesmo com login Google válido.
 2. Confirmar que `/admin/acessos` está acessível para quem tem papel `ADMIN` e bloqueado para os demais.
 3. Confirmar que `/solicitacoes`, `/contratos`, `/dashboards` respeitam `canViewBoard` (middleware, `src/middleware.ts`).
+4. Conferir que cada ambiente se declarou certo, o que só dá para ver depois do
+   deploy: a faixa "SANDBOX" aparece no Sandbox e **não** aparece em Produção.
+   Se aparecer nos dois, `APP_ENV` não chegou na Produção. A conferência
+   completa da separação entre os ambientes, incluindo o teste de envio
+   bloqueado, está na seção 7 de
+   [`docs/runbook-ambientes.md`](docs/runbook-ambientes.md).
 
 ## 5. Pendência documentada (não é bloqueio técnico, é aprovação)
 

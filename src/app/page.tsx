@@ -38,7 +38,7 @@ const SECONDARY_SERVICES = [
   },
   {
     href: "/chamados/nda",
-    title: "NDA e Contratos de Fornecedores",
+    title: "Cadastro, Contratos de Fornecedores e NDA",
     description: "NDA, contratos ativos e consultas sobre fornecedores.",
     icon: <Scale size={16} strokeWidth={1.75} />,
   },
