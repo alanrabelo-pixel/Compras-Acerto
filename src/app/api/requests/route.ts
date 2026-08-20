@@ -6,7 +6,7 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
 import { campo } from "@/lib/rotulos";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
-import { exigirQuadro } from "@/lib/acesso";
+import { atorDaSessao, exigirQuadro } from "@/lib/acesso";
 
 // GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
@@ -57,6 +57,21 @@ export async function POST(req: NextRequest) {
     affectedUsers,
   } = body;
 
+  // Quem está abrindo a solicitação: a SESSÃO manda, o corpo só entra quando
+  // não há sessão nenhuma (desenvolvimento local com LOCAL_BYPASS_AUTH, onde o
+  // formulário roda sem SSO e escolhe o solicitante no UserPicker).
+  //
+  // Antes, requesterId vinha do corpo e nunca era comparado com a sessão: com
+  // um POST direto dava para abrir solicitação em nome de outra pessoa, e a
+  // confirmação de recebimento (sendPurchaseEmail abaixo) chegava na caixa
+  // dela, com a descrição da compra que ela não pediu. O StageEvent de
+  // abertura também registrava a pessoa errada como autora.
+  //
+  // Nenhum papel é exigido aqui de propósito: abrir solicitação é de qualquer
+  // colaborador, o recorte é só de identidade.
+  const ator = await atorDaSessao();
+  const solicitanteId = ator?.id ?? requesterId;
+
   // Validação mínima dos campos obrigatórios (marcados com * no formulário).
   // estimatedValue NÃO é obrigatório aqui, de propósito: ver
   // gate na Triagem, que exige o valor antes de calcular alçada/lane.
@@ -69,7 +84,7 @@ export async function POST(req: NextRequest) {
   // aprovador é o dono do centro de custo escolhido, resolvido abaixo via
   // CostCenter.managerId, não uma escolha manual do solicitante).
   const required = {
-    requesterId, diretoria, costCenterId, leadershipPreApproved,
+    requesterId: solicitanteId, diretoria, costCenterId, leadershipPreApproved,
     priority, demandType, shortDescription, longDescription,
     suggestedDeadline, quantity,
   };
@@ -102,7 +117,7 @@ export async function POST(req: NextRequest) {
   const request = await prisma.purchaseRequest.create({
     data: {
       code,
-      requesterId,
+      requesterId: solicitanteId,
       diretoria,
       costCenterId,
       leadershipPreApproved,
@@ -135,7 +150,7 @@ export async function POST(req: NextRequest) {
   });
 
   await prisma.stageEvent.create({
-    data: { requestId: request.id, toStage: "SOLICITACAO", actorId: requesterId },
+    data: { requestId: request.id, toStage: "SOLICITACAO", actorId: solicitanteId },
   });
 
   // Comunicação automática: confirmação de recebimento (ver seção 3.1 do doc de referência)

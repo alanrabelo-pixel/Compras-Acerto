@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { normalizarCnpj } from "@/lib/cnpj";
 
 /**
@@ -18,8 +19,16 @@ import { normalizarCnpj } from "@/lib/cnpj";
  * PARTIDA editável no formulário, nunca a fonte de verdade definitiva,
  * porque nomes de fornecedor têm variação (razão social x nome fantasia,
  * digitação diferente) que uma correspondência automática pode não cobrir.
+ *
+ * A resposta é quanto a Acerto já comprou daquele fornecedor em 12 meses, com o
+ * nome dele junto: dado de negociação, e não algo que qualquer conta da empresa
+ * deva conseguir consultar só por ter o id da solicitação na mão. Mesmo recorte
+ * das demais leituras da solicitação.
  */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
     select: { indicatedSupplierName: true },

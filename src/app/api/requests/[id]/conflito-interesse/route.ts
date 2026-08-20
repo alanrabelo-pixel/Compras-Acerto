@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
+import { atorDaSessao, exigirLeituraDeSolicitacao } from "@/lib/acesso";
 
 /**
  * POST /api/requests/[id]/conflito-interesse
@@ -12,11 +12,22 @@ import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
  * recente é a que vale.
  */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
 
   const body = await req.json();
-  const { declaredBy, hasConflict, details } = body;
+  const { declaredBy: declaredByInformado, hasConflict, details } = body;
+
+  // Declaração de conflito é uma afirmação assinada, e o autor vinha do corpo:
+  // dava para declarar "sem conflito" no nome do comprador que tem o conflito e
+  // com isso destravar a Aprovação. Havendo sessão ela manda; sem sessão
+  // (desenvolvimento com LOCAL_BYPASS_AUTH) segue o corpo, senão o formulário
+  // local para de funcionar.
+  const ator = await atorDaSessao();
+  const declaredBy = ator?.id ?? declaredByInformado;
 
   if (!declaredBy) return NextResponse.json({ error: "Informe quem está fazendo a declaração de conflito de interesse." }, { status: 400 });
   if (typeof hasConflict !== "boolean") {

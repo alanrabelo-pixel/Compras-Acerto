@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
+import { atorDaSessao, exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { saveFile } from "@/lib/storage";
 import { validarAnexo } from "@/lib/upload";
 import { AttachmentCategory, Stage } from "@prisma/client";
@@ -21,12 +21,22 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 // POST /api/requests/[id]/attachments: upload (multipart/form-data: file, uploadedBy, stage).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
 
   const form = await req.formData();
   const file = form.get("file");
-  const uploadedBy = form.get("uploadedBy");
+  // Quem anexou vinha inteiro do formulário, então dava para subir arquivo na
+  // solicitação assinando com o id de outra pessoa. Havendo sessão, ela manda e
+  // o campo do corpo é ignorado; sem sessão (desenvolvimento com
+  // LOCAL_BYPASS_AUTH) continua valendo o corpo, senão o UserPicker do painel de
+  // anexos para de funcionar localmente.
+  const ator = await atorDaSessao();
+  const uploadedByInformado = form.get("uploadedBy");
+  const uploadedBy = ator?.id ?? uploadedByInformado;
   // stage e category vinham do cliente com cast direto para o enum, sem
   // conferência: um valor fora da lista só estourava lá no Prisma, virando 500
   // sem explicação. Valor desconhecido agora cai no padrão.

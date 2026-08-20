@@ -10,9 +10,13 @@ export type SupplierOption = {
   contactName: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
-  screeningStatus: string;
-  approvedVendor: boolean;
-  riskTier: string;
+  // Opcionais de propósito: /api/suppliers só devolve a avaliação interna de
+  // risco para quem vê o quadro. No formulário de NDA, aberto a qualquer
+  // colaborador, estes três não vêm, e o aviso de triagem simplesmente não
+  // aparece, em vez de o cadastro inteiro ficar indisponível.
+  screeningStatus?: string;
+  approvedVendor?: boolean;
+  riskTier?: string;
 };
 
 /**

@@ -9,11 +9,22 @@ import { USUARIO_PUBLICO } from "@/lib/usuario";
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
 // antes de enviar (ver APROVACAO_GESTOR em src/lib/workflow.ts). Mais de um
 // gestor por centro de custo é permitido (pedido do usuário).
+//
+// Sem guarda de propósito, e a exceção está registrada em
+// src/app/api/autorizacao.cobertura.test.ts: qualquer colaborador abre
+// /solicitacoes/nova e precisa escolher o centro de custo.
+//
+// `select` explícito em vez de `findMany` sem recorte: a rota é legível por
+// toda a empresa, e sem isto qualquer coluna nova em CostCenter passaria a
+// sair na resposta sem ninguém decidir isso (é o mesmo modo de falha do
+// comentário de User.anthropicApiKey em prisma/schema.prisma). Os dois
+// consumidores, NovaSolicitacaoForm e MultiCostCenterPicker, usam id, name e o
+// nome dos gestores, nada além.
 export async function GET() {
   const costCenters = await prisma.costCenter.findMany({
     where: { active: true },
     orderBy: { name: "asc" },
-    include: { managers: { select: { name: true } } },
+    select: { id: true, name: true, managers: { select: { name: true } } },
   });
   return NextResponse.json(costCenters);
 }

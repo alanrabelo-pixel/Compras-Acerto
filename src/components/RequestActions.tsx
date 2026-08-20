@@ -1160,7 +1160,9 @@ function PedidoCompraForm({
                 setContactName(s.contactName ?? "");
                 setContactPhone(s.contactPhone ?? "");
                 setContactEmail(s.contactEmail ?? "");
-                setTriagemDoFornecedor(s.screeningStatus);
+                // Ausente quando quem está na tela não vê o quadro: aí o aviso
+                // de triagem não aparece, em vez de aparecer errado.
+                setTriagemDoFornecedor(s.screeningStatus ?? null);
               }}
             />
           </div>

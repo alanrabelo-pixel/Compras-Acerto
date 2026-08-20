@@ -23,6 +23,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 // POST /api/tickets/[id]/attachments: upload (multipart/form-data: file, uploadedBy).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  // Mesmo recorte do GET, e pelo mesmo motivo: params.id é o chamado dono do
+  // anexo. Sem isto, qualquer conta autenticada com o id de um chamado alheio
+  // na mão pendurava arquivo dentro dele, e o arquivo passa a ser servido por
+  // /api/attachments/[id]/file para quem lê aquele chamado. Vem antes da busca
+  // do chamado de propósito: exigirLeituraDeChamado já responde 403 para
+  // chamado inexistente, e responder 404 antes dela confirmaria a existência
+  // do id para quem não tem acesso nenhum.
+  const barrado = await exigirLeituraDeChamado(params.id);
+  if (barrado) return barrado;
+
   const ticket = await prisma.simpleTicket.findUnique({ where: { id: params.id } });
   if (!ticket) return NextResponse.json({ error: "Chamado não encontrado" }, { status: 404 });
 

@@ -67,6 +67,14 @@ export type Ator = {
  * de outra pessoa.
  */
 export async function atorDaSessao(): Promise<Ator | null> {
+  // Com o bypass ligado não existe sessão para buscar, e insistir em buscar
+  // quebra: getServerSession lê os headers da requisição e estoura com
+  // "headers was called outside a request scope" fora de um contexto de
+  // requisição de verdade. Devolver null aqui é o que faz o padrão
+  // `ator?.id ?? valorDoCorpo` cair no corpo em desenvolvimento, que é
+  // exatamente o comportamento desejado.
+  if (bypassAuthAtivo()) return null;
+
   const session = await getServerSession(authOptions);
   const user = session?.user as
     | { id?: string; email?: string | null; roles?: string[]; canViewBoard?: boolean }
