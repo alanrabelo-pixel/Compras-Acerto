@@ -9,7 +9,7 @@ import type { TicketCategory } from "@prisma/client";
 export const TICKET_CATEGORIES = {
   viagens: { enumValue: "VIAGENS" as TicketCategory, label: "Viagens Acerto", prefix: "VG" },
   facilities: { enumValue: "FACILITIES" as TicketCategory, label: "Facilities", prefix: "FC" },
-  nda: { enumValue: "NDA" as TicketCategory, label: "Cadastro, Contratos de Fornecedores e NDA", prefix: "NDA" },
+  nda: { enumValue: "NDA" as TicketCategory, label: "Cadastros, Contratos de Fornecedores e NDA", prefix: "NDA" },
 } as const;
 
 export type TicketCategorySlug = keyof typeof TICKET_CATEGORIES;

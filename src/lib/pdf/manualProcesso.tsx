@@ -203,7 +203,7 @@ export function ManualProcessoDocument() {
         <Text style={styles.coverTag}>ORIENTAÇÃO INTERNA</Text>
         <Text style={styles.coverTitle}>Manual do Processo{"\n"}de Solicitações Internas</Text>
         <Text style={styles.coverSystem}>Sistema alAi</Text>
-        <Text style={styles.coverSubtitle}>Solicitação de Compras · Viagens Acerto · Facilities · Cadastro, Contratos de Fornecedores e NDA</Text>
+        <Text style={styles.coverSubtitle}>Solicitação de Compras · Viagens Acerto · Facilities · Cadastros, Contratos de Fornecedores e NDA</Text>
         <Text style={styles.coverDate}>Atualizado em {TODAY}</Text>
         {ASSETS.sorrisoBranco && <Image style={styles.coverSorriso} src={{ data: ASSETS.sorrisoBranco, format: "png" }} />}
       </Page>
@@ -226,7 +226,7 @@ export function ManualProcessoDocument() {
             "6. Quem pode acessar o quê",
             "7. Viagens Acerto",
             "8. Facilities",
-            "9. Cadastro, Contratos de Fornecedores e NDA",
+            "9. Cadastros, Contratos de Fornecedores e NDA",
             "10. Dúvidas e contato",
           ].map((line) => (
             <View key={line} style={styles.toc}>
@@ -262,7 +262,7 @@ export function ManualProcessoDocument() {
           Para pedidos de infraestrutura e manutenção do dia a dia do escritório. Mesmo formato simples de
           chamado do Viagens Acerto.
         </Card>
-        <Card title="Cadastro, Contratos de Fornecedores e NDA">
+        <Card title="Cadastros, Contratos de Fornecedores e NDA">
           Para solicitação de cadastro de fornecedores, NDA, consultas de contratos ativos e fornecedores
           homologados. Mesmo formato simples de chamado do Viagens Acerto e Facilities.
         </Card>
@@ -513,8 +513,8 @@ export function ManualProcessoDocument() {
         <Stage n={3} label="Troca de mensagens" desc="Toda a conversa com o time de Facilities acontece dentro do próprio chamado, mantendo o histórico completo." />
         <Stage n={4} label="Conclusão" desc="Quando o pedido é resolvido, o time responsável marca o chamado como Concluído." />
 
-        {/* 9. Cadastro, Contratos de Fornecedores e NDA */}
-        <H1 bookmark="9. Cadastro, Contratos de Fornecedores e NDA">9. Cadastro, Contratos de Fornecedores e NDA</H1>
+        {/* 9. Cadastros, Contratos de Fornecedores e NDA */}
+        <H1 bookmark="9. Cadastros, Contratos de Fornecedores e NDA">9. Cadastros, Contratos de Fornecedores e NDA</H1>
         <P>Mesmo modelo simples do Viagens Acerto e Facilities, para solicitação de cadastro de fornecedores, NDA, consultas de contratos ativos e fornecedores homologados.</P>
         <Stage n={1} label="Abrir chamado" desc="Informe seu nome, e-mail e descreva o que você precisa." />
         <Stage n={2} label="Acompanhamento" desc="O chamado aparece no quadro em uma das três colunas: Aberto, Em Andamento ou Concluído." />

@@ -808,7 +808,7 @@ export function AuditoriaSistemaDocument() {
         <H1 bookmark="6. Chamados simples (Viagens, Facilities, NDA)">6. Chamados simples (Viagens, Facilities, NDA)</H1>
         <P>
           Fluxo enxuto e idêntico nas três categorias. A única diferença real são os campos extras específicos de
-          Cadastro, Contratos de Fornecedores e NDA, ligados a fornecedor ou contrato. Não passa pelas alçadas, orçamento ou
+          Cadastros, Contratos de Fornecedores e NDA, ligados a fornecedor ou contrato. Não passa pelas alçadas, orçamento ou
           aprovações da Solicitação de Compras: é, de propósito, fora desse processo.
         </P>
         <Bullet><Text style={styles.cardLabel}>Abertura: </Text>qualquer pessoa com e-mail @acerto.com.br, sem exigir vínculo com usuário cadastrado. Nome e e-mail em texto livre.</Bullet>
