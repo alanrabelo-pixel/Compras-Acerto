@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
+import { exigirPapel } from "@/lib/acesso";
 
 const LEVELS = [1, 2, 3];
 
@@ -11,6 +12,12 @@ const LEVELS = [1, 2, 3];
  * (pedido do usuário).
  */
 export async function GET() {
+  // Quem aprova cada faixa de valor é informação de controle interno, e a tela
+  // que edita isso (/admin/centros-de-custo) já é restrita a ADMIN pelo
+  // middleware. canViewBoard aqui seria largo demais.
+  const barrado = await exigirPapel(["ADMIN"], "a configuração de alçadas");
+  if (barrado) return barrado;
+
   const rows = await prisma.approvalLevelApprover.findMany({
     where: { level: { in: LEVELS } },
     include: { user: { select: USUARIO_PUBLICO } },

@@ -5,6 +5,7 @@ import { sendPurchaseEmail } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { logger } from "@/lib/logger";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
+import { exigirLeituraDeContrato } from "@/lib/acesso";
 
 /**
  * PATCH /api/contracts/[id]
@@ -68,6 +69,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  // Quadro ou o gestor daquele contrato. Antes de qualquer consulta.
+  const barrado = await exigirLeituraDeContrato(params.id);
+  if (barrado) return barrado;
+
   const contract = await prisma.contract.findUnique({
     where: { id: params.id },
     include: { contractManager: { select: USUARIO_PUBLICO }, alerts: true, request: true },

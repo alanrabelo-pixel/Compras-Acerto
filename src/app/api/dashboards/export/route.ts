@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
 import { buildDashboardWhere } from "@/lib/dashboard-data";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
+import { exigirQuadro } from "@/lib/acesso";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,11 @@ export const dynamic = "force-dynamic";
  * propósito, para o recorte do relatório bater com o que está na tela).
  */
 export async function GET(req: NextRequest) {
+  // Antes de montar a planilha: são cinco abas com a base inteira movimentada
+  // no processo (valores, fornecedores, aprovadores, exceções orçamentárias).
+  const barrado = await exigirQuadro("a exportação da base");
+  if (barrado) return barrado;
+
   const sp = req.nextUrl.searchParams;
 
   const de = sp.get("de");

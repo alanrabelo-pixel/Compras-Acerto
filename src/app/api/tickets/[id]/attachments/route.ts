@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { saveFile } from "@/lib/storage";
 import { validarAnexo } from "@/lib/upload";
+import { exigirLeituraDeChamado } from "@/lib/acesso";
 
 export const runtime = "nodejs";
 
 // GET /api/tickets/[id]/attachments: lista anexos do chamado.
+// params.id é o chamado dono dos anexos: quem não pode ler o chamado não pode
+// ver o que está anexado nele (nome de arquivo já entrega conteúdo, ex.:
+// "NDA Fornecedor X.pdf").
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeChamado(params.id);
+  if (barrado) return barrado;
+
   const attachments = await prisma.attachment.findMany({
     where: { ticketId: params.id },
     orderBy: { createdAt: "desc" },

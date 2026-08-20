@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { RoleName } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/rbac";
+import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { decryptSecret } from "@/lib/crypto";
 import { approvalLevel, STAGES } from "@/lib/workflow";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
@@ -38,6 +39,9 @@ const STAGE_ROLE: Partial<Record<string, RoleName[]>> = {
 };
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const insights = await prisma.aiInsight.findMany({
     where: { requestId: params.id },
     include: { requestedBy: { select: USUARIO_PUBLICO } },

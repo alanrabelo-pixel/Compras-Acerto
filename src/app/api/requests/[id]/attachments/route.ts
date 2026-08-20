@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { saveFile } from "@/lib/storage";
 import { validarAnexo } from "@/lib/upload";
 import { AttachmentCategory, Stage } from "@prisma/client";
@@ -8,6 +9,9 @@ export const runtime = "nodejs";
 
 // GET /api/requests/[id]/attachments: lista anexos da solicitação.
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const attachments = await prisma.attachment.findMany({
     where: { requestId: params.id },
     orderBy: { createdAt: "desc" },

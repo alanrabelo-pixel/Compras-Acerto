@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
+import { exigirLeituraDeChamado } from "@/lib/acesso";
 import type { TicketStatus } from "@prisma/client";
 
 const VALID_STATUS: TicketStatus[] = ["ABERTO", "EM_ANDAMENTO", "CONCLUIDO"];
 
 // GET /api/tickets/[id]: detalhe de um chamado (com mensagens).
+// Só quem atende (canViewBoard) ou quem abriu o chamado pode ler, mesmo
+// critério que a tela de detalhe já aplica (ver src/lib/chamados-viewer.ts).
+// O detalhe traz o histórico de mensagens inteiro, então a guarda vem antes
+// da consulta, não depois.
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeChamado(params.id);
+  if (barrado) return barrado;
+
   const ticket = await prisma.simpleTicket.findUnique({
     where: { id: params.id },
     include: { messages: { orderBy: { createdAt: "asc" } } },

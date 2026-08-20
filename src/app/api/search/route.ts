@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { STAGES } from "@/lib/workflow";
 import { USUARIO_RESUMIDO } from "@/lib/usuario";
+import { exigirQuadro } from "@/lib/acesso";
 
 export type SearchResult = {
   type: "solicitacao" | "contrato";
@@ -19,6 +20,12 @@ export type SearchResult = {
  * rápida de navegação, não um relatório.
  */
 export async function GET(req: NextRequest) {
+  // Antes até da leitura do termo: a busca varre a carteira inteira de
+  // solicitações e de contratos, sem recorte por registro, e o próprio
+  // resultado (código, descrição, fornecedor, CNPJ) já é o vazamento.
+  const barrado = await exigirQuadro("a busca geral");
+  if (barrado) return barrado;
+
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q || q.length < 2) return NextResponse.json([]);
 

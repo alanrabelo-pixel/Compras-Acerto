@@ -3,16 +3,36 @@ import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { proximoCodigo } from "@/lib/codigo";
+import { resolveChamadoViewer } from "@/lib/chamados-viewer";
+import { naoAutenticado } from "@/lib/acesso";
 
 // GET /api/tickets?category=viagens|facilities: lista chamados de uma categoria.
+//
+// Recorte igual ao da tela (src/app/chamados/[category]/page.tsx): quem tem
+// canViewBoard vê a categoria inteira, quem não tem vê só os próprios, por
+// requesterEmail (SimpleTicket não tem FK pra User, ver chamados-viewer.ts).
+// Não é exigirQuadro seco de propósito: isso tiraria do solicitante o
+// acompanhamento do que ele mesmo abriu, que a tela permite. Sem a guarda,
+// qualquer conta autenticada lia os chamados de todo mundo, inclusive os de
+// NDA com dados de fornecedor.
 export async function GET(req: NextRequest) {
+  const viewer = await resolveChamadoViewer(req.nextUrl.searchParams.get("userId") ?? undefined);
+  // Sem quadro e sem e-mail resolvido significa requisição sem sessão. Vale um
+  // 401 explícito em vez de uma lista vazia, que esconderia o motivo. Em
+  // LOCAL_BYPASS_AUTH o viewer já volta showFullBoard, então esta linha não é
+  // alcançada lá (o bypass é tratado dentro de resolveChamadoViewer).
+  if (!viewer.showFullBoard && !viewer.email) return naoAutenticado();
+
   const categorySlug = req.nextUrl.searchParams.get("category") ?? "";
   if (!isTicketCategorySlug(categorySlug)) {
     return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
   }
 
   const tickets = await prisma.simpleTicket.findMany({
-    where: { category: TICKET_CATEGORIES[categorySlug].enumValue },
+    where: {
+      category: TICKET_CATEGORIES[categorySlug].enumValue,
+      ...(viewer.showFullBoard ? {} : { requesterEmail: viewer.email }),
+    },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(tickets);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { minimumQuotesRequired } from "@/lib/workflow";
 import { requireRole } from "@/lib/rbac";
+import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 
@@ -12,6 +13,9 @@ import { USUARIO_PUBLICO } from "@/lib/usuario";
  * de valor (ver minimumQuotesRequired em workflow.ts).
  */
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const quotes = await prisma.quote.findMany({ where: { requestId: params.id }, orderBy: { createdAt: "asc" } });
   return NextResponse.json(quotes);
 }

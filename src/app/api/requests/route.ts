@@ -6,9 +6,18 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
 import { campo } from "@/lib/rotulos";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
+import { exigirQuadro } from "@/lib/acesso";
 
 // GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
+  // Listagem ampla, sem recorte por registro: devolve a carteira inteira da
+  // empresa. Não há filtro por solicitante nesta rota (só `stage`), então não
+  // existe recorte "só as minhas" a preservar aqui; quem não vê o quadro é
+  // barrado. A tela /solicitacoes/minhas não passa por esta rota, ela consulta
+  // o Prisma direto no servidor com where.requesterId.
+  const barrado = await exigirQuadro("o quadro de solicitações");
+  if (barrado) return barrado;
+
   const stage = req.nextUrl.searchParams.get("stage");
   const requests = await prisma.purchaseRequest.findMany({
     where: stage ? { currentStage: stage as never } : undefined,

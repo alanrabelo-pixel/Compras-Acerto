@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { DashboardSummaryDocument } from "@/lib/pdf/dashboardSummary";
 import { loadDashboardData, money } from "@/lib/dashboard-data";
+import { exigirQuadro } from "@/lib/acesso";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,11 @@ export const dynamic = "force-dynamic";
 // GET /api/dashboards/export-pdf: resumo executivo em PDF, com o MESMO
 // recorte de filtros da tela (ver DashboardHeader / dashboards/page.tsx).
 export async function GET(req: NextRequest) {
+  // Antes de carregar os dados e renderizar o PDF: o resumo executivo traz
+  // gasto total, ranking de compradores e de fornecedores da empresa inteira.
+  const barrado = await exigirQuadro("a exportação da base");
+  if (barrado) return barrado;
+
   const sp = req.nextUrl.searchParams;
   const data = await loadDashboardData({
     diretoria: sp.get("diretoria") ?? undefined,

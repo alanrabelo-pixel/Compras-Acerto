@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 
 /**
  * POST /api/requests/[id]/conflito-interesse
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const declarations = await prisma.conflictOfInterestDeclaration.findMany({
     where: { requestId: params.id },
     orderBy: { createdAt: "desc" },

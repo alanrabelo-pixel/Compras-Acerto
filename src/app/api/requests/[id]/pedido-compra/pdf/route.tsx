@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/db";
+import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { PedidoCompraDocument } from "@/lib/pdf/pedidoCompra";
 
 export const runtime = "nodejs";
 
 // GET /api/requests/[id]/pedido-compra/pdf: gera o PDF do Pedido de Compra sob demanda.
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const barrado = await exigirLeituraDeSolicitacao(params.id);
+  if (barrado) return barrado;
+
   const request = await prisma.purchaseRequest.findUnique({
     where: { id: params.id },
     include: { purchaseOrder: { include: { items: { orderBy: { order: "asc" } } } } },
