@@ -2,9 +2,13 @@
  * Embrulho dos comandos do Prisma que ESCREVEM no banco.
  *
  * Por que existe: a guarda de src/lib/guarda-banco.ts cobria duas rotinas de
- * escrita (o seed e a suíte de testes) e o repositório tem cinco. As outras
- * três são `prisma migrate dev`, `prisma db push` e `prisma migrate reset`, e a
- * quarta, `prisma studio`, abre uma interface que edita linha a linha. Nenhuma
+ * escrita, o seed e a suíte de testes. Este embrulho acrescenta quatro:
+ * `prisma migrate dev`, `prisma db push`, `prisma migrate reset` e
+ * `prisma studio`, que abre uma interface que edita linha a linha.
+ *
+ * NÃO cobre `prisma db execute`, `prisma db seed` nem `prisma migrate resolve`,
+ * que também escrevem. Ficaram de fora por não estarem no fluxo normal, e não
+ * por serem seguras: quem digitar uma delas à mão alcança qualquer banco. Nenhuma
  * delas passa por código nosso: `prisma` é um binário de terceiro que lê o
  * DATABASE_URL sozinho e vai direto no banco. Não há onde encaixar a guarda por
  * dentro, então ela entra por fora: os scripts de npm apontam para cá, este

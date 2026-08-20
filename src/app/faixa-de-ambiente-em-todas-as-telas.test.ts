@@ -4,7 +4,7 @@ import path from "path";
 
 /**
  * A faixa de ambiente existia, mas só nas telas de Compras: ela morava no
- * AppShell, e seis das 17 telas não passam por ele. Ficavam sem aviso a página
+ * AppShell, e seis telas não passam por ele. Ficavam sem aviso a página
  * inicial (porta de entrada de todo mundo), o login (a primeira tela que a
  * pessoa vê), o "sem acesso" e as três de Chamados.
  *
@@ -12,11 +12,11 @@ import path from "path";
  * src/app/api/tickets/route.ts) e fora de produção esse e-mail é engolido pela
  * trava de envio (src/lib/integrations/gmail.ts). Sem faixa, a pessoa abre o
  * chamado no Sandbox achando que é o sistema, não recebe nada, e o chamado
- * morre sem ninguém saber. Um aviso que cobre 11 telas de 17 não é um aviso:
+ * morre sem ninguém saber. Um aviso que cobre só parte das telas não é um aviso:
  * é uma armadilha, porque ensina que "sem faixa" significa produção.
  *
  * Por isso a faixa subiu para o RootLayout (src/app/layout.tsx), o único ponto
- * por onde as 17 passam.
+ * por onde todas passam.
  *
  * Este arquivo tem duas metades, e a segunda é a que importa mais:
  *
@@ -161,7 +161,7 @@ describe("RootLayout: o que a faixa mostra em cada ambiente", () => {
   });
 });
 
-describe("Ligação: a faixa alcança as 17 telas, e só uma vez", () => {
+describe("Ligação: a faixa alcança todas as telas, e só uma vez", () => {
   it("as seis telas que ficavam de fora continuam no lugar que o RootLayout embrulha", () => {
     // Se alguma delas sumir ou mudar de lugar, o teste cai e alguém reconfere a
     // lista, em vez de a tela nova nascer sem aviso.
@@ -194,7 +194,7 @@ describe("Ligação: a faixa alcança as 17 telas, e só uma vez", () => {
     }
   });
 
-  it("todas as telas passam pelo RootLayout, e são mais do que as 11 que o AppShell cobria", () => {
+  it("todas as telas passam pelo RootLayout, e são mais do que as que o AppShell cobria", () => {
     const telas = arquivosDoApp("page.tsx");
     const pelaCasca = telas.filter((t) => fs.readFileSync(t, "utf-8").includes("AppShell"));
 
@@ -242,5 +242,55 @@ describe("Ligação: o espaço da faixa é devolvido em todas as telas", () => {
     const definicoes = CSS.match(/--faixa-ambiente-h:/g) ?? [];
 
     expect(definicoes.length).toBe(1);
+  });
+});
+
+/**
+ * A exceção conhecida, registrada como teste para não virar surpresa.
+ *
+ * global-error.tsx renderiza o próprio html e body porque substitui o layout
+ * raiz quando ELE quebra, e é Client Component, onde process.env.APP_ENV não
+ * existe. É a única tela sem faixa, e por limitação real, não por esquecimento.
+ * O teste existe para que quem contar as telas cobertas encontre a exceção
+ * escrita, em vez de concluir que a cobertura é total.
+ */
+describe("a exceção: global-error não tem faixa, e isso é sabido", () => {
+  it("não desenha a faixa, e o arquivo diz por quê", () => {
+    const fonte = fs.readFileSync(path.join(process.cwd(), "src/app/global-error.tsx"), "utf8");
+
+    expect(fonte).not.toContain("faixa-ambiente");
+    expect(fonte).toContain("ÚNICA TELA SEM A FAIXA DE AMBIENTE");
+  });
+
+  it("continua sendo Client Component, que é a causa da limitação", () => {
+    const fonte = fs.readFileSync(path.join(process.cwd(), "src/app/global-error.tsx"), "utf8");
+
+    // Se algum dia deixar de ser, a limitação some e a faixa passa a caber.
+    expect(fonte.startsWith('"use client"')).toBe(true);
+  });
+
+  it("o projeto segue sem nenhuma variável NEXT_PUBLIC_, que é o que a exceção protege", () => {
+    // A faixa em global-error exigiria expor o ambiente ao navegador, e isso
+    // assaria o ambiente no build: o mesmo artefato deixaria de servir os dois.
+    const src = path.join(process.cwd(), "src");
+    const encontrados: string[] = [];
+    const varrer = (dir: string) => {
+      for (const nome of fs.readdirSync(dir)) {
+        const caminho = path.join(dir, nome);
+        if (fs.statSync(caminho).isDirectory()) { varrer(caminho); continue; }
+        if (!/\.(ts|tsx)$/.test(nome)) continue;
+        // Arquivo de teste fora, e procura o USO e não a palavra: este próprio
+        // teste e o comentário de global-error.tsx citam NEXT_PUBLIC_ para
+        // explicar por que ela não existe, e um teste que se acusa sozinho
+        // ensina a ignorá-lo.
+        if (/\.test\.tsx?$/.test(nome)) continue;
+        if (fs.readFileSync(caminho, "utf8").includes("process.env.NEXT_PUBLIC_")) {
+          encontrados.push(path.relative(process.cwd(), caminho).split(path.sep).join("/"));
+        }
+      }
+    };
+    varrer(src);
+
+    expect(encontrados).toEqual([]);
   });
 });

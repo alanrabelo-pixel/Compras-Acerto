@@ -5,6 +5,18 @@
  * error.tsx normal não alcança. Por isso precisa trazer as próprias tags html e
  * body, e não pode depender do CSS do app (que pode ser justamente o que
  * falhou). Os estilos aqui são inline de propósito.
+ *
+ * ESTA É A ÚNICA TELA SEM A FAIXA DE AMBIENTE, e é limitação, não esquecimento.
+ * A faixa vive no layout raiz (src/app/layout.tsx), que é exatamente o que esta
+ * tela substitui quando ele quebra. E ela não pode calcular o ambiente por
+ * conta própria: é Client Component, e process.env.APP_ENV não existe no
+ * navegador. Resolver exigiria uma variável NEXT_PUBLIC_, e o projeto hoje não
+ * tem nenhuma, o que é justamente o que permite o MESMO build servir Produção e
+ * Sandbox, com a diferença inteira em variável de runtime. Trocar essa
+ * propriedade por uma faixa numa tela de erro catastrófico não compensa.
+ *
+ * Consequência prática, para quem for depurar: ver esta tela não diz em qual
+ * ambiente você está. Olhe a URL.
  */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (

@@ -11,7 +11,7 @@ import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestDat
  *    Vercel, as duas telas são idênticas. Quem abre a errada não tem como
  *    saber, e o Sandbox é justamente o ambiente onde nada sai (nem e-mail nem
  *    Slack, ver src/lib/ambiente.ts). A faixa nasceu aqui, na casca das telas
- *    de Compras (AppShell), e de lá alcançava 11 das 17 telas. Hoje ela mora
+ *    de Compras (AppShell), e de lá alcançava só parte das telas. Hoje ela mora
  *    no RootLayout, que alcança todas; o que sobrou deste lado é a garantia de
  *    que a casca NÃO a desenha de novo, senão as telas de Compras teriam duas.
  *    O comportamento da faixa está em
@@ -79,7 +79,7 @@ describe("A casca de Compras não redesenha a faixa de ambiente", () => {
     const arvore = await AppShell({ children: null });
     const texto = textoDaArvore(arvore);
 
-    // Se voltar a desenhar aqui, as 11 telas de Compras mostram duas faixas
+    // Se voltar a desenhar aqui, as telas de Compras mostram duas faixas
     // empilhadas, e a de baixo tapa o topo do conteúdo (a de cima é fixed e a
     // compensação de espaço só devolve a altura de uma).
     expect(texto).not.toContain("SANDBOX");

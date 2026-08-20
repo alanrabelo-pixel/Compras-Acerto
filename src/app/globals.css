@@ -663,7 +663,7 @@ button:focus-visible,
 /* variável, para não cobrir conteúdo nem empurrar a página para além da    */
 /* janela.                                                                  */
 /*                                                                          */
-/* A âncora é o <body> (e não .app-shell) porque a faixa vale para as 17    */
+/* A âncora é o <body> (e não .app-shell) porque a faixa vale para todas   */
 /* telas, e seis delas (início, login, sem-acesso e as três de Chamados)    */
 /* não passam pelo AppShell.                                                */
 /* ---------------------------------------------------------------------- */

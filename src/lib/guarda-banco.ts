@@ -13,7 +13,14 @@
  * máquina de alguém, ou a variável exportada no shell de um deploy, para que
  * `npm test` escreva e apague dentro do banco errado. Não existe desfazer.
  *
- * ONDE ESTÁ LIGADA (cinco rotinas de escrita, nenhuma de fora):
+ * ONDE ESTÁ LIGADA (seis pontos, e três rotinas de escrita FICAM DE FORA):
+ *
+ * O que fica de fora, e é preciso saber: `prisma db execute`, `prisma db seed`
+ * e `prisma migrate resolve` escrevem no banco e não passam por aqui. Não
+ * estão embrulhados porque não são usados no fluxo normal, mas quem os digitar
+ * à mão alcança qualquer banco. Uma guarda que anuncia cobrir tudo é pior que
+ * uma que diz onde termina.
+ *
  * - prisma/seed.ts, na primeira linha executável;
  * - vitest.config.ts, antes de exportar a configuração;
  * - scripts/prisma-guardado.ts, que embrulha os comandos do Prisma. Como

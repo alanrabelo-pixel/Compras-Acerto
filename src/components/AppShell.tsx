@@ -60,7 +60,7 @@ export async function AppShell({ active, children }: { active?: string; children
   ]);
 
   // A faixa de ambiente NÃO fica aqui: ela subiu para o RootLayout
-  // (src/app/layout.tsx), que é o único ponto por onde passam as 17 telas.
+  // (src/app/layout.tsx), que é o único ponto por onde passam todas as telas.
   // Renderizá-la também aqui a duplicaria em todas as telas de Compras. A
   // compensação de espaço desta casca (padding e altura da barra lateral) vem
   // da classe que o RootLayout põe no <body>, ver globals.css.

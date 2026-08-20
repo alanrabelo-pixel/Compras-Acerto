@@ -38,7 +38,7 @@ const THEME_INIT_SCRIPT = `
 
 /**
  * A faixa de ambiente mora aqui, e não na casca de Compras (AppShell), porque
- * o RootLayout é o único ponto por onde passam as 17 telas. Enquanto ela
+ * o RootLayout é o único ponto por onde passam todas as telas. Enquanto ela
  * estava no AppShell, seis telas ficavam sem aviso nenhum: a página inicial,
  * o login, o "sem acesso" e as três de Chamados, que são as que mandam e-mail
  * de confirmação (ver src/app/api/tickets/route.ts). Fora de produção esse
