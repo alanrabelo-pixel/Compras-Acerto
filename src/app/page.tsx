@@ -33,7 +33,8 @@ const SECONDARY_SERVICES = [
   {
     href: "/chamados/facilities",
     title: "Gestão de Facilities",
-    description: "Manutenção, materiais e eventos internos.",
+    description:
+      "Solicitação de manutenção, materiais, registro de incidentes estruturais e eventos internos.",
     icon: <Wrench size={16} strokeWidth={1.75} />,
   },
   {
