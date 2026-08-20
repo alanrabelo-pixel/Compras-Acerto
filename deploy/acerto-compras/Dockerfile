@@ -20,6 +20,12 @@ RUN npm ci
 # ---------- build ----------
 FROM node:20-alpine AS builder
 WORKDIR /app
+# Sem isso, "next build" tenta mandar telemetria anônima pra um endpoint
+# externo em build-time -- no Docker-in-Docker da Golden Pipeline (rede
+# mais restrita que o step "Build Application", que roda o mesmo comando
+# fora do Docker) essa chamada pode ficar tentando indefinidamente sem erro
+# claro (mesma classe de problema que já travou a fonte do Google Fonts).
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # NÃO roda `prisma generate` de novo aqui: o client já veio corretamente
