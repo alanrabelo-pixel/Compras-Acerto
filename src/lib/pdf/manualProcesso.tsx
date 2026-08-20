@@ -263,8 +263,8 @@ export function ManualProcessoDocument() {
           chamado do Viagens Acerto.
         </Card>
         <Card title="Cadastro, Contratos de Fornecedores e NDA">
-          Para pedidos de NDA, dúvidas sobre contratos ativos e consultas sobre fornecedores. Mesmo formato
-          simples de chamado do Viagens Acerto e Facilities.
+          Para solicitação de cadastro de fornecedores, NDA, consultas de contratos ativos e fornecedores
+          homologados. Mesmo formato simples de chamado do Viagens Acerto e Facilities.
         </Card>
 
         {/* 2. Compras: visão geral */}
@@ -515,7 +515,7 @@ export function ManualProcessoDocument() {
 
         {/* 9. Cadastro, Contratos de Fornecedores e NDA */}
         <H1 bookmark="9. Cadastro, Contratos de Fornecedores e NDA">9. Cadastro, Contratos de Fornecedores e NDA</H1>
-        <P>Mesmo modelo simples do Viagens Acerto e Facilities, para pedidos de NDA, dúvidas sobre contratos ativos e consultas sobre fornecedores.</P>
+        <P>Mesmo modelo simples do Viagens Acerto e Facilities, para solicitação de cadastro de fornecedores, NDA, consultas de contratos ativos e fornecedores homologados.</P>
         <Stage n={1} label="Abrir chamado" desc="Informe seu nome, e-mail e descreva o que você precisa." />
         <Stage n={2} label="Acompanhamento" desc="O chamado aparece no quadro em uma das três colunas: Aberto, Em Andamento ou Concluído." />
         <Stage n={3} label="Troca de mensagens" desc="Toda a conversa com o time responsável acontece dentro do próprio chamado, mantendo o histórico completo." />
