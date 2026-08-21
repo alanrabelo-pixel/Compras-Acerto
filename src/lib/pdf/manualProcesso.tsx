@@ -399,17 +399,12 @@ export function ManualProcessoDocument() {
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>1</Text>
-            <Text style={[styles.td, { width: 110 }]}>Até R$ 5 mil</Text>
+            <Text style={[styles.td, { width: 110 }]}>Até R$ 10 mil</Text>
             <Text style={[styles.td, { flex: 1 }]}>Coordenação</Text>
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>2</Text>
-            <Text style={[styles.td, { width: 110 }]}>Até R$ 25 mil</Text>
-            <Text style={[styles.td, { flex: 1 }]}>Gerente F&NC</Text>
-          </View>
-          <View style={styles.tr}>
-            <Text style={[styles.td, styles.tdStrong, { width: 60 }]}>3</Text>
-            <Text style={[styles.td, { width: 110 }]}>Acima de R$ 25 mil</Text>
+            <Text style={[styles.td, { width: 110 }]}>Acima de R$ 10 mil</Text>
             <Text style={[styles.td, { flex: 1 }]}>Gerente F&NC</Text>
           </View>
         </View>

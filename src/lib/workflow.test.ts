@@ -3,6 +3,7 @@ import {
   nextAfterValidacaoOrcamentaria,
   budgetExceptionLevel,
   budgetExceptionApproverRole,
+  BUDGET_EXCEPTION_LEVEL_LABEL,
   approvalLevel,
   approvalsRequiredForLevel,
   nextAfterAprovacao,
@@ -46,20 +47,25 @@ describe("nextAfterValidacaoOrcamentaria", () => {
   });
 });
 
+// Duas faixas, corte em R$ 10 mil (decisão do dono do sistema em 21/08/2026;
+// antes eram três, com cortes em 5 mil e 25 mil). A fronteira é o que mais
+// importa aqui: o valor exato do corte pertence ao Nível 1.
 describe("budgetExceptionLevel", () => {
-  it("is level 1 at and below R$5.000", () => {
+  it("is level 1 at and below R$10.000", () => {
     expect(budgetExceptionLevel(0)).toBe(1);
-    expect(budgetExceptionLevel(5000)).toBe(1);
+    expect(budgetExceptionLevel(9999.99)).toBe(1);
+    expect(budgetExceptionLevel(10000)).toBe(1);
   });
 
-  it("is level 2 just above R$5.000 and up to R$25.000", () => {
-    expect(budgetExceptionLevel(5000.01)).toBe(2);
+  it("is level 2 above R$10.000", () => {
+    expect(budgetExceptionLevel(10000.01)).toBe(2);
     expect(budgetExceptionLevel(25000)).toBe(2);
+    expect(budgetExceptionLevel(1_000_000)).toBe(2);
   });
 
-  it("is level 3 above R$25.000", () => {
-    expect(budgetExceptionLevel(25000.01)).toBe(3);
-    expect(budgetExceptionLevel(1_000_000)).toBe(3);
+  it("has no level 3: valores que antes caíam na terceira faixa agora são Nível 2", () => {
+    expect(budgetExceptionLevel(25000.01)).toBe(2);
+    expect(Object.keys(BUDGET_EXCEPTION_LEVEL_LABEL)).toEqual(["1", "2"]);
   });
 });
 
@@ -68,9 +74,16 @@ describe("budgetExceptionApproverRole", () => {
     expect(budgetExceptionApproverRole(1)).toBe("COORDENACAO");
   });
 
-  it("requires GERENTE_FNC for levels 2 and 3 (no CEO)", () => {
+  it("requires GERENTE_FNC for level 2 (no CEO)", () => {
     expect(budgetExceptionApproverRole(2)).toBe("GERENTE_FNC");
-    expect(budgetExceptionApproverRole(3)).toBe("GERENTE_FNC");
+  });
+
+  // O motivo de a escada ter encolhido: a antiga fronteira dos 25 mil separava
+  // dois níveis que exigiam o MESMO papel. Se alguém reintroduzir uma faixa,
+  // que seja para mudar quem decide.
+  it("cada nível tem um papel diferente", () => {
+    const papeis = [budgetExceptionApproverRole(1), budgetExceptionApproverRole(2)];
+    expect(new Set(papeis).size).toBe(papeis.length);
   });
 });
 

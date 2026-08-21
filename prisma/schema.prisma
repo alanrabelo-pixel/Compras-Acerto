@@ -605,7 +605,11 @@ model BudgetException {
   id          String   @id @default(cuid())
   requestId   String   @unique
   request     PurchaseRequest @relation(fields: [requestId], references: [id])
-  level       Int      // 1: até 5k (Coordenação) | 2: até 25k (Gerente F&NC) | 3: acima de 25k (Gerente F&NC)
+  // 1: até 10k (Coordenação) | 2: acima de 10k (Gerente F&NC). Ver
+  // budgetExceptionLevel() em src/lib/workflow.ts. Continua Int, e não enum,
+  // justamente porque a escada já mudou uma vez (eram três faixas, com corte
+  // em 5k e 25k, até 21/08/2026) e trocar faixa não deve exigir migration.
+  level       Int
   decision    ApprovalDecision @default(PENDENTE)
   justification String?
   decidedAt   DateTime?

@@ -83,10 +83,11 @@ describe("PATCH /api/requests/[id]/validacao-orcamentaria", () => {
     const buyer = await createTestUser(["COMPRADOR"]);
     const approver = await createTestUser(["APROVADOR"]);
     const costCenter = await createTestCostCenter();
-    // R$ 10.000 -> nível 2 (acima de 5k, até 25k) -> exige Gerente F&NC.
+    // R$ 25.000 -> nível 2 (acima de 10k) -> exige Gerente F&NC. Não usar
+    // 10.000 aqui: é exatamente o corte, e pertence ao Nível 1.
     const request = await createTestRequest({
       requesterId: requester.id, approverManagerId: approver.id, costCenterId: costCenter.id,
-      currentStage: "VALIDACAO_ORCAMENTARIA", estimatedValue: 10000,
+      currentStage: "VALIDACAO_ORCAMENTARIA", estimatedValue: 25000,
     });
 
     const res = await PATCH(patchRequest({ budgetOk: false, actorId: buyer.id }), { params: { id: request.id } });
@@ -105,7 +106,7 @@ describe("PATCH /api/requests/[id]/validacao-orcamentaria", () => {
     const costCenter = await createTestCostCenter();
     const request = await createTestRequest({
       requesterId: requester.id, approverManagerId: approver.id, costCenterId: costCenter.id,
-      currentStage: "VALIDACAO_ORCAMENTARIA", estimatedValue: 10000,
+      currentStage: "VALIDACAO_ORCAMENTARIA", estimatedValue: 25000, // Nível 2 -> Gerente F&NC
     });
     await PATCH(patchRequest({ budgetOk: false, actorId: buyer.id }), { params: { id: request.id } });
 
@@ -129,7 +130,7 @@ describe("PATCH /api/requests/[id]/validacao-orcamentaria", () => {
     const costCenter = await createTestCostCenter();
     const request = await createTestRequest({
       requesterId: requester.id, approverManagerId: approver.id, costCenterId: costCenter.id,
-      currentStage: "VALIDACAO_ORCAMENTARIA", estimatedValue: 10000, // Nível 2 -> exige Gerente F&NC
+      currentStage: "VALIDACAO_ORCAMENTARIA", estimatedValue: 25000, // Nível 2 -> exige Gerente F&NC
     });
     await PATCH(patchRequest({ budgetOk: false, actorId: buyer.id }), { params: { id: request.id } });
 

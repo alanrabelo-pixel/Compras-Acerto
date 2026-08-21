@@ -776,17 +776,12 @@ export function AuditoriaSistemaDocument() {
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 45 }]}>1</Text>
-            <Text style={[styles.td, { width: 100 }]}>Até R$5 mil</Text>
+            <Text style={[styles.td, { width: 100 }]}>Até R$10 mil</Text>
             <Text style={[styles.td, { flex: 1 }]}>Coordenação</Text>
           </View>
           <View style={styles.tr}>
             <Text style={[styles.td, styles.tdStrong, { width: 45 }]}>2</Text>
-            <Text style={[styles.td, { width: 100 }]}>R$5 mil a R$25 mil</Text>
-            <Text style={[styles.td, { flex: 1 }]}>Gerente F&amp;NC</Text>
-          </View>
-          <View style={styles.tr}>
-            <Text style={[styles.td, styles.tdStrong, { width: 45 }]}>3</Text>
-            <Text style={[styles.td, { width: 100 }]}>Acima de R$25 mil</Text>
+            <Text style={[styles.td, { width: 100 }]}>Acima de R$10 mil</Text>
             <Text style={[styles.td, { flex: 1 }]}>Gerente F&amp;NC. Sem CEO</Text>
           </View>
         </View>

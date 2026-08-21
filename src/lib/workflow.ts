@@ -207,10 +207,21 @@ export function nextAfterValidacaoOrcamentaria(params: {
   return "COTACAO";
 }
 
-export function budgetExceptionLevel(estimatedValue: number): 1 | 2 | 3 {
-  if (estimatedValue <= 5000) return 1;
-  if (estimatedValue <= 25000) return 2;
-  return 3;
+/**
+ * Alçada da exceção orçamentária. DOIS níveis, com corte em R$ 10 mil
+ * (decisão do dono do sistema em 21/08/2026).
+ *
+ * Antes eram três faixas (5 mil / 25 mil / acima), mas os níveis 2 e 3
+ * apontavam para o MESMO papel, Gerente F&NC: a fronteira dos 25 mil não
+ * mudava quem decidia, só o rótulo. Duas faixas para dois papéis é a forma
+ * honesta da mesma regra.
+ *
+ * Não confundir com approvalLevel() logo abaixo, que é a alçada da APROVAÇÃO
+ * FINAL e tem outra escada (50 mil / 500 mil) e outro efeito (número de
+ * assinaturas). São dois controles independentes.
+ */
+export function budgetExceptionLevel(estimatedValue: number): 1 | 2 {
+  return estimatedValue <= 10000 ? 1 : 2;
 }
 
 /**
@@ -218,17 +229,15 @@ export function budgetExceptionLevel(estimatedValue: number): 1 | 2 | 3 {
  * explícito do usuário: antes, qualquer pessoa com papel Controladoria
  * decidia exceção de qualquer nível, sem diferenciar pela alçada calculada
  * acima. Decisão do usuário: manter só dois papéis (Coordenação / Gerente
- * F&NC), sem CEO. Nível 1 exige Coordenação, Níveis 2 e 3 exigem Gerente F&NC.
+ * F&NC), sem CEO. Nível 1 exige Coordenação, Nível 2 exige Gerente F&NC.
  */
-export function budgetExceptionApproverRole(level: 1 | 2 | 3): RoleName {
-  if (level === 1) return "COORDENACAO";
-  return "GERENTE_FNC";
+export function budgetExceptionApproverRole(level: 1 | 2): RoleName {
+  return level === 1 ? "COORDENACAO" : "GERENTE_FNC";
 }
 
-export const BUDGET_EXCEPTION_LEVEL_LABEL: Record<1 | 2 | 3, string> = {
-  1: "Nível 1 (até R$ 5 mil): Coordenação",
-  2: "Nível 2 (até R$ 25 mil): Gerente F&NC",
-  3: "Nível 3 (acima de R$ 25 mil): Gerente F&NC",
+export const BUDGET_EXCEPTION_LEVEL_LABEL: Record<1 | 2, string> = {
+  1: "Nível 1 (até R$ 10 mil): Coordenação",
+  2: "Nível 2 (acima de R$ 10 mil): Gerente F&NC",
 };
 
 /**
