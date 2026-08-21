@@ -1,6 +1,7 @@
 import { describe, it, expect, afterAll, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
+import type { DemandType } from "@prisma/client";
 import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestData, TEST_PREFIX } from "@/test-helpers/fixtures";
 
 /**
@@ -42,8 +43,8 @@ vi.mock("@/lib/integrations/slack", () => ({
 }));
 
 const { POST: criarSolicitacao } = await import("../route");
-const { PATCH: aprovacaoGestor } = await import("./aprovacao-gestor/route");
 const { PATCH: validacaoOrcamentaria } = await import("./validacao-orcamentaria/route");
+const { PATCH: triagem } = await import("./triagem/route");
 
 function patch(
   handler: (req: NextRequest, ctx: { params: { id: string } }) => Promise<Response>,
@@ -74,7 +75,12 @@ async function anexarComprovante(requestId: string, uploadedBy: string) {
   });
 }
 
-async function cenario(params: { stage: "APROVACAO_GESTOR" | "VALIDACAO_ORCAMENTARIA"; extraBudget: boolean; comAnexo: boolean }) {
+async function cenario(params: {
+  stage: "TRIAGEM" | "VALIDACAO_ORCAMENTARIA";
+  extraBudget: boolean;
+  comAnexo: boolean;
+  demandType?: DemandType;
+}) {
   const requester = await createTestUser([]);
   const gestor = await createTestUser(["APROVADOR"]);
   const costCenter = await createTestCostCenter();
@@ -84,6 +90,7 @@ async function cenario(params: { stage: "APROVACAO_GESTOR" | "VALIDACAO_ORCAMENT
     costCenterId: costCenter.id,
     currentStage: params.stage,
     estimatedValue: 20000,
+    demandType: params.demandType,
   });
   if (params.extraBudget) {
     await prisma.purchaseRequest.update({ where: { id: req.id }, data: { extraBudget: true } });
@@ -159,76 +166,24 @@ describe("Comprovante do FP&A: criação e ramo de orçamento disponível", () =
       expect(res.status).toBe(201);
       const criada = (await res.json()) as { id: string; extraBudget: boolean; currentStage: string };
       expect(criada.extraBudget).toBe(true);
-      expect(criada.currentStage).toBe("APROVACAO_GESTOR");
+      // Desde 21/08/2026 a abertura vai direto para a Triagem: a etapa
+      // Aprovação do Gestor saiu do fluxo (ver a nota de legado em STAGES).
+      expect(criada.currentStage).toBe("TRIAGEM");
     });
   });
 
-  describe("PATCH /api/requests/[id]/aprovacao-gestor", () => {
-    it("barra a aprovação de Orçamento Extra sem comprovante, e a solicitação não sai da etapa", async () => {
-      const { req, gestor } = await cenario({ stage: "APROVACAO_GESTOR", extraBudget: true, comAnexo: false });
-
-      const res = await patch(aprovacaoGestor, "aprovacao-gestor", req.id, { actorId: gestor.id, decision: "APROVADO" });
-
-      expect(res.status).toBe(422);
-      const corpo = await res.json();
-      expect(corpo.error).toContain("FP&A");
-
-      // O que mais importa: a solicitação não avançou para Triagem, de onde
-      // ela ainda poderia escapar pelo atalho de CANCELAMENTO, que pula a
-      // Validação Orçamentária inteira.
-      const depois = await prisma.purchaseRequest.findUniqueOrThrow({ where: { id: req.id } });
-      expect(depois.currentStage).toBe("APROVACAO_GESTOR");
-      expect(depois.managerApprovalDecision).toBeNull();
-      expect(await prisma.stageEvent.count({ where: { requestId: req.id, toStage: "TRIAGEM" } })).toBe(0);
-    });
-
-    it("aprova quando o comprovante foi anexado depois da criação, que é a sequência real do formulário", async () => {
-      const { req, gestor } = await cenario({ stage: "APROVACAO_GESTOR", extraBudget: true, comAnexo: true });
-
-      const res = await patch(aprovacaoGestor, "aprovacao-gestor", req.id, { actorId: gestor.id, decision: "APROVADO" });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.currentStage).toBe("TRIAGEM");
-    });
-
-    it("não trava a reprovação: recusar uma compra não depende de documento", async () => {
-      const { req, gestor } = await cenario({ stage: "APROVACAO_GESTOR", extraBudget: true, comAnexo: false });
-
-      const res = await patch(aprovacaoGestor, "aprovacao-gestor", req.id, {
-        actorId: gestor.id,
-        decision: "REPROVADO",
-        justification: "Não faz sentido no momento.",
-      });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.currentStage).toBe("CANCELADO");
-    });
-
-    it("barra também o ADMIN que personifica o gestor", async () => {
-      const { req, gestor } = await cenario({ stage: "APROVACAO_GESTOR", extraBudget: true, comAnexo: false });
-      const admin = await createTestUser(["ADMIN"]);
-
-      const res = await patch(aprovacaoGestor, "aprovacao-gestor", req.id, {
-        actorId: gestor.id,
-        decision: "APROVADO",
-        personifiedBy: admin.id,
-      });
-
-      expect(res.status).toBe(422);
-    });
-
-    it("não exige nada de quem informou linha de orçamento", async () => {
-      const { req, gestor } = await cenario({ stage: "APROVACAO_GESTOR", extraBudget: false, comAnexo: false });
-
-      const res = await patch(aprovacaoGestor, "aprovacao-gestor", req.id, { actorId: gestor.id, decision: "APROVADO" });
-
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.currentStage).toBe("TRIAGEM");
-    });
-  });
+  /*
+   * O bloco que testava PATCH aprovacao-gestor saiu em 21/08/2026 junto com a
+   * rota. Ele cobria um quarto ponto de cobrança do comprovante do FP&A, que
+   * deixou de existir com a etapa. Os três que sobraram, e que são os que
+   * decidem de verdade, estão nos describes abaixo: o ramo "há orçamento
+   * disponível", a abertura da exceção e a aprovação da exceção.
+   *
+   * Uma consequência ficou registrada em docs/registro-2026-08-21.md: aquele
+   * ponto era o único ANTES da Triagem, e a Triagem tem atalho para o Jurídico
+   * quando demandType é CANCELAMENTO, que pula a Validação Orçamentária. Ver
+   * o teste de fronteira ao fim deste arquivo.
+   */
 
   describe("PATCH /api/requests/[id]/validacao-orcamentaria, ramo 'há orçamento disponível'", () => {
     it("recusa avançar por 'há orçamento' uma solicitação de Orçamento Extra sem comprovante", async () => {
@@ -340,6 +295,60 @@ describe("exceção orçamentária sem a marcação de Orçamento Extra", () => 
       exceptionApproverId: aprovador.id,
       justification: "sem orçamento e sem validação do FP&A",
     });
+
+    expect(res.status).toBe(200);
+  });
+});
+
+/*
+ * A rota de fuga que a remoção da Aprovação do Gestor abriu, e que foi
+ * fechada no mesmo commit.
+ *
+ * O atalho de CANCELAMENTO na Triagem vai direto para o Jurídico e pula a
+ * Validação Orçamentária inteira, que é onde o comprovante é cobrado. Com a
+ * Aprovação do Gestor no fluxo, a fuga era barrada antes da Triagem. Sem ela,
+ * o atalho passou a ser a única saída sem cobrança, e por isso a checagem foi
+ * acrescentada lá.
+ */
+describe("Triagem: atalho de CANCELAMENTO não é rota de fuga do comprovante", () => {
+  it("barra o atalho para o Jurídico quando é Orçamento Extra sem comprovante", async () => {
+    const comprador = await createTestUser(["COMPRADOR"]);
+    const { req } = await cenario({
+      stage: "TRIAGEM", extraBudget: true, comAnexo: false, demandType: "CANCELAMENTO",
+    });
+
+    const res = await patch(triagem, "triagem", req.id, { buyerId: comprador.id });
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).error).toContain("FP&A");
+
+    // O que mais importa: não escapou para o Jurídico.
+    const depois = await prisma.purchaseRequest.findUniqueOrThrow({ where: { id: req.id } });
+    expect(depois.currentStage).toBe("TRIAGEM");
+    expect(await prisma.stageEvent.count({ where: { requestId: req.id, toStage: "JURIDICO" } })).toBe(0);
+  });
+
+  it("libera o atalho quando o comprovante está anexado", async () => {
+    const comprador = await createTestUser(["COMPRADOR"]);
+    const { req, requester } = await cenario({
+      stage: "TRIAGEM", extraBudget: true, comAnexo: true, demandType: "CANCELAMENTO",
+    });
+    expect(requester).toBeDefined();
+
+    const res = await patch(triagem, "triagem", req.id, { buyerId: comprador.id });
+
+    expect(res.status).toBe(200);
+    const depois = await prisma.purchaseRequest.findUniqueOrThrow({ where: { id: req.id } });
+    expect(depois.currentStage).toBe("JURIDICO");
+  });
+
+  it("não atrapalha o cancelamento comum, que não é Orçamento Extra", async () => {
+    const comprador = await createTestUser(["COMPRADOR"]);
+    const { req } = await cenario({
+      stage: "TRIAGEM", extraBudget: false, comAnexo: false, demandType: "CANCELAMENTO",
+    });
+
+    const res = await patch(triagem, "triagem", req.id, { buyerId: comprador.id });
 
     expect(res.status).toBe(200);
   });

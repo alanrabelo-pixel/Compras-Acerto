@@ -180,8 +180,10 @@ export function RequestActions({
 
   const formularioDaEtapa = (() => {
   switch (request.currentStage) {
-    case "APROVACAO_GESTOR":
-      return <AprovacaoGestorForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
+    // APROVACAO_GESTOR saiu do fluxo em 21/08/2026 (ver a nota de legado em
+    // STAGES). Sem case: solicitação antiga parada nela, se houver, cai no
+    // default e mostra o aviso de etapa sem formulário, em vez de oferecer
+    // uma ação cuja rota já não existe.
     case "TRIAGEM":
       return <TriagemForm request={request} onSubmit={call} loading={loading} error={error} sessionActor={sessionActor} />;
     case "VALIDACAO_ORCAMENTARIA":
@@ -251,8 +253,10 @@ const EXPLICACAO_DA_ETAPA: Record<string, string> = {
     "Registro das propostas recebidas. O número mínimo de cotações depende do valor da compra.",
   "Mapa de Cotação":
     "Comparação lado a lado das propostas para escolher a vencedora, registrando o motivo da escolha.",
-  "Aprovação do Gestor":
-    "Primeira aprovação, feita por quem gerencia o centro de custo que vai pagar a compra.",
+  // Mantido para solicitações antigas paradas nesta etapa: ela saiu do fluxo
+  // em 21/08/2026 e nenhuma nova chega aqui.
+  "Aprovação do Gestor (legado)":
+    "Etapa desativada. A solicitação aberta hoje vai direto para a Triagem.",
   "Aprovação":
     "Aprovação por alçada de valor. Acima de R$ 50 mil exige duas pessoas diferentes decidindo, como dupla checagem.",
   "Jurídico":
@@ -773,55 +777,6 @@ function MapaCotacaoForm({
         <Button variant="primary" disabled={loading || !actorId || !selectedQuoteId} onClick={() => onSubmit(`/api/requests/${request.id}/mapa-cotacao`, "PATCH", { actorId, selectedQuoteId })}>
           Selecionar vencedor e avançar para Aprovação
         </Button>
-      </div>
-    </Panel>
-  );
-}
-
-function AprovacaoGestorForm({
-  request, onSubmit, loading, error, sessionActor,
-}: { request: RequestData; onSubmit: Submit; loading: boolean; error: string | null; sessionActor: SessionActor }) {
-  const approverState = usePredefinedApproverId(sessionActor);
-  const { actorId, personifiedBy } = approverState;
-  const [justification, setJustification] = useState("");
-
-  return (
-    <Panel title="Aprovação do Gestor">
-      <div style={{ display: "grid", gap: 10 }}>
-        {request.costCenter.managers.length > 0 ? (
-          <p className="hint-box hint-box-info">
-            Esta solicitação aguarda a decisão de{" "}
-            <strong>{request.costCenter.managers.map((m) => m.name).join(", ")}</strong>, qualquer um dos gestores
-            responsáveis pelo centro de custo escolhido pode decidir.
-          </p>
-        ) : (
-          <p className="hint-box hint-box-warning">
-            Este centro de custo ainda não tem um gestor aprovador definido. Peça a um administrador para configurar
-            um em Administração → Centros de Custo, ou selecione manualmente abaixo quem está decidindo agora.
-          </p>
-        )}
-        <div className="form-section">
-          <PredefinedApproverField label="Quem está decidindo" sessionActor={sessionActor} state={approverState} placeholder="Selecione o gestor aprovador" />
-          <label className="label" htmlFor="aprovacao-gestor-justification" style={{ marginTop: 8 }}>Justificativa (obrigatória para reprovar)</label>
-          <input id="aprovacao-gestor-justification" className="input" value={justification} onChange={(e) => setJustification(e.target.value)} />
-        </div>
-        <ErrorBox error={error} />
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button
-            variant="primary"
-            disabled={loading || !actorId}
-            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "APROVADO", justification: justification || undefined, personifiedBy })}
-          >
-            Aprovar
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={loading || !actorId || !justification}
-            onClick={() => onSubmit(`/api/requests/${request.id}/aprovacao-gestor`, "PATCH", { actorId, decision: "REPROVADO", justification, personifiedBy })}
-          >
-            Reprovar
-          </Button>
-        </div>
       </div>
     </Panel>
   );

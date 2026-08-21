@@ -236,7 +236,7 @@ function Finding({
 // ---------------------------------------------------------------------------
 
 const DIA_W = 1000;
-const DIA_H = 2480;
+const DIA_H = 2340; // 15 caixas x 140 + margens (era 16, ver STAGE_BOXES)
 const BOX_W = 250;
 const BOX_H = 58;
 const MAIN_X = 300; // borda esquerda das caixas da coluna principal
@@ -249,22 +249,26 @@ const CANC_H = 66;
 
 type StageBox = { key: string; label: string; y: number; sub?: string };
 const STAGE_BOXES: StageBox[] = [
+  // A Aprovação do Gestor era a 2 e saiu do fluxo em 21/08/2026: a abertura
+  // vai direto para a Triagem. As demais subiram 140 e foram renumeradas, e
+  // DIA_H caiu 140 junto. Não deixar a caixa aqui "só para o histórico": este
+  // diagrama descreve o fluxo vigente, e boxByKey usa find()! sem rede, então
+  // qualquer seta apontando para uma chave removida quebra na renderização.
   { key: "SOLICITACAO", label: "1. Solicitação de Compra", y: 150 },
-  { key: "APROVACAO_GESTOR", label: "2. Aprovação do Gestor", y: 290 },
-  { key: "TRIAGEM", label: "3. Homologação e Triagem", y: 430 },
-  { key: "VALIDACAO_ORCAMENTARIA", label: "4. Validação Orçamentária", y: 570, sub: "laço: exceção pendente" },
-  { key: "DUE_DILIGENCE", label: "5. Due Diligence (Privacidade)", y: 710 },
-  { key: "COTACAO", label: "6. Cotação", y: 850 },
-  { key: "MAPA_COTACAO", label: "7. Mapa de Cotação", y: 990 },
-  { key: "APROVACAO", label: "8. Aprovação", y: 1130 },
-  { key: "JURIDICO", label: "9. Jurídico", y: 1270 },
-  { key: "PEDIDO_COMPRA", label: "10. Pedido de Compra", y: 1410 },
-  { key: "AGUARDANDO_ENTREGA", label: "11. Aguardando Entrega/Conclusão", y: 1550 },
-  { key: "MEDICAO", label: "12. Medição e Aprovação Financeira", y: 1690, sub: "laço: reprovado tecnicamente" },
-  { key: "FISCAL", label: "13. Validação Fiscal", y: 1830, sub: "laço: documento reprovado" },
-  { key: "TESOURARIA", label: "14. Tesouraria (Pagamento)", y: 1970 },
-  { key: "MAPEAMENTO_CONTRATO", label: "15. Mapeamento de Contrato", y: 2110 },
-  { key: "CONCLUIDO", label: "16. Concluído", y: 2250 },
+  { key: "TRIAGEM", label: "2. Homologação e Triagem", y: 290 },
+  { key: "VALIDACAO_ORCAMENTARIA", label: "3. Validação Orçamentária", y: 430, sub: "laço: exceção pendente" },
+  { key: "DUE_DILIGENCE", label: "4. Due Diligence (Privacidade)", y: 570 },
+  { key: "COTACAO", label: "5. Cotação", y: 710 },
+  { key: "MAPA_COTACAO", label: "6. Mapa de Cotação", y: 850 },
+  { key: "APROVACAO", label: "7. Aprovação", y: 990 },
+  { key: "JURIDICO", label: "8. Jurídico", y: 1130 },
+  { key: "PEDIDO_COMPRA", label: "9. Pedido de Compra", y: 1270 },
+  { key: "AGUARDANDO_ENTREGA", label: "10. Aguardando Entrega/Conclusão", y: 1410 },
+  { key: "MEDICAO", label: "11. Medição e Aprovação Financeira", y: 1550, sub: "laço: reprovado tecnicamente" },
+  { key: "FISCAL", label: "12. Validação Fiscal", y: 1690, sub: "laço: documento reprovado" },
+  { key: "TESOURARIA", label: "13. Tesouraria (Pagamento)", y: 1830 },
+  { key: "MAPEAMENTO_CONTRATO", label: "14. Mapeamento de Contrato", y: 1970 },
+  { key: "CONCLUIDO", label: "15. Concluído", y: 2110 },
 ];
 
 function boxByKey(key: string) {
@@ -401,8 +405,7 @@ function DiagramPage() {
 
       <Svg width={DIA_W} height={DIA_H} style={{ position: "absolute", top: 0, left: 0 }}>
         {/* setas retas: fluxo padrão */}
-        <StraightArrow fromKey="SOLICITACAO" toKey="APROVACAO_GESTOR" />
-        <StraightArrow fromKey="APROVACAO_GESTOR" toKey="TRIAGEM" />
+        <StraightArrow fromKey="SOLICITACAO" toKey="TRIAGEM" />
         <StraightArrow fromKey="TRIAGEM" toKey="VALIDACAO_ORCAMENTARIA" />
         <StraightArrow fromKey="VALIDACAO_ORCAMENTARIA" toKey="DUE_DILIGENCE" />
         <StraightArrow fromKey="DUE_DILIGENCE" toKey="COTACAO" />
@@ -434,7 +437,6 @@ function DiagramPage() {
         <SelfLoop stageKey="FISCAL" />
 
         {/* setas vermelhas: vão para Cancelado */}
-        <CancelArrow fromKey="APROVACAO_GESTOR" label="Reprovado" />
         <CancelArrow fromKey="TRIAGEM" label="Reprovado" />
         <CancelArrow fromKey="VALIDACAO_ORCAMENTARIA" label="Exceção reprovada" />
         <CancelArrow fromKey="DUE_DILIGENCE" label="Reprovado" />
@@ -541,7 +543,7 @@ export function AuditoriaSistemaDocument() {
         <Footer />
         <H1 bookmark="3. Solicitação de Compras, etapa por etapa">3. Solicitação de Compras, etapa por etapa</H1>
         <P>
-          Nem toda solicitação passa por todas as 16 etapas. O desvio exato depende do tipo de demanda, do valor
+          Nem toda solicitação passa por todas as 15 etapas. O desvio exato depende do tipo de demanda, do valor
           estimado e das aprovações. Abaixo, cada etapa com quem age, o que dispara a entrada, todos os caminhos de
           saída e os efeitos colaterais reais (e-mail, Slack, registros criados).
         </P>
@@ -550,24 +552,13 @@ export function AuditoriaSistemaDocument() {
           n={1} title="Solicitação de Compra" role="Solicitante"
           trigger="Envio do formulário Nova Solicitação. O código é gerado como PC-{ano}-{sequência}."
           branches={[
-            "Avança automaticamente para Aprovação do Gestor assim que criada. Esta etapa é transitória, nunca fica parada aqui.",
+            "Avança automaticamente para Homologação e Triagem assim que criada. Esta etapa é transitória, nunca fica parada aqui.",
           ]}
-          effects={["Notificação de confirmação de recebimento por e-mail ao solicitante", "Slack DM a todos os gestores do centro de custo, não só o principal"]}
+          effects={["Notificação de confirmação de recebimento por e-mail ao solicitante", "Slack DM informativo a todos os gestores do centro de custo, não só o principal"]}
           file="src/app/api/requests/route.ts (POST)"
         />
         <StageCard
-          n={2} title="Aprovação do Gestor" role="Gestor do Centro de Custo"
-          trigger="Automática, na criação da solicitação."
-          branches={[
-            "Aprovado: segue para Homologação e Triagem.",
-            "Reprovado (exige justificativa): vai para Cancelado.",
-            "Um ADMIN pode decidir em nome do gestor a qualquer momento, sem teto de valor.",
-          ]}
-          effects={["E-mail de reprovação. Não há e-mail de aprovação nesta etapa, uma assimetria (ver achado 9)"]}
-          file="src/app/api/requests/[id]/aprovacao-gestor/route.ts"
-        />
-        <StageCard
-          n={3} title="Homologação e Triagem" role="Comprador"
+          n={2} title="Homologação e Triagem" role="Comprador"
           trigger="Aprovação do gestor concedida."
           branches={[
             "Ação Devolver: permanece em Triagem, com um comentário registrado, sem mudança de etapa.",
@@ -582,7 +573,7 @@ export function AuditoriaSistemaDocument() {
           file="src/app/api/requests/[id]/triagem/route.ts"
         />
         <StageCard
-          n={4} title="Validação Orçamentária" role="Comprador. Exceção: Coordenação ou Gerente F&NC"
+          n={3} title="Validação Orçamentária" role="Comprador. Exceção: Coordenação ou Gerente F&NC"
           trigger="Saída da Triagem."
           branches={[
             "Orçamento OK e Ferramenta Nova: segue para Due Diligence.",
@@ -594,28 +585,28 @@ export function AuditoriaSistemaDocument() {
           file="src/app/api/requests/[id]/validacao-orcamentaria/route.ts"
         />
         <StageCard
-          n={5} title="Due Diligence (Privacidade)" role="Privacidade"
+          n={4} title="Due Diligence (Privacidade)" role="Privacidade"
           trigger="Ferramenta nova aprovada no orçamento."
           branches={["Aprovado: segue para Cotação.", "Reprovado: vai para Cancelado, com motivo padrão \"Reprovado em Due Diligence\" se não informado."]}
           effects={["E-mail de atualização de etapa, na aprovação, ou de reprovação"]}
           file="src/app/api/requests/[id]/due-diligence/route.ts"
         />
         <StageCard
-          n={6} title="Cotação" role="Comprador"
+          n={5} title="Cotação" role="Comprador"
           trigger="Orçamento validado, com ou sem due diligence."
           branches={["Mínimo de propostas atingido (1 se até R$2.500, 3 acima disso): segue para Mapa de Cotação."]}
           effects={["Uma chamada por fornecedor cotado", "E-mail de atualização de etapa ao avançar"]}
           file="src/app/api/requests/[id]/cotacao/route.ts"
         />
         <StageCard
-          n={7} title="Mapa de Cotação" role="Comprador"
+          n={6} title="Mapa de Cotação" role="Comprador"
           trigger="Número mínimo de cotações atingido."
           branches={["Fornecedor vencedor selecionado: segue para Aprovação."]}
           effects={["E-mail de atualização de etapa"]}
           file="src/app/api/requests/[id]/mapa-cotacao/route.ts"
         />
         <StageCard
-          n={8} title="Aprovação" role="Aprovador (pool por alçada)"
+          n={7} title="Aprovação" role="Aprovador (pool por alçada)"
           trigger="Fornecedor selecionado no Mapa de Cotação."
           branches={[
             "Exige declaração de conflito de interesse, sem conflito, antes de criar a aprovação.",
@@ -631,7 +622,7 @@ export function AuditoriaSistemaDocument() {
           file="src/app/api/requests/[id]/aprovacao/route.ts"
         />
         <StageCard
-          n={9} title="Jurídico" role="Jurídico"
+          n={8} title="Jurídico" role="Jurídico"
           trigger="Aprovação concluída com exigência de contrato, ou atalho de Cancelamento vindo da Triagem."
           branches={[
             "Contrato assinado e tipo Cancelamento: vai direto para Concluído, pulando Pedido de Compra.",
@@ -642,14 +633,14 @@ export function AuditoriaSistemaDocument() {
           file="src/app/api/requests/[id]/juridico/route.ts"
         />
         <StageCard
-          n={10} title="Pedido de Compra" role="Comprador"
+          n={9} title="Pedido de Compra" role="Comprador"
           trigger="Revisão jurídica concluída, ou aprovação sem exigência de contrato."
           branches={["Emissão do PDF oficial: segue para Aguardando Entrega ou Conclusão."]}
           effects={["Gera e salva o PDF do Pedido de Compra no sistema de arquivos local", "E-mail com o link do PDF"]}
           file="src/app/api/requests/[id]/pedido-compra/route.tsx"
         />
         <StageCard
-          n={11} title="Aguardando Entrega/Conclusão" role="Comprador"
+          n={10} title="Aguardando Entrega/Conclusão" role="Comprador"
           trigger="Pedido de Compra emitido."
           branches={[
             "Exige medição: segue para Medição, que tem prioridade sobre mapeamento quando ambos são verdadeiros.",
@@ -660,35 +651,35 @@ export function AuditoriaSistemaDocument() {
           file="src/app/api/requests/[id]/aguardando-entrega/route.ts"
         />
         <StageCard
-          n={12} title="Medição e Aprovação Financeira" role="Comprador"
+          n={11} title="Medição e Aprovação Financeira" role="Comprador"
           trigger="Compra exige medição, por exemplo serviços recorrentes ou obras."
           branches={["Aprovado tecnicamente: segue para Validação Fiscal.", "Reprovado ou pendente: permanece em Medição. Não há caminho de cancelamento aqui."]}
           effects={["E-mail de atualização de etapa ao avançar"]}
           file="src/app/api/requests/[id]/medicao/route.ts"
         />
         <StageCard
-          n={13} title="Validação Fiscal" role="Fiscal"
+          n={12} title="Validação Fiscal" role="Fiscal"
           trigger="Medição aprovada."
           branches={["Documento aprovado: segue para Tesouraria.", "Documento reprovado: permanece em Validação Fiscal. Não há caminho de cancelamento."]}
           effects={["E-mail de atualização de etapa ao avançar"]}
           file="src/app/api/requests/[id]/fiscal/route.ts"
         />
         <StageCard
-          n={14} title="Tesouraria (Pagamento)" role="Tesouraria"
+          n={13} title="Tesouraria (Pagamento)" role="Tesouraria"
           trigger="Documento fiscal aprovado."
           branches={["ERP confirma o pagamento e gera contrato: segue para Mapeamento de Contrato.", "ERP confirma o pagamento, sem contrato: vai para Concluído."]}
           effects={["E-mail de atualização de etapa"]}
           file="src/app/api/requests/[id]/tesouraria/route.ts"
         />
         <StageCard
-          n={15} title="Mapeamento de Contrato" role="Comprador"
+          n={14} title="Mapeamento de Contrato" role="Comprador"
           trigger="Pagamento confirmado, ou saída direta de Aguardando Entrega, quando a compra gera contrato vigente."
           branches={["Contrato cadastrado: vai para Concluído."]}
           effects={["Cria o registro de Contrato, que alimenta a área de Contratos", "E-mail de atualização de etapa"]}
           file="src/app/api/requests/[id]/mapeamento-contrato/route.ts"
         />
         <StageCard
-          n={16} title="Concluído" role="Nenhum"
+          n={15} title="Concluído" role="Nenhum"
           trigger="Fim do fluxo, por qualquer um dos caminhos acima."
           branches={["Terminal. A única ação permitida é o registro de Avaliação (NPS de 0 a 10), que é só informativo e não afeta mais nada."]}
           effects={[]}
@@ -696,7 +687,7 @@ export function AuditoriaSistemaDocument() {
         />
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Cancelado, terminal</Text>
-          <Text style={styles.cardLine}>Nenhuma ação adicional definida. Alcançável a partir de Aprovação do Gestor, Triagem, Validação Orçamentária (exceção reprovada), Due Diligence e Aprovação.</Text>
+          <Text style={styles.cardLine}>Nenhuma ação adicional definida. Alcançável a partir de Triagem, Validação Orçamentária (exceção reprovada), Due Diligence e Aprovação.</Text>
         </View>
       </Page>
 
@@ -852,7 +843,7 @@ export function AuditoriaSistemaDocument() {
         <H1 bookmark="12. Notificações: e-mail e Slack">12. Notificações: e-mail e Slack</H1>
         <P>Toda tentativa de notificação grava um registro, de sucesso ou de falha. Nenhuma etapa do workflow é bloqueada por falha de e-mail ou Slack.</P>
         <Bullet><Text style={styles.cardLabel}>E-mails: </Text>confirmação de recebimento, atualização de etapa (genérico, dispara na maioria das transições), reprovado, aprovado, pedido de compra gerado, chamado aberto, nova mensagem em chamado, alerta de renovação de contrato.</Bullet>
-        <Bullet><Text style={styles.cardLabel}>Ausência notável: </Text>não existe e-mail de aprovação na etapa Aprovação do Gestor, só de reprovação.</Bullet>
+        <Bullet><Text style={styles.cardLabel}>Nota histórica: </Text>a assimetria de e-mail (havia aviso de reprovação, não de aprovação) era da etapa Aprovação do Gestor, removida do fluxo em 21/08/2026.</Bullet>
         <Bullet><Text style={styles.cardLabel}>Slack: </Text>aviso de nova solicitação a todos os gestores do centro de custo, disclosure de decisão personificada, lembrete de escalonamento ao aprovador e à Controladoria, alerta de renovação de contrato, aviso de cancelamento de contrato à Tesouraria.</Bullet>
       </Page>
 
@@ -921,7 +912,7 @@ export function AuditoriaSistemaDocument() {
         <Finding n={7} severity="doc" situacao="resolvido" comoFoiResolvido="os dois comentários do modelo de dados foram corrigidos, e uma terceira menção que sobrou no cálculo da alçada, encontrada só na verificação posterior, também." title="Comentários do schema ainda citam o papel de CEO">
           O papel de CEO foi removido do sistema e não existe mais no cadastro de papéis. Dois comentários no modelo de dados ainda descrevem a alçada de nível 3 como envolvendo o CEO. É desatualização de documentação interna.
         </Finding>
-        <Finding n={8} severity="regra" situacao="resolvido" comoFoiResolvido="fechado em três pontos: os dois ramos da Validação Orçamentária e a Aprovação do Gestor. Um agente adversarial ainda encontrou o caminho mais fácil de todos, que era o controle inteiro depender de um booleano declarado pelo próprio solicitante na criação: bastava digitar qualquer coisa no campo Linha do Orçamento para desligá-lo nos três pontos de uma vez. Hoje abrir a exceção por indisponibilidade de orçamento marca a solicitação como extra-orçamentária, corrigindo o registro, e APROVAR a exceção exige o comprovante independente do que foi marcado na abertura. Reprovar segue livre, senão a solicitação fica presa esperando um documento que pode nunca chegar. O que sobra: a criação ainda aceita Orçamento Extra sem anexo." title="Anexo obrigatório do Orçamento Extra só é exigido na tela">
+        <Finding n={8} severity="regra" situacao="resolvido" comoFoiResolvido="fechado em três pontos: os dois ramos da Validação Orçamentária e a Aprovação do Gestor. Esta última saiu do fluxo em 21/08/2026, e o ponto de cobrança que ela levava junto foi reposto no atalho de CANCELAMENTO da Triagem, que é a única saída que pula a Validação Orçamentária. Um agente adversarial ainda encontrou o caminho mais fácil de todos, que era o controle inteiro depender de um booleano declarado pelo próprio solicitante na criação: bastava digitar qualquer coisa no campo Linha do Orçamento para desligá-lo nos três pontos de uma vez. Hoje abrir a exceção por indisponibilidade de orçamento marca a solicitação como extra-orçamentária, corrigindo o registro, e APROVAR a exceção exige o comprovante independente do que foi marcado na abertura. Reprovar segue livre, senão a solicitação fica presa esperando um documento que pode nunca chegar. O que sobra: a criação ainda aceita Orçamento Extra sem anexo." title="Anexo obrigatório do Orçamento Extra só é exigido na tela">
           O formulário impede o envio sem o anexo de validação do FP&amp;A quando Orçamento Extra é escolhido. A API que de fato cria a solicitação aceita a mesma opção sem checar se o anexo existe. Uma chamada direta à API contornaria essa exigência.
         </Finding>
         <Finding n={9} severity="doc" situacao="resolvido" comoFoiResolvido="o caminho aprovado deixou de ser silencioso e passou a usar o mesmo aviso das outras etapas, informando ao solicitante que a compra seguiu para Homologação e Triagem." title="Aprovação do gestor não notifica o lado positivo">

@@ -45,12 +45,8 @@ export async function loadPendingRequestsForUser(userId: string, myRoles: RoleNa
   return requests.filter((r) => {
     if (isAdmin) return true; // ADMIN pode agir em qualquer etapa (ver requireRole em rbac.ts)
 
-    // Aprovação do Gestor do Centro de Custo: só aparece pra quem está no
-    // pool de gestores DAQUELE centro de custo específico (CostCenter.managers,
-    // ver /admin/centros-de-custo), não pra qualquer APROVADOR da empresa.
-    if (r.currentStage === "APROVACAO_GESTOR") {
-      return r.costCenter.managers.some((m) => m.id === userId);
-    }
+    // A etapa Aprovação do Gestor saiu do fluxo em 21/08/2026 e o ramo que a
+    // tratava saiu junto (ver a nota de legado em STAGES.APROVACAO_GESTOR).
 
     if (r.currentStage === "APROVACAO") {
       return r.approvals.some((a) => a.approverId === userId && a.decision === "PENDENTE");

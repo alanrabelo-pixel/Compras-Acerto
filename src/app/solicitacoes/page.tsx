@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { STAGES } from "@/lib/workflow";
+import { STAGES, etapaVisivelNoQuadro } from "@/lib/workflow";
 import type { Prisma, Stage, Diretoria, DemandType, Priority } from "@prisma/client";
 import { AppShell } from "@/components/AppShell";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
@@ -82,7 +82,7 @@ export default async function SolicitacoesPage({
   }
 
   const include = { requester: { select: USUARIO_PUBLICO }, costCenter: true } as const;
-  const stageOrder = (Object.keys(STAGES) as Stage[]).filter((s) => s !== "CANCELADO");
+  const stageOrder = (Object.keys(STAGES) as Stage[]).filter(etapaVisivelNoQuadro);
 
   const [totalCount, costCenters] = await Promise.all([
     prisma.purchaseRequest.count({ where }),
@@ -155,7 +155,7 @@ export default async function SolicitacoesPage({
         {viewMode === "kanban" ? (
         <div style={{ display: "flex", gap: "var(--space-4)", overflowX: "auto", marginTop: "var(--space-6)", paddingBottom: "var(--space-3)" }}>
           {Object.values(STAGES)
-            .filter((s) => s.stage !== "CANCELADO")
+            .filter((s) => etapaVisivelNoQuadro(s.stage))
             .map((stageDef) => {
               const items = byStage.get(stageDef.stage) ?? [];
               const stageTotal = stageCountMap.get(stageDef.stage) ?? items.length;

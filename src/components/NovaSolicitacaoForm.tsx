@@ -305,8 +305,8 @@ export function NovaSolicitacaoForm({
             return (
               <p style={{ fontSize: 12, color: "var(--ink-muted)", marginTop: -4 }}>
                 {names.length > 0
-                  ? <>Gestor{names.length > 1 ? "es" : ""} aprovador{names.length > 1 ? "es" : ""} deste centro de custo: <strong>{names.join(", ")}</strong>. Será{names.length > 1 ? "ão" : ""} notificado{names.length > 1 ? "s" : ""} automaticamente ao enviar.</>
-                  : "Este centro de custo ainda não tem um gestor aprovador definido. A solicitação ficará parada na etapa de Aprovação do Gestor até um administrador configurar um em Administração → Centros de Custo."}
+                  ? <>Gestor{names.length > 1 ? "es" : ""} deste centro de custo: <strong>{names.join(", ")}</strong>. Será{names.length > 1 ? "ão" : ""} notificado{names.length > 1 ? "s" : ""} automaticamente ao enviar.</>
+                  : "Este centro de custo ainda não tem gestor definido. A solicitação segue normalmente para a Triagem; só não haverá quem avisar sobre ela."}
               </p>
             );
           })()}

@@ -52,6 +52,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if ("managerIds" in body) {
     const newPrimary = costCenter.managers[0]?.id ?? null;
+    // Só alcança solicitação antiga: a etapa saiu do fluxo em 21/08/2026 e
+    // nenhuma nova entra nela. Mantido, e não apagado, porque continua certo
+    // para quem eventualmente esteja parado lá em algum ambiente, e não custa
+    // nada quando não casa com ninguém.
     await prisma.purchaseRequest.updateMany({
       where: { costCenterId: params.id, currentStage: "APROVACAO_GESTOR", managerApprovalDecision: null },
       data: { approverManagerId: newPrimary },

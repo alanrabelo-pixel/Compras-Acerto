@@ -7,7 +7,6 @@ import {
   approvalLevel,
   approvalsRequiredForLevel,
   nextAfterAprovacao,
-  nextAfterAprovacaoGestor,
   nextAfterAguardandoEntrega,
   nextAfterTesouraria,
   slaDaysForDiretoria,
@@ -19,6 +18,8 @@ import {
   determineLane,
   requiresBasicVendorScreening,
   somarDiasUteis,
+  STAGES,
+  etapaVisivelNoQuadro,
 } from "./workflow";
 
 describe("nextAfterValidacaoOrcamentaria", () => {
@@ -128,13 +129,18 @@ describe("nextAfterAprovacao", () => {
   });
 });
 
-describe("nextAfterAprovacaoGestor", () => {
-  it("routes to TRIAGEM when the cost center manager approves", () => {
-    expect(nextAfterAprovacaoGestor({ approved: true })).toBe("TRIAGEM");
+// A etapa Aprovação do Gestor saiu do fluxo em 21/08/2026 e nextAfterAprovacaoGestor
+// saiu junto. O que a substitui está travado abaixo: a abertura vai direto
+// para a Triagem.
+describe("abertura da solicitação", () => {
+  it("SOLICITACAO leva direto para TRIAGEM, sem aprovação do gestor no meio", () => {
+    expect(STAGES.SOLICITACAO.nextStages).toEqual(["TRIAGEM"]);
   });
 
-  it("cancels the request when the cost center manager reproves", () => {
-    expect(nextAfterAprovacaoGestor({ approved: false })).toBe("CANCELADO");
+  it("APROVACAO_GESTOR continua no enum, para o histórico não quebrar, mas fora do quadro", () => {
+    expect(STAGES.APROVACAO_GESTOR).toBeDefined();
+    expect(etapaVisivelNoQuadro("APROVACAO_GESTOR")).toBe(false);
+    expect(etapaVisivelNoQuadro("TRIAGEM")).toBe(true);
   });
 });
 

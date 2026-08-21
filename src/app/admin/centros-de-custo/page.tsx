@@ -51,10 +51,10 @@ export default async function CentrosDeCustoPage({
       <main className="page" style={{ paddingTop: 28 }}>
         <h1 className="page-title">Centros de Custo</h1>
         <p className="page-subtitle">
-          Cada centro de custo tem um ou mais gestores que aprovam automaticamente as solicitações de compra assim
-          que o formulário é enviado, antes do comprador atuar (etapa "Aprovação do Gestor"). Qualquer um deles pode
-          decidir, reduzindo a necessidade de ajuste manual quando um titular está ausente. Trocar os gestores aqui
-          também atualiza as solicitações que já estão paradas nessa etapa aguardando decisão. Prefira desativar um
+          Cada centro de custo tem um ou mais gestores, avisados automaticamente quando uma solicitação é aberta no
+          centro de custo deles. Desde 21/08/2026 esse aviso é informativo: a solicitação segue direto para a Triagem
+          e o gestor não decide mais na entrada. O controle de gasto sem orçamento ficou na exceção orçamentária da
+          Validação Orçamentária, e o controle por valor, na etapa Aprovação. Prefira desativar um
           centro de custo a renomeá-lo ou excluí-lo, pois isso preserva o histórico das solicitações já vinculadas a ele.
         </p>
 
@@ -125,9 +125,9 @@ export default async function CentrosDeCustoPage({
 
           <div className="section-gap">
             <p className="page-subtitle" style={{ marginBottom: 14 }}>
-              Visão inversa da tabela de Centros de Custo: escolha, por pessoa, quais centros de custo ela pode
-              aprovar. Quem não estiver marcado para um centro de custo não vê a solicitação em "Minhas Pendências"
-              quando ela chega na etapa "Aprovação do Gestor".
+              Visão inversa da tabela de Centros de Custo: escolha, por pessoa, quais centros de custo ela
+              acompanha. Quem não estiver marcado para um centro de custo não recebe o aviso de solicitação nova
+              aberta nele.
             </p>
             <TableWrap>
               <TableHeadRow columns="1.6fr 2.4fr">

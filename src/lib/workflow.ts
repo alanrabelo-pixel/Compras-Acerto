@@ -37,13 +37,29 @@ export const STAGES: Record<Stage, StageDefinition> = {
     stage: "SOLICITACAO",
     label: "Solicitação de Compra",
     // Sem tempo de referência: é o próprio formulário, não existe espera.
-    nextStages: ["APROVACAO_GESTOR"],
+    // Vai direto para Triagem: ver a nota de legado em APROVACAO_GESTOR.
+    nextStages: ["TRIAGEM"],
   },
+  /**
+   * LEGADO. Fora do fluxo desde 21/08/2026, por decisão do dono do sistema:
+   * a solicitação aberta vai direto para a Triagem, e quem faz o primeiro
+   * crivo é o comprador. O controle de gasto sem orçamento não se perdeu, só
+   * mudou de lugar: quem marca Orçamento Extra na abertura já cai no fluxo de
+   * exceção da Validação Orçamentária, com aprovador definido pelo valor
+   * (budgetExceptionLevel), e a alçada financeira continua na etapa Aprovação.
+   *
+   * A entrada continua aqui por três motivos: STAGES é um Record de todas as
+   * etapas do enum; o enum não perdeu o valor, para não exigir migration; e
+   * StageEvent de solicitações antigas ainda aponta para cá, então apagar
+   * quebraria o histórico. Nenhuma solicitação estava nesta etapa quando ela
+   * saiu do fluxo, e nenhuma tinha decisão de gestor gravada.
+   *
+   * O quadro e os seletores de etapa filtram esta entrada (ver
+   * src/app/solicitacoes/page.tsx), do mesmo jeito que já filtravam CANCELADO.
+   */
   APROVACAO_GESTOR: {
     stage: "APROVACAO_GESTOR",
-    label: "Aprovação do Gestor",
-    // Gestor do centro de custo (CostCenter.managerId, ver /admin/centros-de-custo)
-    // decide logo após o envio do formulário, antes de qualquer ação do comprador.
+    label: "Aprovação do Gestor (legado)",
     nextStages: ["TRIAGEM", "CANCELADO"],
     slaDaysCorporativo: 1,
     slaDaysTecnologiaRevenue: 2,
@@ -164,6 +180,22 @@ export const STAGES: Record<Stage, StageDefinition> = {
 };
 
 /**
+ * Etapas que existem no enum mas não viram coluna do quadro nem opção de
+ * seletor. Uma lista só, em vez de `!== "CANCELADO"` repetido em cada tela:
+ * quando a segunda etapa oculta apareceu, o filtro espalhado teria de ser
+ * caçado em cinco arquivos, e quem esquecesse um deixaria uma coluna vazia.
+ *
+ * CANCELADO: sempre teve visão própria, nunca foi coluna.
+ * APROVACAO_GESTOR: fora do fluxo desde 21/08/2026, mantida no enum só para o
+ * histórico continuar resolvendo (ver a nota de legado na entrada dela).
+ */
+export const ETAPAS_OCULTAS_NO_QUADRO: readonly Stage[] = ["CANCELADO", "APROVACAO_GESTOR"];
+
+export function etapaVisivelNoQuadro(stage: Stage): boolean {
+  return !ETAPAS_OCULTAS_NO_QUADRO.includes(stage);
+}
+
+/**
  * Tempo esperado na etapa atual, em dias, para a diretoria da solicitação.
  *
  * Os números de STAGES existiam desde o começo e nunca eram lidos por
@@ -265,10 +297,6 @@ export function nextAfterAprovacao(params: {
 }): Stage {
   if (!params.approved) return "CANCELADO";
   return params.needsContract ? "JURIDICO" : "PEDIDO_COMPRA";
-}
-
-export function nextAfterAprovacaoGestor(params: { approved: boolean }): Stage {
-  return params.approved ? "TRIAGEM" : "CANCELADO";
 }
 
 export function nextAfterAguardandoEntrega(params: {

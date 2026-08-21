@@ -181,6 +181,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             currentStageLabel={STAGES[request.currentStage].label}
             allStageOptions={Object.values(STAGES)
               .filter((s) => s.stage !== request.currentStage)
+              // CANCELADO continua na lista, que é uso legítimo do admin. Já
+              // APROVACAO_GESTOR saiu do fluxo em 21/08/2026 e não tem mais
+              // rota: mover uma solicitação para lá a deixaria sem nenhuma
+              // ação possível, só o próprio override para tirá-la de novo.
+              .filter((s) => s.stage !== "APROVACAO_GESTOR")
               .map((s) => ({ value: s.stage, label: s.label }))}
           />
         </div>
@@ -192,7 +197,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             aprovação ao FP&amp;A e anexar o arquivo no painel &quot;Comprovante de aprovação do FP&amp;A&quot; mais
             abaixo nesta página. Quem faz: o solicitante ({request.requester.name}) ou o comprador
             {request.buyer ? ` (${request.buyer.name})` : " responsável"}. Enquanto o comprovante não estiver
-            anexado, a Aprovação do Gestor e a Validação Orçamentária não avançam.
+            anexado, a Validação Orçamentária não avança, e o atalho de cancelamento na Triagem também não.
           </WarningNotice>
         )}
 

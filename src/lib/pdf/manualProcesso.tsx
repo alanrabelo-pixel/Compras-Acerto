@@ -276,21 +276,20 @@ export function ManualProcessoDocument() {
           acontece:
         </P>
         <Stage n={1} label="Solicitação de Compra" desc="Quem precisa comprar algo abre a solicitação com os dados básicos: o que é, para qual centro de custo, valor estimado e prioridade." />
-        <Stage n={2} label="Aprovação do Gestor" desc="O gestor do centro de custo escolhido decide se aprova antes de qualquer ação do time de Compras (ver alerta de alinhamento prévio na seção 3)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={3} label="Homologação e Triagem" desc="O time de Compras | F&NC confere se as informações estão completas antes de seguir." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={4} label="Validação Orçamentária" desc="Verificamos se existe orçamento disponível na linha informada. Se não houver, a solicitação entra em um fluxo de exceção orçamentária até uma decisão (veja seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={5} label="Due Diligence (Privacidade)" desc="Só acontece para contratação de ferramenta nova ou que lide com dados pessoais: avaliação de privacidade e segurança antes de cotar." sla="2 dias úteis" />
-        <Stage n={6} label="Cotação" desc="O time de Compras busca propostas com fornecedores. O número mínimo de cotações depende do valor da compra (veja seção 4)." sla="5 dias úteis (Corporativo) · 7 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={7} label="Mapa de Cotação" desc="As propostas recebidas são organizadas lado a lado para comparação e escolha do fornecedor." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={8} label="Aprovação" desc="A solicitação segue para quem tem alçada de aprovar aquele valor (veja a tabela de alçadas na seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={9} label="Jurídico" desc="Quando a compra exige contrato formal, o Jurídico revisa e valida as cláusulas antes de seguir." sla="20 dias úteis (Corporativo) · 30 dias úteis (Tecnologia e Revenue)" />
-        <Stage n={10} label="Pedido de Compra" desc="Emitimos o Pedido de Compra oficial em PDF, com dados do fornecedor, itens, valores e condições de pagamento." sla="1 dia útil" />
-        <Stage n={11} label="Aguardando Entrega/Conclusão" desc="Aguardamos a entrega do produto ou a execução do serviço contratado." />
-        <Stage n={12} label="Medição e Aprovação Financeira" desc="Para compras que exigem medição (ex.: serviços recorrentes, obras), validamos o quanto foi efetivamente entregue antes do pagamento." sla="2 dias úteis" />
-        <Stage n={13} label="Validação Fiscal" desc="Conferência fiscal da nota/documento antes de liberar o pagamento." sla="2 dias úteis" />
-        <Stage n={14} label="Tesouraria (Pagamento)" desc="Efetivação do pagamento ao fornecedor." sla="3 dias úteis" />
-        <Stage n={15} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." sla="2 dias úteis" />
-        <Stage n={16} label="Concluído" desc="A solicitação é encerrada." />
+        <Stage n={2} label="Homologação e Triagem" desc="O time de Compras | F&NC confere se as informações estão completas antes de seguir." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={3} label="Validação Orçamentária" desc="Verificamos se existe orçamento disponível na linha informada. Se não houver, a solicitação entra em um fluxo de exceção orçamentária até uma decisão (veja seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={4} label="Due Diligence (Privacidade)" desc="Só acontece para contratação de ferramenta nova ou que lide com dados pessoais: avaliação de privacidade e segurança antes de cotar." sla="2 dias úteis" />
+        <Stage n={5} label="Cotação" desc="O time de Compras busca propostas com fornecedores. O número mínimo de cotações depende do valor da compra (veja seção 4)." sla="5 dias úteis (Corporativo) · 7 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={6} label="Mapa de Cotação" desc="As propostas recebidas são organizadas lado a lado para comparação e escolha do fornecedor." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={7} label="Aprovação" desc="A solicitação segue para quem tem alçada de aprovar aquele valor (veja a tabela de alçadas na seção 4)." sla="1 dia útil (Corporativo) · 2 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={8} label="Jurídico" desc="Quando a compra exige contrato formal, o Jurídico revisa e valida as cláusulas antes de seguir." sla="20 dias úteis (Corporativo) · 30 dias úteis (Tecnologia e Revenue)" />
+        <Stage n={9} label="Pedido de Compra" desc="Emitimos o Pedido de Compra oficial em PDF, com dados do fornecedor, itens, valores e condições de pagamento." sla="1 dia útil" />
+        <Stage n={10} label="Aguardando Entrega/Conclusão" desc="Aguardamos a entrega do produto ou a execução do serviço contratado." />
+        <Stage n={11} label="Medição e Aprovação Financeira" desc="Para compras que exigem medição (ex.: serviços recorrentes, obras), validamos o quanto foi efetivamente entregue antes do pagamento." sla="2 dias úteis" />
+        <Stage n={12} label="Validação Fiscal" desc="Conferência fiscal da nota/documento antes de liberar o pagamento." sla="2 dias úteis" />
+        <Stage n={13} label="Tesouraria (Pagamento)" desc="Efetivação do pagamento ao fornecedor." sla="3 dias úteis" />
+        <Stage n={14} label="Mapeamento de Contrato" desc="Quando a compra gera um contrato vigente, ele é cadastrado na gestão de contratos, com alertas automáticos de renovação." sla="2 dias úteis" />
+        <Stage n={15} label="Concluído" desc="A solicitação é encerrada." />
         <Card title="Cancelamento">
           A solicitação pode ser cancelada em praticamente qualquer etapa do fluxo, por exemplo, se o
           orçamento for reprovado ou a aprovação for negada.
@@ -309,15 +308,17 @@ export function ManualProcessoDocument() {
         <Bullet><Text style={{ fontWeight: 700 }}>Prioridade</Text>: Baixa (rotineira), Média (importante), Alta (urgente) ou Crítica (urgência máxima). Ao marcar Alta ou Crítica, o sistema pede para confirmar que a urgência é real, já que prioridades altas furam fila e pressionam prazo de outras solicitações.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Prazo sugerido</Text> para conclusão: se a data for menor que 7 dias úteis, um alerta lembra que cotação, aprovação e emissão do pedido levam tempo.</Bullet>
         <Bullet><Text style={{ fontWeight: 700 }}>Linha do Orçamento</Text>: escolha <Text style={{ fontWeight: 700 }}>Orçamento Extra</Text> quando não há linha prevista (exige anexar o print da validação do orçamento pelo time de FP&A) ou <Text style={{ fontWeight: 700 }}>Outros</Text> para digitar o nome da linha manualmente.</Bullet>
-        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não): marcar "Não" mostra um aviso de que a solicitação tem mais chance de ser devolvida na etapa de Aprovação do Gestor.</Bullet>
+        <Bullet>Se a compra já foi <Text style={{ fontWeight: 700 }}>alinhada com a liderança</Text> (Sim/Não): é uma declaração de contexto, que fica registrada e ajuda quem for triar. Não muda o caminho da solicitação.</Bullet>
         <Bullet>
           Anexos de apoio (proposta, briefing, etc.), quando fizer sentido. São aceitos PDF, imagem,
           documento e planilha do Office, e-mail salvo e zip, com até 15MB por arquivo. Páginas de
           internet e executáveis não são aceitos, por segurança.
         </Bullet>
         <P>
-          Depois de enviada, a solicitação passa primeiro pelo gestor do centro de custo escolhido (etapa
-          Aprovação do Gestor) antes de chegar ao time de Compras | F&NC.
+          Depois de enviada, a solicitação vai direto para a Homologação e Triagem, com o time de Compras | F&NC.
+          O gestor do centro de custo escolhido é avisado no mesmo momento, para saber o que entrou no orçamento
+          dele. Gasto sem linha prevista continua controlado: quem marca Orçamento Extra passa pela exceção
+          orçamentária, decidida pela Coordenação ou pelo Gerente F&NC conforme o valor.
         </P>
         <P>
           Depois de aberta, a solicitação aparece no quadro de Solicitações, organizado por etapa, e pode

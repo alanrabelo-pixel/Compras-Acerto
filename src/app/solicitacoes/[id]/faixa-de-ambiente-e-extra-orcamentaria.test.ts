@@ -120,7 +120,7 @@ async function cenario(params: { extraBudget: boolean; comComprovante: boolean }
     requesterId: solicitante.id,
     approverManagerId: gestor.id,
     costCenterId: costCenter.id,
-    currentStage: "APROVACAO_GESTOR",
+    currentStage: "VALIDACAO_ORCAMENTARIA", // era APROVACAO_GESTOR, etapa removida do fluxo em 21/08/2026
     estimatedValue: 20000,
   });
   if (params.extraBudget) {
@@ -167,7 +167,7 @@ describe("Tela da solicitação: extra-orçamentária e comprovante do FP&A", ()
     expect(texto).toContain("anexar o arquivo");
     expect(texto).toContain(solicitante.name);
     // Qual é a consequência de não fazer, que hoje só aparece no 422.
-    expect(texto).toContain("a Aprovação do Gestor e a Validação Orçamentária não avançam");
+    expect(texto).toContain("a Validação Orçamentária não avança");
 
     // Aviso sem saída não resolve nada: o painel genérico de Anexos grava tudo
     // como GERAL, então precisa existir um painel que grave a categoria que a
@@ -184,7 +184,7 @@ describe("Tela da solicitação: extra-orçamentária e comprovante do FP&A", ()
 
     expect(texto).toContain("Orçamento Extra");
     expect(texto).toContain(`aprovacao-fpa-${TEST_PREFIX}.pdf`);
-    expect(texto).not.toContain("a Aprovação do Gestor e a Validação Orçamentária não avançam");
+    expect(texto).not.toContain("a Validação Orçamentária não avança");
   });
 
   it("não inventa aviso nenhum para quem informou linha de orçamento", async () => {

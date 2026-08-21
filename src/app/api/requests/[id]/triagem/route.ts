@@ -9,6 +9,7 @@ import {
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
+import { checarComprovanteDoFpa } from "@/lib/orcamento-extra";
 import { requireRole } from "@/lib/rbac";
 import { DESTINO_CONTROLADORIA } from "@/lib/destinatarios";
 import { logger } from "@/lib/logger";
@@ -72,6 +73,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // Orçamentária, Cotação, Aprovação e Pedido de Compra: vai direto para
   // Jurídico formalizar o distrato/termo de cancelamento.
   if (request.demandType === "CANCELAMENTO") {
+    // Este atalho pula a Validação Orçamentária, que é onde o comprovante do
+    // FP&A é cobrado. Enquanto existiu a Aprovação do Gestor, ela barrava a
+    // fuga ANTES da Triagem; a etapa saiu do fluxo em 21/08/2026 e levou esse
+    // ponto de cobrança junto. Sem a linha abaixo, uma solicitação marcada
+    // como Orçamento Extra sairia por aqui sem nunca apresentar o documento.
+    // Um cancelamento não gasta, então a combinação é incoerente, mas o
+    // formulário permite marcá-la, e a regra é não deixar rota de fuga.
+    const comprovante = await checarComprovanteDoFpa(request, "seguir para o Jurídico");
+    if (!comprovante.ok) {
+      return NextResponse.json({ error: comprovante.erro }, { status: 422 });
+    }
+
     const atalho = await avancarEtapa({
       requestId: request.id,
       de: "TRIAGEM",

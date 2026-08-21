@@ -174,14 +174,16 @@ export async function POST(req: NextRequest) {
   const { subject, html } = templates.confirmacaoRecebimento(request.requester.name, shortDescription);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  // Notifica TODOS os gestores do centro de custo (não só o principal), pois é
-  // qualquer um deles que pode agir agora, na etapa APROVACAO_GESTOR (não é
-  // mais só uma cópia informativa).
+  // Avisa TODOS os gestores do centro de custo (não só o principal). Desde
+  // 21/08/2026 é aviso, não convocação: a etapa Aprovação do Gestor saiu do
+  // fluxo e o gestor não decide mais nada aqui. Continua sendo notificado
+  // porque é o dono do orçamento e precisa saber o que entra no centro de
+  // custo dele; quem age agora é o comprador, na Triagem.
   await Promise.all(
     costCenter.managers.map((manager) =>
       sendSlackDM({
         slackUserEmail: manager.email,
-        text: `Nova solicitação de compra aguardando sua aprovação: *${shortDescription}* (${code}), por ${request.requester.name}.`,
+        text: `Nova solicitação de compra no seu centro de custo: *${shortDescription}* (${code}), por ${request.requester.name}. Seguiu direto para Triagem.`,
         requestId: request.id,
       }).catch(() => {
         // Falha de Slack não deve bloquear a criação da solicitação, já registrada em Notification.
@@ -189,14 +191,17 @@ export async function POST(req: NextRequest) {
     )
   );
 
-  // Move automaticamente para Aprovação do Gestor: só depois da decisão dele
-  // é que segue para Triagem (ver PATCH /api/requests/[id]/aprovacao-gestor).
+  // Vai direto para a Triagem. A Aprovação do Gestor saiu do fluxo em
+  // 21/08/2026 (ver a nota de legado em STAGES.APROVACAO_GESTOR): quem faz o
+  // primeiro crivo é o comprador. Gasto sem orçamento continua controlado,
+  // pela exceção orçamentária na Validação Orçamentária, e o valor continua
+  // controlado pela alçada na etapa Aprovação.
   const updated = await prisma.purchaseRequest.update({
     where: { id: request.id },
-    data: { currentStage: "APROVACAO_GESTOR" },
+    data: { currentStage: "TRIAGEM" },
   });
   await prisma.stageEvent.create({
-    data: { requestId: request.id, fromStage: "SOLICITACAO", toStage: "APROVACAO_GESTOR" },
+    data: { requestId: request.id, fromStage: "SOLICITACAO", toStage: "TRIAGEM" },
   });
 
   return NextResponse.json(updated, { status: 201 });

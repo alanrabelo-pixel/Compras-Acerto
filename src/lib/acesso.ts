@@ -37,7 +37,11 @@ import { bypassAuthAtivo } from "@/lib/bypass";
  * do fornecedor, Concluído, Cancelado) cai no recorte por parte e por quadro.
  */
 const PAPEIS_QUE_ATUAM_NA_ETAPA: Partial<Record<Stage, RoleName[]>> = {
-  APROVACAO_GESTOR: ["APROVADOR"],
+  // APROVACAO_GESTOR saiu daqui em 21/08/2026 junto com a etapa (ver a nota de
+  // legado em STAGES). Solicitação antiga parada nela, se existir em algum
+  // ambiente, cai no recorte por parte e por quadro, que é mais restritivo:
+  // ninguém perde acesso indevidamente, no máximo um APROVADOR sem quadro
+  // deixa de enxergar uma etapa em que já não pode agir.
   TRIAGEM: ["COMPRADOR"],
   VALIDACAO_ORCAMENTARIA: ["COMPRADOR"],
   DUE_DILIGENCE: ["PRIVACIDADE"],

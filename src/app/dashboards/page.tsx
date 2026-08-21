@@ -16,7 +16,7 @@ import { AlertsPanel, AlertsPanelAgrupado } from "@/components/dashboard/AlertsP
 import { ChamadosExpandido } from "@/components/dashboard/ChamadosExpandido";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { loadDashboardData, money } from "@/lib/dashboard-data";
-import { STAGES } from "@/lib/workflow";
+import { STAGES, etapaVisivelNoQuadro } from "@/lib/workflow";
 import { TableWrap, TableHeadRow, TableRow, Card } from "@/components/ui";
 import {
   Wallet, FileText, Package, Hourglass, Truck, Banknote, TrendingUp, CheckCircle2, Users,
@@ -35,9 +35,9 @@ export default async function DashboardsPage({
   };
 }) {
   const data = await loadDashboardData(searchParams);
-  const stageOptions = Object.keys(STAGES)
-    .filter((s) => s !== "CANCELADO")
-    .map((s) => ({ value: s, label: STAGES[s as keyof typeof STAGES].label }));
+  const stageOptions = (Object.keys(STAGES) as (keyof typeof STAGES)[])
+    .filter(etapaVisivelNoQuadro)
+    .map((s) => ({ value: s, label: STAGES[s].label }));
 
   const sp = new URLSearchParams();
   for (const [key, value] of Object.entries(searchParams)) {
