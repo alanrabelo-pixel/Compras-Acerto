@@ -53,15 +53,30 @@ async function scenario(estimatedValue: number) {
   return { request, approval, approver, intruder };
 }
 
+/**
+ * NO TOPO DO ARQUIVO, DE PROPÓSITO, e não dentro de um describe.
+ *
+ * Este arquivo tem três describes, e a limpeza vivia dentro do primeiro. Ela
+ * rodava ao fim daquele bloco e os dois seguintes criavam dados depois disso,
+ * sem ninguém para apagá-los: 7 solicitações, 34 usuários e 7 centros de custo
+ * por execução, sobrando no banco de desenvolvimento. Nenhum teste falhava,
+ * porque no instante da limpeza o banco estava mesmo limpo.
+ *
+ * afterAll no topo roda uma vez só, depois do último describe do arquivo.
+ * Ao acrescentar um describe aqui, não crie outra limpeza: esta já o cobre.
+ */
+afterAll(async () => {
+  await cleanupTestData();
+});
+
 describe("PATCH /api/requests/[id]/aprovacao: autorização", () => {
   beforeEach(() => {
     vi.stubEnv("LOCAL_BYPASS_AUTH", "false");
     session.current = null;
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     vi.unstubAllEnvs();
-    await cleanupTestData();
   });
 
   it("recusa quem não é o aprovador designado, mesmo omitindo personifiedBy", async () => {

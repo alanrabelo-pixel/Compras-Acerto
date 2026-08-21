@@ -94,30 +94,41 @@ async function cenario(params: { stage: "APROVACAO_GESTOR" | "VALIDACAO_ORCAMENT
   return { req, requester, gestor };
 }
 
-describe("Comprovante do FP&A: criação e ramo de orçamento disponível", () => {
-  afterAll(async () => {
-    // As solicitações abertas pela própria rota nascem com código sequencial
-    // real (PC-AAAA-NNNN), então cleanupTestData(), que filtra por TEST_PREFIX
-    // no code, não as alcança. O recorte é pelos usuários deste módulo.
-    const usuarios = await prisma.user.findMany({ where: { email: { contains: TEST_PREFIX } }, select: { id: true } });
-    const idsDeUsuario = usuarios.map((u) => u.id);
-    if (idsDeUsuario.length > 0) {
-      const solicitacoes = await prisma.purchaseRequest.findMany({
-        where: { requesterId: { in: idsDeUsuario } },
-        select: { id: true },
-      });
-      const ids = solicitacoes.map((s) => s.id);
-      if (ids.length > 0) {
-        await prisma.stageEvent.deleteMany({ where: { requestId: { in: ids } } });
-        await prisma.budgetException.deleteMany({ where: { requestId: { in: ids } } });
-        await prisma.attachment.deleteMany({ where: { requestId: { in: ids } } });
-        await prisma.notification.deleteMany({ where: { requestId: { in: ids } } });
-        await prisma.purchaseRequest.deleteMany({ where: { id: { in: ids } } });
-      }
+/**
+ * NO TOPO DO ARQUIVO, DE PROPÓSITO, e não dentro de um describe.
+ *
+ * Este arquivo tem dois describes de primeiro nível, e a limpeza vivia dentro
+ * do primeiro. Ela rodava ao fim daquele bloco, e o segundo ("exceção
+ * orçamentária sem a marcação de Orçamento Extra") criava dados depois disso,
+ * sem ninguém para apagá-los. Nenhum teste falhava, porque no instante da
+ * limpeza o banco estava mesmo limpo.
+ *
+ * Ao acrescentar um describe aqui, não crie outra limpeza: esta já o cobre.
+ */
+afterAll(async () => {
+  // As solicitações abertas pela própria rota nascem com código sequencial
+  // real (PC-AAAA-NNNN), então cleanupTestData(), que filtra por TEST_PREFIX
+  // no code, não as alcança. O recorte é pelos usuários deste módulo.
+  const usuarios = await prisma.user.findMany({ where: { email: { contains: TEST_PREFIX } }, select: { id: true } });
+  const idsDeUsuario = usuarios.map((u) => u.id);
+  if (idsDeUsuario.length > 0) {
+    const solicitacoes = await prisma.purchaseRequest.findMany({
+      where: { requesterId: { in: idsDeUsuario } },
+      select: { id: true },
+    });
+    const ids = solicitacoes.map((s) => s.id);
+    if (ids.length > 0) {
+      await prisma.stageEvent.deleteMany({ where: { requestId: { in: ids } } });
+      await prisma.budgetException.deleteMany({ where: { requestId: { in: ids } } });
+      await prisma.attachment.deleteMany({ where: { requestId: { in: ids } } });
+      await prisma.notification.deleteMany({ where: { requestId: { in: ids } } });
+      await prisma.purchaseRequest.deleteMany({ where: { id: { in: ids } } });
     }
-    await cleanupTestData();
-  });
+  }
+  await cleanupTestData();
+});
 
+describe("Comprovante do FP&A: criação e ramo de orçamento disponível", () => {
   describe("POST /api/requests (criação)", () => {
     it("continua criando com Orçamento Extra e sem anexo, porque o anexo só existe depois da criação", async () => {
       const solicitante = await createTestUser([]);
