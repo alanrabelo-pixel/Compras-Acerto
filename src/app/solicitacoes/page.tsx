@@ -67,12 +67,18 @@ export default async function SolicitacoesPage({
     return `?${params.toString()}`;
   };
 
+  // Validada contra STAGES antes de virar filtro: um valor que não existe no
+  // enum ia direto para o `where` e zerava o quadro, sem erro e sem dizer por
+  // quê. Link velho ou URL digitada à mão passavam a mostrar "nada aqui", que
+  // se confunde com não haver solicitação. Inválida agora é ignorada.
+  const etapaFiltrada = searchParams.stage && searchParams.stage in STAGES ? (searchParams.stage as Stage) : null;
+
   const where: Prisma.PurchaseRequestWhereInput = {};
   if (searchParams.diretoria) where.diretoria = searchParams.diretoria as Diretoria;
   if (searchParams.costCenterId) where.costCenterId = searchParams.costCenterId;
   if (searchParams.priority) where.priority = searchParams.priority as Priority;
   if (searchParams.demandType) where.demandType = searchParams.demandType as DemandType;
-  if (searchParams.stage) where.currentStage = searchParams.stage as Stage;
+  if (etapaFiltrada) where.currentStage = etapaFiltrada;
   if (searchParams.q) {
     where.OR = [
       { code: { contains: searchParams.q, mode: "insensitive" } },
@@ -82,7 +88,21 @@ export default async function SolicitacoesPage({
   }
 
   const include = { requester: { select: USUARIO_PUBLICO }, costCenter: true } as const;
-  const stageOrder = (Object.keys(STAGES) as Stage[]).filter(etapaVisivelNoQuadro);
+
+  // Etapas que viram coluna. UMA lista, usada tanto na consulta quanto na
+  // renderização: eram duas, calculadas separadamente, e foi essa duplicação
+  // que escondeu o defeito abaixo.
+  //
+  // O FILTRO POR ETAPA ERA IGNORADO NO KANBAN. Cada coluna consulta com
+  // `{ ...where, currentStage: stage }`, e esse `currentStage` sobrescrevia o
+  // que veio do filtro: pedir ?stage=COTACAO devolvia o quadro inteiro, sem
+  // erro e sem aviso. Na Lista sempre funcionou, porque lá o `where` é usado
+  // direto. Restringir as colunas resolve os dois lados: a consulta passa a
+  // rodar só para a etapa pedida, e a tela mostra só aquela coluna, que é o
+  // que a URL promete.
+  const stageOrder = (Object.keys(STAGES) as Stage[])
+    .filter(etapaVisivelNoQuadro)
+    .filter((s) => etapaFiltrada === null || s === etapaFiltrada);
 
   const [totalCount, costCenters] = await Promise.all([
     prisma.purchaseRequest.count({ where }),
@@ -154,8 +174,8 @@ export default async function SolicitacoesPage({
 
         {viewMode === "kanban" ? (
         <div style={{ display: "flex", gap: "var(--space-4)", overflowX: "auto", marginTop: "var(--space-6)", paddingBottom: "var(--space-3)" }}>
-          {Object.values(STAGES)
-            .filter((s) => etapaVisivelNoQuadro(s.stage))
+          {stageOrder
+            .map((s) => STAGES[s])
             .map((stageDef) => {
               const items = byStage.get(stageDef.stage) ?? [];
               const stageTotal = stageCountMap.get(stageDef.stage) ?? items.length;

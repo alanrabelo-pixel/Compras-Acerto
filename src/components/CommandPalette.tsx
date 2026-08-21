@@ -4,8 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
-type SearchResult = { type: "solicitacao" | "contrato"; id: string; title: string; subtitle: string; href: string };
+type TipoDeResultado = "solicitacao" | "contrato" | "chamado" | "fornecedor" | "centro-de-custo" | "pessoa";
+type SearchResult = { type: TipoDeResultado; id: string; title: string; subtitle: string; href: string };
 type Item = { key: string; title: string; subtitle: string; href: string; group: string };
+
+/**
+ * Nome do grupo por tipo. Record completo, e não um ternário: com seis tipos,
+ * o `r.type === "solicitacao" ? ... : "Contratos"` que existia aqui rotularia
+ * como "Contratos" tudo que não fosse solicitação, e um tipo novo entraria no
+ * grupo errado sem ninguém perceber. Assim o compilador cobra a entrada.
+ */
+const GRUPO_DO_TIPO: Record<TipoDeResultado, string> = {
+  solicitacao: "Solicitações",
+  contrato: "Contratos",
+  chamado: "Chamados",
+  fornecedor: "Fornecedores",
+  "centro-de-custo": "Centros de Custo",
+  pessoa: "Pessoas",
+};
 
 const QUICK_ACTIONS: Item[] = [
   { key: "nova", title: "+ Nova Solicitação", subtitle: "Abrir uma nova solicitação de compra", href: "/solicitacoes/nova", group: "Ações rápidas" },
@@ -16,7 +32,8 @@ const QUICK_ACTIONS: Item[] = [
 ];
 
 /**
- * Command Palette (Ctrl/Cmd+K): busca global (Solicitações + Contratos) e
+ * Command Palette (Ctrl/Cmd+K): busca global (solicitações, contratos,
+ * chamados, fornecedores, centros de custo e pessoas) e
  * ações rápidas de navegação, num único lugar. Não reaproveita o Modal
  * genérico da biblioteca de componentes de propósito: uma paleta de comando
  * precisa aparecer perto do topo, mais larga, e sem cabeçalho/botão de
@@ -39,7 +56,7 @@ export function CommandPalette() {
           title: r.title,
           subtitle: r.subtitle,
           href: r.href,
-          group: r.type === "solicitacao" ? "Solicitações" : "Contratos",
+          group: GRUPO_DO_TIPO[r.type] ?? "Outros",
         }))
       : QUICK_ACTIONS;
 
@@ -133,7 +150,7 @@ export function CommandPalette() {
               <input
                 ref={inputRef}
                 className="command-palette-input"
-                placeholder="Buscar solicitações, contratos, ou navegar..."
+                placeholder="Buscar solicitação, contrato, chamado, fornecedor, centro de custo ou pessoa..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onInputKeyDown}
