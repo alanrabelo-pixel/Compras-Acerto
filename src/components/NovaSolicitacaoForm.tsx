@@ -278,7 +278,10 @@ export function NovaSolicitacaoForm({
   const canSubmit =
     requesterId && costCenterId && leadershipPreApproved && budgetLineChoice &&
     shortDescription && longDescription && suggestedDeadline && quantity > 0 &&
-    (!isExtraBudget || (extraBudgetFileSelected && extraPronto)) &&
+    // O anexo do FP&A deixou de ser exigido em 21/08/2026: a aprovação da
+    // exceção passou a ser registrada no próprio sistema. O que Orçamento
+    // Extra exige agora é o detalhamento do modal, que é o que o aprovador lê.
+    (!isExtraBudget || extraPronto) &&
     (!isOtherBudget || budgetLineText.trim());
 
   return (
@@ -404,7 +407,9 @@ export function NovaSolicitacaoForm({
             {isExtraBudget && (
               <>
                 <WarningNotice className="section-gap">
-                  Orçamento Extra exige anexo obrigatório: o print da validação do orçamento pelo time de FP&A, no campo logo abaixo.
+                  Sem linha de orçamento prevista, esta compra passa por uma exceção orçamentária, decidida pela
+                  Coordenação ou pelo Gerente F&NC conforme o valor. Preencha o detalhamento abaixo: é ele que a
+                  pessoa vai ler para decidir.
                 </WarningNotice>
                 {extraPronto ? (
                   <div className="hint-box hint-box-neutral section-gap" style={{ display: "grid", gap: 6 }}>
@@ -436,13 +441,8 @@ export function NovaSolicitacaoForm({
           </Field>
 
           <Field
-            label="Aprovação Extra-orçamentária"
-            required={isExtraBudget}
-            help={
-              isExtraBudget
-                ? "Obrigatório: você selecionou \"Orçamento Extra\" acima. Anexe o e-mail com a validação do diretor imediato e do time de FP&A."
-                : "Anexar o e-mail com a validação do diretor imediato e do time de FP&A. Solicitações abertas sem a previsão de orçamento deverão ter obrigatoriamente anexado o print com a validação do orçamento Extra pelo time de FP&A."
-            }
+            label="Documento de apoio do orçamento (opcional)"
+            help="Se você já tem alguma validação por escrito, do seu diretor ou do FP&A, pode juntar aqui. Não é obrigatório: a decisão sobre a exceção orçamentária é registrada no próprio sistema, por quem tem a alçada."
           >
             <input
               ref={extraBudgetFileRef} type="file" className="input" style={{ padding: 6 }}

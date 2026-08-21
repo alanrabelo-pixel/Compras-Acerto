@@ -153,25 +153,22 @@ describe("Tela da solicitação: extra-orçamentária e comprovante do FP&A", ()
     await cleanupTestData();
   });
 
-  it("avisa que é Orçamento Extra sem comprovante, dizendo o que fazer e quem faz", async () => {
-    const { req, solicitante } = await cenario({ extraBudget: true, comComprovante: false });
+  // Este caso pedia o oposto até 21/08/2026: a tela AVISAVA que faltava o
+  // comprovante do FP&A e dizia que a Validação Orçamentária não avançaria sem
+  // ele. A exigência caiu, então o aviso saiu junto. Cobrar um documento que
+  // ninguém precisa entregar é pior que não avisar nada.
+  it("mostra que é Orçamento Extra, e NÃO cobra comprovante nenhum", async () => {
+    const { req } = await cenario({ extraBudget: true, comComprovante: false });
 
     const arvore = await TelaDaSolicitacao({ params: { id: req.id } });
     const texto = textoDaArvore(arvore);
 
-    // Que é extra-orçamentária.
     expect(texto).toContain("Orçamento Extra");
-    // O que falta.
-    expect(texto).toContain("comprovante de aprovação do FP&A");
-    // O que fazer e quem faz.
-    expect(texto).toContain("anexar o arquivo");
-    expect(texto).toContain(solicitante.name);
-    // Qual é a consequência de não fazer, que hoje só aparece no 422.
-    expect(texto).toContain("a Validação Orçamentária não avança");
+    expect(texto).not.toContain("comprovante de aprovação do FP&A");
+    expect(texto).not.toContain("a Validação Orçamentária não avança");
 
-    // Aviso sem saída não resolve nada: o painel genérico de Anexos grava tudo
-    // como GERAL, então precisa existir um painel que grave a categoria que a
-    // regra procura.
+    // O painel do anexo continua existindo, agora opcional: solicitações
+    // antigas têm arquivos nessa categoria e sumiriam da tela sem ele.
     const elementos = elementosDaArvore(arvore);
     expect(elementos.some((e) => e.props.category === CATEGORIA_COMPROVANTE_FPA)).toBe(true);
   });

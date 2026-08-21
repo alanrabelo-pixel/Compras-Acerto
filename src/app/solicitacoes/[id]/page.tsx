@@ -14,7 +14,7 @@ import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
 import {
-  checarComprovanteDoFpa,
+  anexoDeApoioDoOrcamento,
   CATEGORIA_COMPROVANTE_FPA,
   BASE_DE_ORCAMENTO_EXTRA_LABEL,
   IMPACTO_DE_ORCAMENTO_EXTRA_LABEL,
@@ -98,9 +98,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
   // única tela que gravava APROVACAO_EXTRA_ORCAMENTARIA era o formulário de
   // abertura. Quem não anexou na criação ficava sem lugar para anexar depois.
   // Daí o painel dedicado abaixo, mesmo padrão do painel de triagem.
-  const checagemDoComprovante = await checarComprovanteDoFpa(request, "antes de aprovar a solicitação");
-  const comprovanteDoFpa = checagemDoComprovante.ok ? checagemDoComprovante.comprovante : null;
-  const faltaComprovanteDoFpa = !checagemDoComprovante.ok;
+  // O aviso de "falta o comprovante" saiu em 21/08/2026 junto com a
+  // exigência: não há mais nada a cobrar, então avisar seria pedir um
+  // documento que ninguém precisa entregar. O anexo continua opcional, e o
+  // painel continua existindo para os arquivos que já existem.
+  const comprovanteDoFpa = await anexoDeApoioDoOrcamento(request.id);
 
   const anexosDoFpa = request.attachments.filter((a) => a.category === CATEGORIA_COMPROVANTE_FPA);
   // Mostrado também quando extraBudget é false mas o documento existe (o
@@ -195,16 +197,6 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           />
         </div>
 
-        {faltaComprovanteDoFpa && (
-          <WarningNotice className="section-gap">
-            <strong>Orçamento Extra sem o comprovante de aprovação do FP&amp;A.</strong> Esta solicitação foi aberta
-            sem linha de orçamento, então o documento do FP&amp;A é obrigatório para ela seguir. O que fazer: pedir a
-            aprovação ao FP&amp;A e anexar o arquivo no painel &quot;Comprovante de aprovação do FP&amp;A&quot; mais
-            abaixo nesta página. Quem faz: o solicitante ({request.requester.name}) ou o comprador
-            {request.buyer ? ` (${request.buyer.name})` : " responsável"}. Enquanto o comprovante não estiver
-            anexado, a Validação Orçamentária não avança, e o atalho de cancelamento na Triagem também não.
-          </WarningNotice>
-        )}
 
         {request.fragmentationFlag && (
           <WarningNotice className="section-gap">
@@ -268,8 +260,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
               <p style={{ margin: 0 }}>
                 <span className="text-muted">Orçamento Extra:</span>{" "}
                 {comprovanteDoFpa
-                  ? `Sim, com comprovante do FP&A anexado (${comprovanteDoFpa.fileName})`
-                  : "Sim, comprovante do FP&A pendente"}
+                  ? `Sim, com documento de apoio anexado (${comprovanteDoFpa.fileName})`
+                  : "Sim"}
               </p>
             )}
             <p style={{ margin: 0 }}><span className="text-muted">Data limite sugerida (solicitante):</span> {formatDateOnly(request.suggestedDeadline)}</p>
@@ -291,10 +283,12 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
 
         <RequestActions request={serializableRequest} sessionActor={sessionActor} declaredByNames={declaredByNames} />
 
-        {/* Comprovante de aprovação do FP&A: painel próprio porque este anexo
-            tem categoria própria (é ele que as portas de saída procuram, ver
-            @/lib/orcamento-extra) e o painel genérico de Anexos grava tudo
-            como GERAL, que não conta para a regra. */}
+        {/* Documentos de apoio do orçamento. Painel próprio porque o anexo tem
+            categoria própria e o painel genérico grava tudo como GERAL.
+            OPCIONAL desde 21/08/2026: a aprovação da exceção passou a ser
+            registrada no próprio sistema (BudgetException), e o print de
+            e-mail deixou de ser exigido. O painel fica para os arquivos que já
+            existem e para quem quiser juntar evidência. */}
         {mostrarComprovanteDoFpa && (
           <AttachmentsPanel
             requestId={request.id}
@@ -302,8 +296,8 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
             uploaderId={request.requesterId}
             sessionActor={sessionActor}
             category={CATEGORIA_COMPROVANTE_FPA}
-            title="Comprovante de aprovação do FP&A"
-            emptyLabel="Nenhum comprovante anexado. Esta compra é extra-orçamentária: anexe aqui a aprovação do FP&A. Sem este arquivo, o gestor não consegue aprovar e a Validação Orçamentária não avança."
+            title="Documentos de apoio do orçamento (opcional)"
+            emptyLabel="Nenhum documento anexado, e nada fica pendente por isso. A aprovação da exceção orçamentária é registrada no próprio sistema. Use este espaço só se quiser juntar alguma evidência de apoio."
           />
         )}
 

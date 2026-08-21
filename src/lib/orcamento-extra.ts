@@ -51,46 +51,32 @@ export const IMPACTO_DE_ORCAMENTO_EXTRA_LABEL: Record<(typeof IMPACTOS_DE_ORCAME
   PONTUAL: "Custo pontual",
 };
 
-export type ChecagemDoComprovante =
-  | { ok: true; comprovante: Attachment | null }
-  | { ok: false; erro: string };
-
 /**
- * @param acaoBloqueada trecho final da mensagem, com o que a pessoa está
- * tentando fazer (ex: "antes de aprovar a solicitação").
- * @param exigirMesmoSemMarcacao para o caminho em que o próprio sistema conclui
- * que a compra é extra-orçamentária, e não depende mais do que o solicitante
- * marcou: abertura de exceção por indisponibilidade de orçamento.
+ * Documento de apoio do orçamento, quando existir. OPCIONAL.
+ *
+ * ATÉ 21/08/2026 ISTO ERA UMA EXIGÊNCIA, e bloqueava cinco pontos do fluxo com
+ * 422: o atalho de cancelamento na Triagem, os dois ramos da Validação
+ * Orçamentária, a aprovação da exceção, e um aviso na tela. A regra caiu por
+ * decisão do dono do sistema, e a razão é que ela ficou redundante:
+ *
+ * O anexo era o print de um e-mail em que o FP&A aprovava o gasto fora do
+ * orçamento. Era prova externa porque o sistema não tinha prova própria. Hoje
+ * tem: o solicitante detalha valor, base, vigência, impacto e motivo num modal
+ * na abertura (colunas extraBudget* em PurchaseRequest), e a Coordenação ou o
+ * Gerente F&NC decide a exceção DENTRO do sistema, com nível, decisão, autor,
+ * justificativa e data gravados em BudgetException. O registro da aprovação
+ * passou a ser o próprio banco, e exigir o print de um e-mail sobre a mesma
+ * decisão é pedir duas vezes a mesma coisa, sendo que a segunda é pior.
+ *
+ * O campo continua existindo, opcional, por dois motivos: solicitações
+ * anteriores a esta data já têm arquivos nesta categoria e sumiriam da tela se
+ * o painel fosse removido, e quem tiver documentação de apoio ainda pode
+ * juntá-la. O que não existe mais é qualquer caminho em que a ausência do
+ * arquivo impeça a solicitação de andar.
  */
-export async function checarComprovanteDoFpa(
-  request: { id: string; extraBudget: boolean },
-  acaoBloqueada: string,
-  exigirMesmoSemMarcacao = false
-): Promise<ChecagemDoComprovante> {
-  // Buscado também quando extraBudget é false, de propósito: o formulário
-  // envia este anexo sempre que a pessoa escolhe um arquivo, mesmo com linha
-  // de orçamento informada, e a exceção orçamentária vincula o documento
-  // quando ele existe. Só a EXIGÊNCIA é condicionada a extraBudget.
-  const comprovante = await prisma.attachment.findFirst({
-    where: { requestId: request.id, category: CATEGORIA_COMPROVANTE_FPA },
+export async function anexoDeApoioDoOrcamento(requestId: string): Promise<Attachment | null> {
+  return prisma.attachment.findFirst({
+    where: { requestId, category: CATEGORIA_COMPROVANTE_FPA },
     orderBy: { createdAt: "desc" },
   });
-
-  // `exigirMesmoSemMarcacao` fecha o caso espelhado, que é o mais comum dos
-  // dois: o comprador conclui "não há orçamento" numa solicitação que ninguém
-  // marcou como Orçamento Extra. O controle inteiro dependia de um booleano
-  // que o solicitante declara sozinho na criação, e bastava digitar qualquer
-  // coisa no campo Linha do Orçamento para desligá-lo nos três pontos de
-  // cobrança de uma vez. Abrir uma exceção orçamentária É o caso
-  // extra-orçamentário, independente do que foi marcado lá atrás.
-  if ((request.extraBudget || exigirMesmoSemMarcacao) && !comprovante) {
-    return {
-      ok: false,
-      erro:
-        "Esta solicitação foi aberta como Orçamento Extra e ainda não tem o comprovante de aprovação do FP&A anexado. " +
-        `Anexe o documento na solicitação ${acaoBloqueada}.`,
-    };
-  }
-
-  return { ok: true, comprovante };
 }

@@ -4,7 +4,7 @@ import { budgetExceptionLevel, budgetExceptionApproverRole, nextAfterValidacaoOr
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
-import { checarComprovanteDoFpa } from "@/lib/orcamento-extra";
+import { anexoDeApoioDoOrcamento } from "@/lib/orcamento-extra";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
@@ -33,32 +33,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const roleError = await requireRole(actorId, ["COMPRADOR"]);
     if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
 
-    // O comprovante do FP&A é exigido AQUI TAMBÉM, e não só no ramo da exceção
-    // (abaixo). Decisão tomada lendo o que este ramo faz: "há orçamento" numa
-    // solicitação aberta como Orçamento Extra é uma contradição, e era a saída
-    // mais larga das duas. O ramo da exceção pelo menos grava um
-    // BudgetException, com alçada e aprovador; este aqui manda a solicitação
-    // direto para Cotação (ou Due Diligence) sem exceção, sem documento e sem
-    // nenhum registro de que a compra é extra-orçamentária. Um único booleano
-    // no corpo da requisição desligava o controle inteiro.
+    // Este ramo já exigiu o comprovante do FP&A. A exigência caiu em
+    // 21/08/2026, com as outras quatro, quando o registro da aprovação passou
+    // a ser o próprio sistema (ver @/lib/orcamento-extra).
     //
-    // Se a marcação de Orçamento Extra estiver errada (o comprador encontrou
-    // uma linha que cobre a compra), a saída não é passar por cima: é anexar a
-    // validação do FP&A, ou corrigir a solicitação na origem. Dizer "há
-    // orçamento" aqui não desfaz a marcação, só faz a solicitação sair da
-    // etapa afirmando duas coisas incompatíveis ao mesmo tempo.
-    const checagem = await checarComprovanteDoFpa(request, "antes de avançar a Validação Orçamentária");
-    if (!checagem.ok) {
-      return NextResponse.json(
-        {
-          error:
-            `${checagem.erro} Se existe linha de orçamento para esta compra, a marcação de Orçamento Extra ` +
-            "está errada e precisa ser corrigida na solicitação, não contornada aqui.",
-        },
-        { status: 422 }
-      );
-    }
-
+    // FICA REGISTRADO O QUE A REMOÇÃO REABRIU, porque não é nada: este ramo
+    // manda a solicitação direto para Cotação sem criar BudgetException, então
+    // uma compra marcada como Orçamento Extra pode sair daqui sem exceção e
+    // sem registro de que é extra-orçamentária. Isso já era assim antes do
+    // comprovante existir, e o comprovante nunca corrigiu: ele só pedia um
+    // arquivo. Quem fecha esse caminho é o comprador, respondendo "não há
+    // orçamento" quando de fato não há, e a coerência disso não é verificável
+    // por código. Se um dia incomodar, o conserto é impedir budgetOk=true numa
+    // solicitação com extraBudget=true, não pedir documento.
     const nextStage = nextAfterValidacaoOrcamentaria({ budgetOk: true, demandType: request.demandType });
 
     const avanco = await avancarEtapa({
@@ -84,24 +71,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const level = budgetExceptionLevel(Number(request.estimatedValue));
 
   if (!exceptionDecision) {
-    // Exige o comprovante do FP&A e, de quebra, devolve o anexo de "Aprovação
-    // Extra-orçamentária" enviado na abertura (Nova Solicitação) para vincular
-    // à exceção. Mesma regra do ramo de orçamento disponível acima e da
-    // Aprovação do Gestor, concentrada em @/lib/orcamento-extra.
-    const checagem = await checarComprovanteDoFpa(request, "antes de registrar a exceção orçamentária");
-    if (!checagem.ok) {
-      return NextResponse.json({ error: checagem.erro }, { status: 422 });
-    }
-    const extraBudgetAttachment = checagem.comprovante;
+    // Vincula à exceção o documento de apoio, SE existir. Deixou de ser
+    // exigência em 21/08/2026 (ver @/lib/orcamento-extra); continua vinculado
+    // porque, quando alguém anexa algo, o lugar certo do arquivo é junto da
+    // exceção a que ele se refere.
+    const anexoDeApoio = await anexoDeApoioDoOrcamento(request.id);
 
     // A solicitação passa a constar como extra-orçamentária de fato: chegar
     // aqui significa que o comprador concluiu que não há orçamento, mesmo que
-    // ninguém tenha marcado a caixa na abertura. Sem isto, o controle inteiro
-    // seguiria dependendo de um booleano que o solicitante declara sozinho, e
-    // os pontos de cobrança seguintes consultariam um valor que já se sabe
-    // errado. Abrir a exceção continua permitido sem o comprovante: quem não
-    // marcou Orçamento Extra nunca teve onde anexá-lo, e travar a abertura
-    // deixaria a solicitação sem saída. A cobrança é na decisão, abaixo.
+    // ninguém tenha marcado a caixa na abertura. Sem isto, o registro seguiria
+    // dependendo de um booleano que o solicitante declara sozinho.
     if (!request.extraBudget) {
       await prisma.purchaseRequest.update({ where: { id: request.id }, data: { extraBudget: true } });
     }
@@ -109,8 +88,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // Primeira chamada: apenas registra a exceção como pendente, na alçada certa.
     const exception = await prisma.budgetException.upsert({
       where: { requestId: request.id },
-      update: { level, attachmentId: extraBudgetAttachment?.id },
-      create: { requestId: request.id, level, attachmentId: extraBudgetAttachment?.id },
+      update: { level, attachmentId: anexoDeApoio?.id },
+      create: { requestId: request.id, level, attachmentId: anexoDeApoio?.id },
     });
     return NextResponse.json({ status: "EXCECAO_PENDENTE", exception });
   }
@@ -124,22 +103,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const decision = exceptionDecision as "APROVADO" | "REPROVADO";
 
   // APROVAR a exceção é o ponto em que a compra sem orçamento fica liberada
-  // para seguir, e é aqui que o comprovante do FP&A tem que existir. Vale
-  // mesmo sem a marcação de Orçamento Extra na abertura: se a solicitação
-  // chegou a ter exceção, ela é extra-orçamentária por definição, e o
-  // controle não pode depender do que o solicitante declarou sobre si mesmo.
-  // REPROVAR segue livre: recusar não precisa de documento, e exigir aqui
-  // deixaria a solicitação presa quando o comprovante nunca vier.
-  if (decision === "APROVADO") {
-    const checagemDaDecisao = await checarComprovanteDoFpa(
-      request,
-      "antes de aprovar a exceção orçamentária",
-      true
-    );
-    if (!checagemDaDecisao.ok) {
-      return NextResponse.json({ error: checagemDaDecisao.erro }, { status: 422 });
-    }
-  }
+  // para seguir, e era aqui que o comprovante do FP&A tinha que existir. Essa
+  // exigência caiu em 21/08/2026, e este é justamente o ponto que explica por
+  // quê: o update logo abaixo grava decisão, quem decidiu (pelo papel exigido
+  // acima, conforme a alçada), a justificativa e a data. Esse registro É a
+  // aprovação. Pedir, além dele, o print de um e-mail em que alguém aprovou a
+  // mesma coisa por fora era duplicar a prova, e a cópia era a pior das duas.
   await prisma.budgetException.update({
     where: { requestId: request.id },
     data: { decision, justification, decidedAt: new Date() },

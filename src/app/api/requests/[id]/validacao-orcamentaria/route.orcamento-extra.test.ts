@@ -54,19 +54,22 @@ describe("Orçamento Extra: comprovante do FP&A", () => {
     await cleanupTestData();
   });
 
-  it("recusa abrir a exceção sem o comprovante anexado", async () => {
+  // Este caso era o inverso até 21/08/2026: abrir a exceção sem anexo devolvia
+  // 422. A exigência caiu quando o registro da aprovação passou a ser o
+  // próprio sistema (ver anexo-de-apoio-opcional.test.ts, que cobre os cinco
+  // pontos). Aqui fica o efeito local: a exceção é criada, e sem anexo.
+  it("abre a exceção sem anexo, com attachmentId nulo", async () => {
     const comprador = await createTestUser(["COMPRADOR"]);
     const req = await solicitacaoExtraOrcamentaria(false);
 
     const res = await patch(req.id, { actorId: comprador.id, budgetOk: false });
 
-    expect(res.status).toBe(422);
-    const corpo = await res.json();
-    expect(corpo.error).toContain("FP&A");
+    expect(res.status).toBe(200);
+    expect((await res.json()).status).toBe("EXCECAO_PENDENTE");
 
-    // O que mais importa: nenhuma exceção sem documento chegou ao banco.
-    const excecao = await prisma.budgetException.findUnique({ where: { requestId: req.id } });
-    expect(excecao).toBeNull();
+    const excecao = await prisma.budgetException.findUniqueOrThrow({ where: { requestId: req.id } });
+    expect(excecao.attachmentId).toBeNull();
+    expect(excecao.decision).toBe("PENDENTE");
   });
 
   it("permite abrir a exceção com o comprovante, e vincula o anexo", async () => {
