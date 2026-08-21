@@ -6,7 +6,8 @@ import type { RoleName } from "@prisma/client";
 import { UserPicker } from "@/components/UserPicker";
 import { SupplierPicker } from "@/components/SupplierPicker";
 import { AiInsightPanel } from "@/components/AiInsightPanel";
-import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, approvalLevel, approvalsRequiredForLevel, STAGES } from "@/lib/workflow";
+import { budgetExceptionLevel, budgetExceptionApproverRole, BUDGET_EXCEPTION_LEVEL_LABEL, STAGES } from "@/lib/workflow";
+import { faixaDoValor, assinaturasExigidas, type Faixa } from "@/lib/alcadas";
 import { Button, Card, WarningNotice } from "@/components/ui";
 
 // Identidade de quem está logado (server session, ver src/lib/auth.ts),
@@ -791,20 +792,46 @@ function AprovacaoForm({
   // sessão real.
   const [approverId, setApproverId] = useState("");
   const [approverId2, setApproverId2] = useState("");
-  // Aprovador(es) padrão desta alçada de valor (ApprovalLevelApprover, ver
+  // Aprovador(es) padrão desta faixa de alçada (ApprovalLevelApprover, ver
   // /admin/centros-de-custo); quando o pool tem gente suficiente, a criação
-  // da Aprovação não exige mais escolha manual (pedido do usuário:
-  // "obrigatório como o gate do centro de custo"). Nível 1 exige 1
-  // aprovador; Níveis 2/3 exigem 2 distintos decidindo em conjunto (ver
-  // approvalsRequiredForLevel).
+  // da Aprovação não exige mais escolha manual.
+  //
+  // Desde 21/08/2026 as faixas vêm do banco (ApprovalTier) e não de constante
+  // no código, então este componente busca DUAS coisas: a forma da escada em
+  // /api/approval-tiers, para saber em qual faixa o valor cai e quantas
+  // assinaturas ela exige, e os aprovadores em /api/approval-levels. São
+  // endpoints separados porque o segundo é restrito a ADMIN: quem não é
+  // administrador continua vendo quantas assinaturas a compra exige, e não vê
+  // os nomes, que é o comportamento que já existia.
+  const [faixa, setFaixa] = useState<Faixa | null>(null);
   const [levelApprovers, setLevelApprovers] = useState<{ level: number; approvers: { id: string; name: string; email: string }[] } | null>(null);
+
   useEffect(() => {
-    fetch("/api/approval-levels").then((res) => res.json()).then((levels) => {
-      const level = request.estimatedValue !== null ? approvalLevel(request.estimatedValue) : null;
-      setLevelApprovers(level !== null ? (levels.find((l: { level: number }) => l.level === level) ?? { level, approvers: [] }) : null);
-    }).catch(() => setLevelApprovers(null));
+    if (request.estimatedValue === null) {
+      setFaixa(null);
+      setLevelApprovers(null);
+      return;
+    }
+    const valor = request.estimatedValue;
+    fetch("/api/approval-tiers")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((faixas: Faixa[]) => {
+        const escolhida = faixaDoValor(faixas, valor);
+        setFaixa(escolhida);
+        if (!escolhida) return setLevelApprovers(null);
+        return fetch("/api/approval-levels")
+          .then((res) => (res.ok ? res.json() : []))
+          .then((levels: { level: number; approvers: { id: string; name: string; email: string }[] }[]) => {
+            setLevelApprovers(levels.find((l) => l.level === escolhida.level) ?? { level: escolhida.level, approvers: [] });
+          });
+      })
+      .catch(() => {
+        setFaixa(null);
+        setLevelApprovers(null);
+      });
   }, [request.estimatedValue]);
-  const requiredApprovers = levelApprovers ? approvalsRequiredForLevel(levelApprovers.level as 1 | 2 | 3) : 1;
+
+  const requiredApprovers = assinaturasExigidas(faixa);
   const poolHasEnough = Boolean(levelApprovers && levelApprovers.approvers.length >= requiredApprovers);
   const [approvalId, setApprovalId] = useState("");
   const [justification, setJustification] = useState("");

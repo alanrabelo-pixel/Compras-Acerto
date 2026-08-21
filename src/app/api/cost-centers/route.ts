@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
+import { garantirPapelDeAprovador } from "@/lib/papel-de-gestor";
 
 // GET /api/cost-centers: lista centros de custo ativos, para o formulário de
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
@@ -46,6 +47,8 @@ export async function POST(req: NextRequest) {
   if (!name) return NextResponse.json({ error: "Informe o nome do centro de custo." }, { status: 400 });
 
   const managerIds: string[] = Array.isArray(body.managerIds) ? body.managerIds : [];
+
+  await garantirPapelDeAprovador(managerIds);
 
   const costCenter = await prisma.costCenter.create({
     data: { name, managers: { connect: managerIds.map((id) => ({ id })) } },

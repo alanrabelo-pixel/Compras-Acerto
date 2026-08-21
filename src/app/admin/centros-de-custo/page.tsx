@@ -4,19 +4,14 @@ import { AppShell } from "@/components/AppShell";
 import { CostCenterManagerPicker } from "@/components/CostCenterManagerPicker";
 import { CostCenterActiveToggle } from "@/components/CostCenterActiveToggle";
 import { CreateCostCenterForm } from "@/components/CreateCostCenterForm";
-import { ApprovalLevelPicker } from "@/components/ApprovalLevelPicker";
+import { AlcadasAdmin } from "@/components/AlcadasAdmin";
 import { ApproverCostCentersPicker } from "@/components/ApproverCostCentersPicker";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { TableWrap, TableHeadRow, TableRow, TableEmpty, Tabs } from "@/components/ui";
 import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
+import { todasAsFaixas } from "@/lib/alcadas";
 
 export const dynamic = "force-dynamic";
-
-const LEVEL_LABEL: Record<number, string> = {
-  1: "Nível 1: até R$ 50 mil",
-  2: "Nível 2: até R$ 500 mil",
-  3: "Nível 3: acima de R$ 500 mil",
-};
 
 export default async function CentrosDeCustoPage({
   searchParams,
@@ -39,6 +34,11 @@ export default async function CentrosDeCustoPage({
   });
 
   const levelRows = await prisma.approvalLevelApprover.findMany({ include: { user: { select: USUARIO_PUBLICO } } });
+  const faixasDeAlcada = await todasAsFaixas();
+  const aprovadoresPorFaixa = levelRows.reduce<Record<number, string[]>>((mapa, linha) => {
+    (mapa[linha.level] ??= []).push(linha.userId);
+    return mapa;
+  }, {});
 
   const approvers = await prisma.user.findMany({
     where: { roles: { some: { role: "APROVADOR" } } },
@@ -102,26 +102,7 @@ export default async function CentrosDeCustoPage({
             </TableWrap>
           </div>
 
-          <div className="section-gap">
-            <p className="page-subtitle" style={{ marginBottom: 14 }}>
-              Aprovador(es) padrão de cada alçada de valor, atribuído(s) automaticamente ao criar a Aprovação na etapa
-              "Aprovação" (depois de Cotação/Mapa de Cotação). Mais de um é permitido, e qualquer um pode decidir.
-            </p>
-            <TableWrap>
-              <TableHeadRow columns="1.6fr 2fr">
-                <span>Alçada</span>
-                <span>Aprovador(es)</span>
-              </TableHeadRow>
-              {[1, 2, 3].map((level) => (
-                <TableRow key={level} columns="1.6fr 2fr" style={{ alignItems: "center" }}>
-                  <span style={{ fontWeight: 600 }}>{LEVEL_LABEL[level]}</span>
-                  <span>
-                    <ApprovalLevelPicker level={level} initialApproverIds={levelRows.filter((r) => r.level === level).map((r) => r.userId)} />
-                  </span>
-                </TableRow>
-              ))}
-            </TableWrap>
-          </div>
+          <AlcadasAdmin faixas={faixasDeAlcada} aprovadoresPorFaixa={aprovadoresPorFaixa} />
 
           <div className="section-gap">
             <p className="page-subtitle" style={{ marginBottom: 14 }}>

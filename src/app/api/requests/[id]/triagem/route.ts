@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { faixasAtivas, faixaDoValor } from "@/lib/alcadas";
 import {
   determineLane,
   checkFragmentationRisk,
-  approvalLevel,
   nextAfterValidacaoOrcamentaria,
 } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
@@ -115,7 +115,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     handlesPersonalData: Boolean(handlesPersonalData),
   });
 
+  // Faixas do banco desde 21/08/2026: o fracionamento compara POSICAO na
+  // escada, entao precisa da escada inteira, nao so do valor.
+  const faixas = await faixasAtivas();
+
   const fragmentation = checkFragmentationRisk({
+    faixas,
     newRequestValue: resolvedEstimatedValue,
     priorRequestsValueLast12Months: Number(priorRequestsValueLast12Months ?? 0),
   });
@@ -177,7 +182,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     _meta: {
       lane,
       fragmentationFlagged: fragmentation.flagged,
-      nextApprovalLevelIfNoBudget: approvalLevel(resolvedEstimatedValue),
+      nextApprovalLevelIfNoBudget: faixaDoValor(faixas, resolvedEstimatedValue)?.level ?? null,
       hintNextStage: nextAfterValidacaoOrcamentaria({ budgetOk: true, demandType: request.demandType }),
     },
   });

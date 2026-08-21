@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RoleName } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { faixasAtivas, faixaDoValor } from "@/lib/alcadas";
 import { requireRole } from "@/lib/rbac";
 import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { decryptSecret } from "@/lib/crypto";
-import { approvalLevel, STAGES } from "@/lib/workflow";
+import { STAGES } from "@/lib/workflow";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import {
   generateInsight,
@@ -186,7 +187,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         fragmentationFlag: request.fragmentationFlag,
         hasConflictDeclared: Boolean(latestConflict?.hasConflict),
         isPersonified: Boolean(pendingApproval?.personifiedBy),
-        approvalLevel: estimatedValue !== null ? approvalLevel(estimatedValue) : 0,
+        approvalLevel: estimatedValue !== null ? (faixaDoValor(await faixasAtivas(), estimatedValue)?.level ?? 0) : 0,
       });
       break;
     }

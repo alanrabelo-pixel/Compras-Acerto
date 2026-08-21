@@ -10,6 +10,7 @@
  * Isso mantém a lógica de negócio separada da mecânica de integração.
  */
 
+import { faixaDoValor, ordenarFaixas, type Faixa } from "@/lib/alcadas";
 import { Stage, DemandType, RoleName, Diretoria } from "@prisma/client";
 
 export type StageDefinition = {
@@ -273,23 +274,21 @@ export const BUDGET_EXCEPTION_LEVEL_LABEL: Record<1 | 2, string> = {
 };
 
 /**
- * CORREÇÃO (revisão de consistência): o documento de referência definia as
- * alçadas de aprovação final como Nível 1 / 3 / 4, sem Nível 2. Renumerado
- * aqui para 1 / 2 / 3, mantendo as mesmas faixas de valor e aprovadores.
+ * A alçada da APROVAÇÃO FINAL saiu daqui em 21/08/2026.
+ *
+ * Era `approvalLevel(valor)`, com 50 mil e 500 mil escritos no código e o
+ * tipo `1 | 2 | 3` propagado por toda parte. Virou tabela (ApprovalTier), para
+ * o dono do sistema incluir, editar e desativar faixas pela tela. A escolha
+ * da faixa agora é `faixaDoValor(faixas, valor)` em @/lib/alcadas, pura, e
+ * quem carrega as faixas é `faixasAtivas()`, no servidor.
+ *
+ * As funções abaixo que dependiam dela passaram a receber as faixas como
+ * argumento, pelo mesmo motivo: manter regra de negócio testável sem banco.
+ *
+ * Não confundir com budgetExceptionLevel, logo acima: aquela é a alçada da
+ * EXCEÇÃO ORÇAMENTÁRIA, continua no código, e tem outra escada (10 mil) e
+ * outro efeito (qual papel decide, não quantas assinaturas).
  */
-export function approvalLevel(estimatedValue: number): 1 | 2 | 3 {
-  if (estimatedValue <= 50000) return 1; // Coordenação F&NC c/ procuração ou Gerente F&NC
-  if (estimatedValue <= 500000) return 2; // Gerente F&NC
-  return 3; // Gerente F&NC (o papel de CEO não existe no sistema, ver linha 221)
-}
-
-// Pedido do usuário: Nível 1 exige 1 aprovador; Níveis 2 e 3 exigem 2
-// aprovadores DISTINTOS decidindo em conjunto (a mesma pessoa não pode
-// contar como as duas assinaturas): controle de dupla checagem para
-// valores mais altos. Ver POST/PATCH /api/requests/[id]/aprovacao.
-export function approvalsRequiredForLevel(level: 1 | 2 | 3): number {
-  return level === 1 ? 1 : 2;
-}
 
 export function nextAfterAprovacao(params: {
   approved: boolean;
@@ -351,8 +350,16 @@ export function isValidTransition(from: Stage, to: Stage): boolean {
  * (não substitui o registro de auditoria, apenas evita que a exceção vire regra
  * para valores altos).
  */
-export function canPersonifyApprover(estimatedValue: number): boolean {
-  return approvalLevel(estimatedValue) === 1;
+export function canPersonifyApprover(faixas: Faixa[], estimatedValue: number): boolean {
+  // "Até o Nível 1" virou "até a faixa mais baixa configurada": com as faixas
+  // editáveis, o número 1 deixou de ser sinônimo de menor valor. A regra que
+  // interessa é a mesma de antes, personificar só nas compras pequenas, e
+  // agora ela acompanha a escada quando alguém mexe nela.
+  const maisBaixa = ordenarFaixas(faixas)[0];
+  const faixa = faixaDoValor(faixas, estimatedValue);
+  // Sem faixa configurada, ninguém personifica: na dúvida, o caminho é o
+  // aprovador real decidir.
+  return Boolean(maisBaixa && faixa && faixa.level === maisBaixa.level);
 }
 
 /**
@@ -369,13 +376,27 @@ export function canPersonifyApprover(estimatedValue: number): boolean {
  * recorrentes de baixo risco.
  */
 export function checkFragmentationRisk(params: {
+  faixas: Faixa[];
   newRequestValue: number;
   priorRequestsValueLast12Months: number;
-}): { flagged: boolean; combinedLevel: 1 | 2 | 3; individualLevel: 1 | 2 | 3 } {
+}): { flagged: boolean; combinedLevel: number; individualLevel: number } {
   const combined = params.newRequestValue + params.priorRequestsValueLast12Months;
-  const combinedLevel = approvalLevel(combined);
-  const individualLevel = approvalLevel(params.newRequestValue);
-  return { flagged: combinedLevel > individualLevel, combinedLevel, individualLevel };
+  const ordenadas = ordenarFaixas(params.faixas);
+  // A comparação é por POSIÇÃO na escada, não pelo número da faixa: `level` é
+  // identidade estável e uma faixa criada depois pode ter número maior e teto
+  // menor. Comparar os números diria que a compra subiu de alçada quando ela
+  // não subiu, e o alerta de fracionamento sairia errado.
+  const posicao = (valor: number) => ordenadas.findIndex((f) => f.maxValue === null || valor <= f.maxValue);
+  const posCombinada = posicao(combined);
+  const posIndividual = posicao(params.newRequestValue);
+
+  const faixaCombinada = ordenadas[posCombinada];
+  const faixaIndividual = ordenadas[posIndividual];
+  return {
+    flagged: posCombinada > posIndividual,
+    combinedLevel: faixaCombinada?.level ?? 0,
+    individualLevel: faixaIndividual?.level ?? 0,
+  };
 }
 
 /**

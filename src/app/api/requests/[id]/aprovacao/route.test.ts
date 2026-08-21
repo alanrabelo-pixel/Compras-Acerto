@@ -119,7 +119,10 @@ describe("POST/PATCH /api/requests/[id]/aprovacao", () => {
     const data = await res.json();
 
     expect(res.status).toBe(422);
-    expect(data.error).toMatch(/Nível 1/);
+    // A mensagem deixou de citar "Nível 1" em 21/08/2026: com as faixas
+    // editáveis, o número 1 deixou de ser sinônimo de menor valor, e a regra
+    // passou a ser "só na faixa mais baixa configurada".
+    expect(data.error).toMatch(/faixa de alçada mais baixa/);
   });
 
   it("permite personificação dentro do Nível 1 com justificativa e comprador válido", async () => {

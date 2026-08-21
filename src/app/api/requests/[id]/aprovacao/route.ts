@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { faixasAtivas, faixaDoValor, assinaturasExigidas } from "@/lib/alcadas";
 import {
-  approvalLevel,
-  approvalsRequiredForLevel,
   canPersonifyApprover,
   nextAfterAprovacao,
   APPROVAL_ESCALATION_BUSINESS_DAYS,
@@ -69,8 +68,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     ? Number(cotacaoVencedora.negotiatedValue)
     : Number(request.estimatedValue);
 
-  const level = approvalLevel(valorDaAlcada);
-  const required = approvalsRequiredForLevel(level);
+  // Faixas vindas do banco desde 21/08/2026 (ApprovalTier, editáveis em
+  // /admin/centros-de-custo). Sem faixa que cubra o valor, a aprovação é
+  // recusada em vez de cair num padrão: aprovar como se fosse a menor alçada
+  // seria exatamente o erro que a escada existe para impedir.
+  const faixas = await faixasAtivas();
+  const faixa = faixaDoValor(faixas, valorDaAlcada);
+  if (!faixa) {
+    return NextResponse.json(
+      {
+        error:
+          "Nenhuma faixa de alçada ativa cobre este valor. Configure as alçadas em Administração > Centros de Custo " +
+          "antes de criar a aprovação.",
+      },
+      { status: 422 },
+    );
+  }
+  const level = faixa.level;
+  const required = assinaturasExigidas(faixa);
 
   // Aprovador(es) padrão da alçada (ApprovalLevelApprover, ver
   // /admin/centros-de-custo): quando o pool tem gente suficiente, os
@@ -214,9 +229,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const personifierRoles = await prisma.userRole.findMany({ where: { userId: personifiedBy } });
     const personifierIsAdmin = personifierRoles.some((r) => r.role === "ADMIN");
 
-    if (!personifierIsAdmin && !canPersonifyApprover(Number(request.estimatedValue))) {
+    const faixasParaPersonificacao = await faixasAtivas();
+    if (!personifierIsAdmin && !canPersonifyApprover(faixasParaPersonificacao, Number(request.estimatedValue))) {
       return NextResponse.json(
-        { error: "Personificação de aprovador só é permitida até o Nível 1 (R$ 50 mil). Este valor exige decisão do aprovador real." },
+        {
+          error:
+            "Personificação de aprovador só é permitida na faixa de alçada mais baixa. Este valor exige decisão do " +
+            "aprovador real.",
+        },
         { status: 422 }
       );
     }

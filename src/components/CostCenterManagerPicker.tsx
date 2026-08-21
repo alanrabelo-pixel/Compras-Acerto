@@ -37,7 +37,11 @@ export function CostCenterManagerPicker({ costCenterId, initialManagerIds }: { c
 
   return (
     <div style={{ opacity: salvando ? 0.6 : 1 }}>
-      <MultiUserPicker selectedIds={managerIds} onChange={save} role="APROVADOR" emptyLabel="Sem gestor do centro de custo definido" />
+      {/* Sem filtro de papel desde 21/08/2026: listava só quem já tinha
+          APROVADOR, e quem não tinha simplesmente não aparecia, sem
+          explicação. Agora lista todo mundo ativo, e PATCH
+          /api/cost-centers/[id] concede o papel a quem for nomeado. */}
+      <MultiUserPicker selectedIds={managerIds} onChange={save} emptyLabel="Sem gestor do centro de custo definido" />
       <StatusDaAcao estado={estado} />
     </div>
   );

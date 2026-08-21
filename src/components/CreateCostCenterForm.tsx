@@ -54,8 +54,11 @@ export function CreateCostCenterForm() {
             <input id="new-cc-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do centro de custo" autoFocus />
           </div>
           <div>
-            <label className="label">Gestor(es) aprovador(es) (opcional)</label>
-            <MultiUserPicker selectedIds={managerIds} onChange={setManagerIds} role="APROVADOR" emptyLabel="Nenhum (configure depois)" />
+            <label className="label">Gestor(es) (opcional)</label>
+            {/* Todo mundo ativo, não só quem já tem o papel Aprovador: a rota
+                concede o papel a quem for nomeado (ver @/lib/papel-de-gestor). */}
+            <MultiUserPicker selectedIds={managerIds} onChange={setManagerIds} emptyLabel="Nenhum (configure depois)" />
+            <p className="help">Quem for nomeado recebe o papel Aprovador automaticamente, se ainda não tiver.</p>
           </div>
           {error && <p style={{ fontSize: 12, color: "var(--danger)", margin: 0 }}>{error}</p>}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>

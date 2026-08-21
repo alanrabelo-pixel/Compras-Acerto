@@ -2804,3 +2804,35 @@ body.com-faixa-de-ambiente .painel-expandido-fundo {
   border-top: 1px solid var(--border);
   background: var(--surface-muted);
 }
+
+/* ---------------------------------------------------------------------------
+   Faixas de alçada em /admin/centros-de-custo.
+
+   Grid próprio, e não TableWrap, porque cada linha tem três blocos de altura
+   muito diferente: o nome com o intervalo em duas linhas, o seletor de
+   aprovadores (que cresce com a quantidade de gente) e a barra de botões. Numa
+   tabela de colunas fixas, a linha inteira acompanharia a maior, e as faixas
+   sem aprovador ficariam com um vazio alto.
+--------------------------------------------------------------------------- */
+.tabela-alcadas {
+  display: grid;
+  gap: 8px;
+}
+
+.linha-alcada {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.4fr) minmax(180px, 2fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 860px) {
+  .linha-alcada {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

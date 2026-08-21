@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { bypassAuthAtivo } from "@/lib/bypass";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
+import { garantirPapelDeAprovador } from "@/lib/papel-de-gestor";
 
 /**
  * PATCH /api/cost-centers/[id] (painel /admin/centros-de-custo): troca o(s)
@@ -43,6 +44,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "Nada para atualizar (esperado managerIds e/ou active)" }, { status: 400 });
   }
+
+  // Quem for nomeado gestor recebe o papel APROVADOR, se ainda nao tiver.
+  // Antes disso a nomeacao falhava em silencio: o seletor so listava quem ja
+  // tinha o papel. Ver @/lib/papel-de-gestor.
+  if (Array.isArray(body.managerIds)) await garantirPapelDeAprovador(body.managerIds);
 
   const costCenter = await prisma.costCenter.update({
     where: { id: params.id },

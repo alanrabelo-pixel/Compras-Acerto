@@ -4,8 +4,6 @@ import {
   budgetExceptionLevel,
   budgetExceptionApproverRole,
   BUDGET_EXCEPTION_LEVEL_LABEL,
-  approvalLevel,
-  approvalsRequiredForLevel,
   nextAfterAprovacao,
   nextAfterAguardandoEntrega,
   nextAfterTesouraria,
@@ -88,31 +86,10 @@ describe("budgetExceptionApproverRole", () => {
   });
 });
 
-describe("approvalLevel", () => {
-  it("is level 1 at and below R$50.000", () => {
-    expect(approvalLevel(50000)).toBe(1);
-  });
-
-  it("is level 2 just above R$50.000 and up to R$500.000", () => {
-    expect(approvalLevel(50000.01)).toBe(2);
-    expect(approvalLevel(500000)).toBe(2);
-  });
-
-  it("is level 3 above R$500.000", () => {
-    expect(approvalLevel(500000.01)).toBe(3);
-  });
-});
-
-describe("approvalsRequiredForLevel", () => {
-  it("exige 1 aprovador no Nível 1", () => {
-    expect(approvalsRequiredForLevel(1)).toBe(1);
-  });
-
-  it("exige 2 aprovadores nos Níveis 2 e 3", () => {
-    expect(approvalsRequiredForLevel(2)).toBe(2);
-    expect(approvalsRequiredForLevel(3)).toBe(2);
-  });
-});
+// approvalLevel e approvalsRequiredForLevel saíram deste arquivo em
+// 21/08/2026: a escada da Aprovação final virou tabela, e a escolha da faixa
+// mudou para faixaDoValor/assinaturasExigidas. Os casos equivalentes, com as
+// fronteiras de 50 mil e 500 mil, estão em src/lib/alcadas.test.ts.
 
 describe("nextAfterAprovacao", () => {
   it("cancels the request when reproved, regardless of needsContract", () => {
@@ -209,17 +186,42 @@ describe("isValidTransition", () => {
   });
 });
 
+// As faixas vêm do banco desde 21/08/2026 (ApprovalTier). Estas são as três
+// que a migration semeou, iguais às constantes que existiam antes, passadas
+// como argumento para as funções continuarem puras e testáveis sem Postgres.
+const FAIXAS_PADRAO = [
+  { level: 1, label: "Nível 1", maxValue: 50000, requiredApprovers: 1 },
+  { level: 2, label: "Nível 2", maxValue: 500000, requiredApprovers: 2 },
+  { level: 3, label: "Nível 3", maxValue: null, requiredApprovers: 2 },
+];
+
 describe("canPersonifyApprover", () => {
-  it("allows personification only within approval level 1 (up to R$50.000)", () => {
-    expect(canPersonifyApprover(50000)).toBe(true);
-    expect(canPersonifyApprover(50000.01)).toBe(false);
-    expect(canPersonifyApprover(1_000_000)).toBe(false);
+  it("allows personification only within the lowest tier (up to R$50.000)", () => {
+    expect(canPersonifyApprover(FAIXAS_PADRAO, 50000)).toBe(true);
+    expect(canPersonifyApprover(FAIXAS_PADRAO, 50000.01)).toBe(false);
+    expect(canPersonifyApprover(FAIXAS_PADRAO, 1_000_000)).toBe(false);
+  });
+
+  it("acompanha a escada quando alguém muda a faixa mais baixa", () => {
+    // O ponto da mudança: "até o Nível 1" virou "até a faixa mais baixa
+    // configurada". Com o corte em 5 mil, 50 mil deixa de permitir.
+    const apertada = [
+      { level: 1, label: "Baixa", maxValue: 5000, requiredApprovers: 1 },
+      { level: 2, label: "Alta", maxValue: null, requiredApprovers: 2 },
+    ];
+    expect(canPersonifyApprover(apertada, 5000)).toBe(true);
+    expect(canPersonifyApprover(apertada, 50000)).toBe(false);
+  });
+
+  it("sem faixa nenhuma configurada, ninguém personifica", () => {
+    expect(canPersonifyApprover([], 100)).toBe(false);
   });
 });
 
 describe("checkFragmentationRisk", () => {
   it("flags when combining with prior purchases crosses into a higher approval level", () => {
     const result = checkFragmentationRisk({
+      faixas: FAIXAS_PADRAO,
       newRequestValue: 30000,
       priorRequestsValueLast12Months: 30000,
     });
@@ -230,12 +232,33 @@ describe("checkFragmentationRisk", () => {
 
   it("does not flag when the combined value stays within the same approval level", () => {
     const result = checkFragmentationRisk({
+      faixas: FAIXAS_PADRAO,
       newRequestValue: 10000,
       priorRequestsValueLast12Months: 10000,
     });
     expect(result.individualLevel).toBe(1);
     expect(result.combinedLevel).toBe(1);
     expect(result.flagged).toBe(false);
+  });
+
+  it("compara POSIÇÃO na escada, não o número da faixa", () => {
+    // O caso que o número quebraria: uma faixa criada depois (level 4) com
+    // teto MENOR que a de level 2. Comparar os números diria que 60 mil
+    // (level 2) é alçada mais alta que 30 mil (level 4), e o alerta sairia
+    // invertido. Por posição, a ordem correta é 4 antes de 2.
+    const foraDeOrdem = [
+      { level: 1, label: "A", maxValue: 10000, requiredApprovers: 1 },
+      { level: 4, label: "B", maxValue: 50000, requiredApprovers: 1 },
+      { level: 2, label: "C", maxValue: null, requiredApprovers: 2 },
+    ];
+    const resultado = checkFragmentationRisk({
+      faixas: foraDeOrdem,
+      newRequestValue: 30000,
+      priorRequestsValueLast12Months: 30000,
+    });
+    expect(resultado.individualLevel).toBe(4);
+    expect(resultado.combinedLevel).toBe(2);
+    expect(resultado.flagged).toBe(true);
   });
 });
 

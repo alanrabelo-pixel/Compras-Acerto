@@ -120,12 +120,48 @@ model CostCenter {
   requests PurchaseRequest[]
 }
 
-// Aprovador(es) padrão de cada alçada de valor (Nível 1/2/3, ver
-// approvalLevel() em src/lib/workflow.ts), configurável em
+// Faixas de alçada da APROVAÇÃO FINAL (etapa Aprovação, depois do Mapa de
+// Cotação). Eram constantes em src/lib/workflow.ts; viraram tabela em
+// 21/08/2026, a pedido do dono do sistema, para permitir incluir, editar e
+// desativar faixas pela tela sem mexer em código.
+//
+// `level` É IDENTIDADE ESTÁVEL, NÃO POSIÇÃO. A ordem de exibição e de cálculo
+// vem de maxValue; o nome que a pessoa lê vem de label. A distinção existe
+// porque Approval.level e ApprovalLevelApprover.level JÁ GRAVARAM números:
+// se inserir uma faixa no meio renumerasse as outras, aprovações antigas
+// passariam a apontar para a alçada errada, e o histórico mentiria. Criar uma
+// faixa entre a 1 e a 2 gera level=4, que aparece no meio da lista por causa
+// do valor. Ninguém precisa saber disso, e por isso o número não é exibido.
+//
+// maxValue nulo marca a FAIXA DO TOPO, a que não tem teto. Exatamente uma
+// faixa ativa deve ter maxValue nulo; a API recusa criar a segunda, senão
+// duas faixas disputariam os valores altos e o resultado dependeria da ordem
+// de leitura no banco.
+//
+// Desativar em vez de apagar é a regra: active=false tira a faixa do cálculo
+// e das telas, e o histórico continua legível. Apagar de verdade só quando a
+// faixa nunca foi usada (sem Approval e sem ApprovalLevelApprover).
+model ApprovalTier {
+  level             Int      @id
+  label             String
+  maxValue          Decimal? @db.Decimal(14, 2)
+  requiredApprovers Int      @default(1)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([active, maxValue])
+}
+
+// Aprovador(es) padrão de cada faixa de alçada, configurável em
 // /admin/centros-de-custo, mesma tela dos gestores de centro de custo. Usado
 // em POST /api/requests/[id]/aprovacao para atribuir automaticamente o
 // aprovador ao criar a Aprovação. Mais de um userId por level é permitido,
 // mesmo raciocínio do CostCenter.managers acima.
+//
+// Sem FK para ApprovalTier de propósito: uma faixa desativada precisa manter
+// seus aprovadores gravados, para o histórico continuar explicando quem podia
+// decidir na época, e para reativar não exigir recadastro.
 model ApprovalLevelApprover {
   level  Int
   userId String
