@@ -6,6 +6,7 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
 import { campo } from "@/lib/rotulos";
 import { BASES_DE_ORCAMENTO_EXTRA, IMPACTOS_DE_ORCAMENTO_EXTRA } from "@/lib/orcamento-extra";
+import { gestoresParaAvisar, resumoParaOGestor } from "@/lib/alerta-centro-de-custo";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import { atorDaSessao, exigirQuadro } from "@/lib/acesso";
 
@@ -226,16 +227,37 @@ export async function POST(req: NextRequest) {
   const { subject, html } = templates.confirmacaoRecebimento(request.requester.name, shortDescription);
   await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
 
-  // Avisa TODOS os gestores do centro de custo (não só o principal). Desde
-  // 21/08/2026 é aviso, não convocação: a etapa Aprovação do Gestor saiu do
-  // fluxo e o gestor não decide mais nada aqui. Continua sendo notificado
-  // porque é o dono do orçamento e precisa saber o que entra no centro de
-  // custo dele; quem age agora é o comprador, na Triagem.
+  // Alerta ao gestor do centro de custo, por Slack. É AVISO, não convocação:
+  // a etapa Aprovação do Gestor saiu do fluxo em 21/08/2026 e a solicitação
+  // não espera ninguém. O gestor é avisado porque é o dono do orçamento.
+  //
+  // Todos os gestores, não só o principal, MENOS quem abriu a solicitação:
+  // avisar alguém do que ela mesma acabou de fazer é o ruído que ensina a
+  // ignorar a notificação. Regra e texto em @/lib/alerta-centro-de-custo,
+  // onde têm teste próprio.
+  const gestoresAvisados = gestoresParaAvisar(costCenter.managers, solicitanteId);
+  const resumo = resumoParaOGestor({
+    code: request.code,
+    shortDescription: request.shortDescription,
+    requesterName: request.requester.name,
+    costCenterName: costCenter.name,
+    estimatedValue: request.estimatedValue !== null ? Number(request.estimatedValue) : null,
+    priority: request.priority,
+    demandType: request.demandType,
+    suggestedDeadline: request.suggestedDeadline,
+    extraBudget: request.extraBudget,
+    extraBudgetBasis: request.extraBudgetBasis,
+    extraBudgetImpact: request.extraBudgetImpact,
+    extraBudgetStart: request.extraBudgetStart,
+    extraBudgetEnd: request.extraBudgetEnd,
+    linkDaSolicitacao: `${process.env.APP_URL}/solicitacoes/${request.id}`,
+  });
+
   await Promise.all(
-    costCenter.managers.map((manager) =>
+    gestoresAvisados.map((manager) =>
       sendSlackDM({
         slackUserEmail: manager.email,
-        text: `Nova solicitação de compra no seu centro de custo: *${shortDescription}* (${code}), por ${request.requester.name}. Seguiu direto para Triagem.`,
+        text: resumo,
         requestId: request.id,
       }).catch(() => {
         // Falha de Slack não deve bloquear a criação da solicitação, já registrada em Notification.
