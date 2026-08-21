@@ -1,50 +1,44 @@
 # syntax=docker/dockerfile:1
 
+# node:alpine (musl) em todos os estagios -- o binario nativo do Prisma
+# Query Engine gerado em "builder" precisa casar com a libc do "runner".
+FROM node:20-alpine AS base
+# openssl: Prisma detecta a versao do libssl em runtime pra escolher o
+# engine musl certo. Sem isso cai num fallback linkado pra libssl 1.1, que
+# nao existe mais no Alpine atual -> "Error loading shared library
+# libssl.so.1.1". Um stage base evita repetir isso em cada estagio.
+RUN apk add --no-cache openssl
+
 # ---------- deps ----------
-# node:alpine (musl) nas 3 etapas de propósito: o binário nativo do Prisma
-# Query Engine gerado em "builder" precisa casar com a libc do runtime — se
-# builder fosse glibc (node:20 comum) e runner fosse alpine (musl), o
-# binário certo não estaria presente e o app quebraria só em produção.
-FROM node:20-alpine AS deps
+FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-# prisma/ e scripts/ ANTES do npm ci: o postinstall (`prisma generate &&
-# node scripts/verify-prisma-engine.cjs`) precisa dos dois pra rodar — sem
-# eles o postinstall falha ("Could not find Prisma Schema" ou
-# "Cannot find module .../verify-prisma-engine.cjs") e quebra o npm ci
-# inteiro (erros reais vistos na pipeline, não só avisos).
+# prisma/ e scripts/ antes do npm ci: o postinstall (prisma generate +
+# verify-prisma-engine.cjs) precisa dos dois.
 COPY prisma ./prisma
 COPY scripts ./scripts
 RUN npm ci
 
 # ---------- build ----------
-FROM node:20-alpine AS builder
+FROM base AS builder
 WORKDIR /app
-# Sem isso, "next build" tenta mandar telemetria anônima pra um endpoint
-# externo em build-time -- no Docker-in-Docker da Golden Pipeline (rede
-# mais restrita que o step "Build Application", que roda o mesmo comando
-# fora do Docker) essa chamada pode ficar tentando indefinidamente sem erro
-# claro (mesma classe de problema que já travou a fonte do Google Fonts).
+# Evita que "next build" tente telemetria em build-time (rede restrita do
+# Docker-in-Docker da golden pipeline trava sem erro claro).
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NÃO roda `prisma generate` de novo aqui: o client já veio corretamente
-# gerado dentro de node_modules/.prisma (via postinstall do "deps", que
-# tem preinstall/openssl) — regenerar aqui rodaria num node:20-alpine
-# limpo, SEM openssl (nenhum preinstall roda de novo neste estágio), e
-# arriscaria sobrescrever o client bom com um gerado com detecção de
-# libssl falha (mesmo bug que já mordeu essa pipeline mais de uma vez).
+# Nao roda `prisma generate` de novo aqui -- usa o client ja gerado em "deps".
 RUN npm run build
 
 # ---------- runtime ----------
-FROM node:20-alpine AS runner
+FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
-# output: standalone (next.config.js) — só os arquivos/node_modules de fato
-# usados em produção, bem menor que copiar node_modules/ inteiro.
+# output: standalone (next.config.js) -- so os arquivos/node_modules
+# realmente usados em produção.
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
