@@ -7,6 +7,7 @@ import {
   nextAfterValidacaoOrcamentaria,
 } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avisar } from "@/lib/avisar";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
@@ -61,8 +62,30 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     await prisma.comment.create({
       data: { requestId: request.id, authorId: buyerId, body: returnReason ?? "Informações incompletas.", stage: "TRIAGEM" },
     });
-    const { subject, html } = templates.atualizacaoEtapa(request.requester.name, request.shortDescription, "Triagem: informações pendentes");
-    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+    // Template PRÓPRIO desde 21/08/2026. Usava o de avanço de etapa, genérico,
+    // dizendo "entrou na fase de Triagem: informações pendentes", sem o motivo
+    // e sem pedir nada. Era o único caso em que a pessoa PRECISA agir,
+    // chegando com a mesma cara dos avisos em que ela não precisa fazer nada.
+    const link = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+    const motivo = returnReason ?? "Informações incompletas.";
+    const { subject, html } = templates.solicitacaoDevolvida(
+      request.requester.name,
+      request.code,
+      request.shortDescription,
+      motivo,
+      link,
+    );
+    await avisar({
+      para: request.requester.email,
+      assunto: subject,
+      html,
+      slack:
+        `*Ação necessária: ${request.code} foi devolvida*\n${request.shortDescription}\n` +
+        `O time de Compras precisa de: ${motivo}\n` +
+        `A solicitação fica parada até você completar.\n<${link}|Abrir para completar>`,
+      requestId: request.id,
+      origem: "triagem devolvida",
+    });
     return NextResponse.json({ status: "DEVOLVIDO" });
   }
 

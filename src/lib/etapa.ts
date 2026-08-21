@@ -1,7 +1,10 @@
 import { Prisma, type Stage } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isValidTransition, STAGES } from "@/lib/workflow";
-import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { templates } from "@/lib/integrations/gmail";
+import { avisar } from "@/lib/avisar";
+import { solicitanteAcompanha, convocadosDaEtapa, convocacao } from "@/lib/avisos-de-etapa";
+import { formatCurrency } from "@/lib/format";
 import { logger } from "@/lib/logger";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 
@@ -131,21 +134,64 @@ export async function notificarAvancoDeEtapa(
   solicitacao: SolicitacaoComSolicitante,
   etapaDestino: Stage
 ): Promise<void> {
-  const { subject, html } = templates.atualizacaoEtapa(
-    solicitacao.requester.name,
-    solicitacao.shortDescription,
-    STAGES[etapaDestino].label
-  );
-  await sendPurchaseEmail({
-    to: solicitacao.requester.email,
-    subject,
-    html,
-    requestId: solicitacao.id,
-  }).catch((erro) => {
-    logger.warn("aviso_avanco_de_etapa_falhou", {
-      solicitacao: solicitacao.code,
-      etapa: etapaDestino,
-      erro,
+  const link = `${process.env.APP_URL}/solicitacoes/${solicitacao.id}`;
+  const rotuloDaEtapa = STAGES[etapaDestino].label;
+  const valor =
+    solicitacao.estimatedValue !== null ? formatCurrency(Number(solicitacao.estimatedValue)) : "não informado";
+
+  // 1. O SOLICITANTE, só nos marcos. Recebia aviso nas doze transições, todas
+  //    com o mesmo texto e nenhuma pedindo nada; doze avisos inúteis ensinam a
+  //    ignorar o décimo terceiro. Ver MARCOS_DO_SOLICITANTE.
+  if (solicitanteAcompanha(etapaDestino)) {
+    const { subject, html } = templates.atualizacaoEtapa(
+      solicitacao.requester.name,
+      solicitacao.code,
+      solicitacao.shortDescription,
+      rotuloDaEtapa,
+      link
+    );
+    await avisar({
+      para: solicitacao.requester.email,
+      assunto: subject,
+      html,
+      slack:
+        `*${solicitacao.code} avançou para ${rotuloDaEtapa}*\n${solicitacao.shortDescription}\n` +
+        `Nada é necessário da sua parte neste momento.\n<${link}|Acompanhar a solicitação>`,
+      requestId: solicitacao.id,
+      origem: `avanco de etapa para ${etapaDestino}`,
     });
-  });
+  }
+
+  // 2. QUEM PRECISA AGIR, em toda entrada de etapa. Não existia: a solicitação
+  //    chegava em Cotação e nenhum comprador sabia, chegava no Jurídico e o
+  //    Jurídico não era avisado. O trabalho só andava porque alguém abria
+  //    "Minhas Pendências" por hábito.
+  //
+  //    Nunca avisa quem acabou de agir: a pessoa que empurrou a solicitação
+  //    para esta etapa não precisa ser convocada para ela, e receber DM do
+  //    próprio clique é o ruído que desacredita a notificação.
+  const convocados = await convocadosDaEtapa(etapaDestino, solicitacao.buyerId);
+  await Promise.all(
+    convocados
+      .filter((pessoa) => pessoa.email !== solicitacao.requester.email)
+      .map((pessoa) => {
+        const msg = convocacao({
+          nome: pessoa.name,
+          codigo: solicitacao.code,
+          descricao: solicitacao.shortDescription,
+          etapa: etapaDestino,
+          solicitante: solicitacao.requester.name,
+          valor,
+          link,
+        });
+        return avisar({
+          para: pessoa.email,
+          assunto: msg.assunto,
+          html: msg.html,
+          slack: msg.slack,
+          requestId: solicitacao.id,
+          origem: `convocacao para ${etapaDestino}`,
+        });
+      }),
+  );
 }

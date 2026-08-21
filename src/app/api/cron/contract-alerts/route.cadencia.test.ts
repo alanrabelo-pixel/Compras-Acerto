@@ -24,12 +24,13 @@ import { createTestUser, cleanupTestData, TEST_PREFIX } from "@/test-helpers/fix
 const emailsEnviados = vi.hoisted(() => [] as string[]);
 const slacksEnviados = vi.hoisted(() => [] as string[]);
 
-vi.mock("@/lib/integrations/gmail", () => ({
+// Templates REAIS, transporte simulado. Mockar só alguns templates quebrava a
+// suíte a cada template novo, porque o objeto parcial deixava os outros
+// undefined; o envio continua capturado, que é o que este arquivo mede.
+vi.mock("@/lib/integrations/gmail", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/integrations/gmail")>()),
   sendPurchaseEmail: async (params: { to: string }) => {
     emailsEnviados.push(params.to);
-  },
-  templates: {
-    alertaRenovacaoContrato: () => ({ subject: "Renovação", html: "<p>corpo</p>" }),
   },
 }));
 

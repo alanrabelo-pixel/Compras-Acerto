@@ -16,9 +16,12 @@ import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestDat
  * caso aqui é um tipo que antes não era encontrado.
  */
 
-vi.mock("@/lib/integrations/gmail", () => ({
+vi.mock("@/lib/integrations/gmail", async (importOriginal) => ({
+  // Templates REAIS: sao funcoes puras que so montam texto, e mockar so
+  // algumas quebrava a suite inteira a cada template novo. Simula-se apenas o
+  // transporte, que e o que nao pode sair de verdade no teste.
+  ...(await importOriginal<typeof import("@/lib/integrations/gmail")>()),
   sendPurchaseEmail: async () => {},
-  templates: { confirmacaoRecebimento: () => ({ subject: "s", html: "h" }), atualizacaoEtapa: () => ({ subject: "s", html: "h" }), reprovado: () => ({ subject: "s", html: "h" }) },
 }));
 vi.mock("@/lib/integrations/slack", () => ({ sendSlackDM: async () => {} }));
 

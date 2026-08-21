@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avisar } from "@/lib/avisar";
 import { proximoCodigo } from "@/lib/codigo";
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { naoAutenticado } from "@/lib/acesso";
@@ -78,7 +79,17 @@ export async function POST(req: NextRequest) {
 
   const link = `${process.env.APP_URL}/chamados/${categorySlug}/${ticket.id}`;
   const { subject, html } = templates.chamadoAberto(requesterName, config.label, code, link);
-  await sendPurchaseEmail({ to: requesterEmail, subject, html });
+  await avisar({
+    para: requesterEmail,
+    assunto: subject,
+    html,
+    slack:
+      `*Chamado  recebido*
+
+` +
+      `Acompanhe as respostas por aqui: <|abrir o chamado>`,
+    origem: "chamado aberto",
+  });
 
   return NextResponse.json(ticket, { status: 201 });
 }

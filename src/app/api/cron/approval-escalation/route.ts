@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { ehProducao } from "@/lib/ambiente";
-import { sendSlackDM } from "@/lib/integrations/slack";
+import { avisar } from "@/lib/avisar";
 import { verificarTokenDeMaquina } from "@/lib/segredos";
 import { APPROVAL_ESCALATION_BUSINESS_DAYS } from "@/lib/workflow";
 import { logger } from "@/lib/logger";
@@ -33,29 +33,58 @@ export async function GET(req: NextRequest) {
   let falhasDeAviso = 0;
   let simulados = 0;
   for (const approval of overdue) {
-    // O aviso é best-effort de propósito: se o Slack estiver fora, o
-    // escalonamento ainda precisa ser marcado. Mas a falha agora fica
-    // registrada, em vez de sumir num catch vazio, senão ninguém descobre
-    // que o lembrete parou de chegar.
-    await sendSlackDM({
-      slackUserEmail: approval.approver.email,
-      text: `Lembrete: a solicitação ${approval.request.code} está aguardando sua aprovação há mais de ${APPROVAL_ESCALATION_BUSINESS_DAYS} dias úteis.`,
-    }).catch((erro) => {
-      falhasDeAviso++;
-      logger.warn("cron_escalonamento_slack_falhou", { destino: "aprovador", solicitacao: approval.request.code, erro });
+    // Pelos dois canais desde 21/08/2026. Eram só Slack, e o lembrete de
+    // atraso é justamente a mensagem que não pode depender de a pessoa estar
+    // olhando o Slack naquele dia. O aviso continua best-effort: se um canal
+    // falhar, o escalonamento ainda é marcado, e a falha fica registrada em
+    // vez de sumir (o `avisar` loga por canal).
+    const link = `${process.env.APP_URL}/solicitacoes/${approval.request.id}`;
+    const dias = APPROVAL_ESCALATION_BUSINESS_DAYS;
+
+    const aoAprovador = await avisar({
+      para: approval.approver.email,
+      assunto: `Lembrete: ${approval.request.code} aguarda sua aprovação há mais de ${dias} dias úteis`,
+      html:
+        `<p>Olá, <b>${approval.approver.name}</b>!</p>` +
+        `<p>A solicitação <b>${approval.request.code}</b> está aguardando a sua aprovação há mais de <b>${dias} dias úteis</b>.</p>` +
+        `<p>Enquanto a decisão não sai, a compra fica parada nesta etapa.</p>` +
+        `<p><a href="${link}">Abrir a solicitação para decidir</a></p>` +
+        `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+      slack:
+        `*Lembrete: ${approval.request.code} aguarda sua aprovação*\n` +
+        `Há mais de ${dias} dias úteis. A compra fica parada até a decisão.\n` +
+        `<${link}|Abrir a solicitação para decidir>`,
+      requestId: approval.request.id,
+      origem: "escalonamento ao aprovador",
     });
 
-    await sendSlackDM({
-      slackUserEmail: DESTINO_CONTROLADORIA,
-      text: `Aprovação em atraso: ${approval.request.code}, aprovador ${approval.approver.name}, aberta desde ${approval.request.createdAt.toLocaleDateString("pt-BR")}.`,
-    }).catch((erro) => {
-      falhasDeAviso++;
-      logger.warn("cron_escalonamento_slack_falhou", { destino: "controladoria", solicitacao: approval.request.code, erro });
+    const aControladoria = await avisar({
+      para: DESTINO_CONTROLADORIA,
+      assunto: `Aprovação em atraso: ${approval.request.code}`,
+      html:
+        `<p>A aprovação da solicitação <b>${approval.request.code}</b> está em atraso.</p>` +
+        `<p>Aprovador: ${approval.approver.name}<br/>Aberta desde: ${approval.request.createdAt.toLocaleDateString("pt-BR")}</p>` +
+        `<p><a href="${link}">Abrir a solicitação</a></p>`,
+      slack:
+        `*Aprovação em atraso: ${approval.request.code}*\n` +
+        `Aprovador: ${approval.approver.name}\n` +
+        `Aberta desde ${approval.request.createdAt.toLocaleDateString("pt-BR")}.\n` +
+        `<${link}|Abrir a solicitação>`,
+      requestId: approval.request.id,
+      origem: "escalonamento a controladoria",
     });
 
-    // Fora de produção NÃO marca. A trava de envio bloqueia sem lançar, então
-    // o .catch acima não roda e este update diria que o aprovador foi
-    // lembrado sem nada ter saído. Aqui a supressão é pior que no alerta de
+    // Um canal que falha conta como falha de aviso, e os dois avisos contam
+    // separado: o contador vai na resposta e no log, e um número que não é
+    // medido de verdade é pior que não ter número.
+    for (const resultado of [aoAprovador, aControladoria]) {
+      if (!resultado.email) falhasDeAviso++;
+      if (!resultado.slack) falhasDeAviso++;
+    }
+
+    // Fora de produção NÃO marca. A trava de envio bloqueia SEM LANÇAR, então
+    // os avisos acima contam como sucesso e este update diria que o aprovador
+    // foi lembrado sem nada ter saído. Aqui a supressão é pior que no alerta de
     // contrato: o filtro desta rota é `escalatedAt: null`, então a marcação
     // falsa do Sandbox tira aquela aprovação do escalonamento PARA SEMPRE, não
     // por uma semana. Com banco compartilhado, o aprovador de verdade nunca

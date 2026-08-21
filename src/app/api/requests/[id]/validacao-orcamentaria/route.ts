@@ -5,6 +5,8 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { avancarEtapa, notificarAvancoDeEtapa } from "@/lib/etapa";
 import { requireRole } from "@/lib/rbac";
 import { anexoDeApoioDoOrcamento } from "@/lib/orcamento-extra";
+import { avisar } from "@/lib/avisar";
+import { formatCurrency } from "@/lib/format";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
@@ -91,6 +93,45 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       update: { level, attachmentId: anexoDeApoio?.id },
       create: { requestId: request.id, level, attachmentId: anexoDeApoio?.id },
     });
+
+    // AVISA QUEM TEM A ALÇADA DE DECIDIR. Não existia: a exceção era criada e
+    // ficava esperando alguém abrir "Minhas Pendências" por conta própria.
+    // Mesma lacuna que havia na aprovação final, no outro ponto do fluxo que
+    // trava esperando decisão.
+    const papelExigido = budgetExceptionApproverRole(level);
+    const decisores = await prisma.user.findMany({
+      where: { active: true, roles: { some: { role: papelExigido } } },
+      select: { name: true, email: true },
+    });
+    const link = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+    const valor = formatCurrency(Number(request.estimatedValue));
+
+    await Promise.all(
+      decisores.map((decisor) => {
+        const { subject, html } = templates.excecaoOrcamentariaAtribuida(
+          decisor.name,
+          request.code,
+          request.shortDescription,
+          valor,
+          request.requester.name,
+          request.extraBudgetJustification,
+          link,
+        );
+        return avisar({
+          para: decisor.email,
+          assunto: subject,
+          html,
+          slack:
+            `*Exceção orçamentária pendente: ${request.code}*\n${request.shortDescription}\n` +
+            `Valor: ${valor}\nSolicitante: ${request.requester.name}\n` +
+            (request.extraBudgetJustification ? `Motivo: ${request.extraBudgetJustification}\n` : "") +
+            `<${link}|Abrir a solicitação para decidir>`,
+          requestId: request.id,
+          origem: "excecao orcamentaria atribuida",
+        });
+      }),
+    );
+
     return NextResponse.json({ status: "EXCECAO_PENDENTE", exception });
   }
 
@@ -128,17 +169,54 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     // Template de reprovação, não o de avanço de etapa: aqui a solicitação
     // termina, não segue adiante.
-    const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification ?? "indisponibilidade de orçamento");
-    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+    const linkReprovada = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+    const motivo = justification ?? "indisponibilidade de orçamento";
+    const { subject, html } = templates.reprovado(
+      request.requester.name,
+      request.code,
+      request.shortDescription,
+      "Exceção Orçamentária",
+      motivo,
+      linkReprovada,
+    );
+    await avisar({
+      para: request.requester.email,
+      assunto: subject,
+      html,
+      slack:
+        `*${request.code} foi reprovada na Exceção Orçamentária*\n${request.shortDescription}\n` +
+        `Motivo: ${motivo}\n<${linkReprovada}|Ver a solicitação>`,
+      requestId: request.id,
+      origem: "excecao orcamentaria reprovada",
+    });
     return NextResponse.json({ status: "REPROVADO" });
   }
 
   const nextStage = nextAfterValidacaoOrcamentaria({ budgetOk: true, demandType: request.demandType });
 
-  // Nota: este caminho (exceção APROVADA) não envia aviso ao solicitante,
-  // diferente do caminho de orçamento OK acima. A assimetria é anterior a esta
-  // mudança e está registrada como achado da auditoria; não alterei aqui para
-  // não mudar quem recebe e-mail junto com um refactor de transação.
+  // Exceção APROVADA passa a avisar o solicitante, fechando a assimetria em
+  // que só a reprovação avisava: quem pediu ficava sem saber que a compra
+  // tinha sido liberada. Estava registrado como achado de auditoria e foi
+  // fechado em 21/08/2026, na revisão das mensagens.
+  const linkDaSolicitacao = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+  const aprovada = templates.excecaoOrcamentariaAprovada(
+    request.requester.name,
+    request.code,
+    request.shortDescription,
+    linkDaSolicitacao,
+  );
+  await avisar({
+    para: request.requester.email,
+    assunto: aprovada.subject,
+    html: aprovada.html,
+    slack:
+      `*Exceção orçamentária aprovada: ${request.code}*\n${request.shortDescription}\n` +
+      `A compra seguiu no fluxo mesmo sem linha de orçamento prevista.\n` +
+      `<${linkDaSolicitacao}|Acompanhar a solicitação>`,
+    requestId: request.id,
+    origem: "excecao orcamentaria aprovada",
+  });
+
   const avanco = await avancarEtapa({
     requestId: request.id,
     de: "VALIDACAO_ORCAMENTARIA",

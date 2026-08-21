@@ -18,13 +18,12 @@ import { createTestUser, createTestCostCenter, cleanupTestData, TEST_PREFIX } fr
  * uma CHECK condicional travaria o histórico.
  */
 
-vi.mock("@/lib/integrations/gmail", () => ({
+vi.mock("@/lib/integrations/gmail", async (importOriginal) => ({
+  // Templates REAIS: sao funcoes puras que so montam texto, e mockar so
+  // algumas quebrava a suite inteira a cada template novo. Simula-se apenas o
+  // transporte, que e o que nao pode sair de verdade no teste.
+  ...(await importOriginal<typeof import("@/lib/integrations/gmail")>()),
   sendPurchaseEmail: async () => {},
-  templates: {
-    confirmacaoRecebimento: () => ({ subject: "Confirmação de teste", html: "<p>teste</p>" }),
-    atualizacaoEtapa: () => ({ subject: "Etapa de teste", html: "<p>teste</p>" }),
-    reprovado: () => ({ subject: "Reprovação de teste", html: "<p>teste</p>" }),
-  },
 }));
 vi.mock("@/lib/integrations/slack", () => ({ sendSlackDM: async () => {} }));
 

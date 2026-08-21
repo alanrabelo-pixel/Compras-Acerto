@@ -178,21 +178,75 @@ export async function sendPurchaseEmail(params: {
 // Templates de e-mail do fluxo original (um por evento-chave). Manter o texto
 // alinhado à Política de Compras vigente ao editar.
 export const templates = {
-  confirmacaoRecebimento: (nome: string, descricao: string) => ({
-    subject: `Confirmação de Recebimento da Solicitação de Compra - ${descricao}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Agradecemos pela sua solicitação! Confirmamos o recebimento da Solicitação de Compra e informamos que ela está sendo processada.</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  /*
+   * OS QUATRO AVISOS AO SOLICITANTE, revistos em 21/08/2026.
+   *
+   * Todos ganharam o CÓDIGO e o LINK. Antes identificavam a compra só pela
+   * descrição curta, e não diziam para onde ir: a pessoa recebia "sua
+   * solicitação avançou" e tinha de encontrá-la sozinha, sendo que o código
+   * (PC-AAAA-NNNN) é a chave usada em todo o resto do sistema, na busca, no
+   * quadro e nas conversas. Duas compras com descrição parecida eram
+   * indistinguíveis na caixa de entrada.
+   *
+   * `reprovado` ganhou a ETAPA. Ele serve três situações diferentes (aprovação
+   * final, Due Diligence e exceção orçamentária) e o assunto era idêntico nas
+   * três, sem dizer onde a compra parou, que é justamente o que muda o que
+   * fazer a seguir.
+   */
+  confirmacaoRecebimento: (nome: string, codigo: string, descricao: string, link: string) => ({
+    subject: `Solicitação ${codigo} recebida - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>Recebemos a sua Solicitação de Compra <b>${codigo}</b> (${descricao}).</p>` +
+      `<p>Ela seguiu para a <b>Homologação e Triagem</b>, com o time de Compras | F&NC, que confere as informações antes de dar andamento. Você é avisado a cada passo.</p>` +
+      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
-  atualizacaoEtapa: (nome: string, descricao: string, etapa: string) => ({
-    subject: `Atualização da Solicitação de Compra - ${descricao}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que a solicitação de compra <b>${descricao}</b> entrou na fase de "${etapa}".</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  atualizacaoEtapa: (nome: string, codigo: string, descricao: string, etapa: string, link: string) => ({
+    subject: `${codigo} avançou para ${etapa} - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A solicitação <b>${codigo}</b> (${descricao}) entrou na fase de "<b>${etapa}</b>".</p>` +
+      `<p>Nada é necessário da sua parte neste momento.</p>` +
+      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
-  reprovado: (nome: string, descricao: string, motivo: string) => ({
-    subject: `Reprovada a Solicitação de Compra - ${descricao}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que a solicitação de compra <b>${descricao}</b> foi reprovada. Motivo: ${motivo}</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  /**
+   * Devolvida na Triagem: separado de `atualizacaoEtapa` de propósito.
+   *
+   * Usava o mesmo texto genérico de um avanço qualquer, dizendo "entrou na
+   * fase de Triagem: informações pendentes", sem o motivo e sem pedir nada.
+   * Era o único caso em que a pessoa PRECISA agir, chegando com a cara dos
+   * outros onze avisos em que ela não precisa fazer nada.
+   */
+  solicitacaoDevolvida: (nome: string, codigo: string, descricao: string, motivo: string, link: string) => ({
+    subject: `Ação necessária: ${codigo} foi devolvida - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi devolvida na Triagem porque faltam informações.</p>` +
+      `<p>O que o time de Compras precisa: ${motivo}</p>` +
+      `<p>Complete os dados e a solicitação volta a andar. Enquanto isso, ela fica parada.</p>` +
+      `<p><a href="${link}">Abrir a solicitação para completar</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
-  aprovado: (nome: string, descricao: string) => ({
-    subject: `Aprovada a Solicitação de Compra - ${descricao}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que a solicitação de compra <b>${descricao}</b> foi aprovada no fluxo financeiro e de compras.</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  reprovado: (nome: string, codigo: string, descricao: string, etapa: string, motivo: string, link: string) => ({
+    subject: `Reprovada em ${etapa}: ${codigo} - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi reprovada na etapa de <b>${etapa}</b>.</p>` +
+      `<p>Motivo: ${motivo}</p>` +
+      `<p>A solicitação foi encerrada. Se a necessidade continuar, o caminho é abrir uma nova tratando o motivo acima, ou falar com quem decidiu.</p>` +
+      `<p><a href="${link}">Ver a solicitação</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  }),
+  aprovado: (nome: string, codigo: string, descricao: string, proximaEtapa: string, link: string) => ({
+    subject: `Aprovada: ${codigo} - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi aprovada no fluxo financeiro e de compras.</p>` +
+      `<p>Próxima etapa: <b>${proximaEtapa}</b>.</p>` +
+      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   pedidoCompraGerado: (nome: string, descricao: string, codigoPedido: string, pdfUrl: string) => ({
     subject: `Pedido de Compra gerado - ${descricao}`,
@@ -224,6 +278,75 @@ export const templates = {
   ) => ({
     subject: `Risco de fracionamento: ${codigo}`,
     html: `<p>A solicitação <b>${codigo}</b> (${descricao}) foi sinalizada com risco de fracionamento na Triagem.</p><p>Sozinha, ela cai na alçada de <b>Nível ${nivelIsolado}</b>. Somada às compras do fornecedor <b>${fornecedor}</b> nos últimos 12 meses, o total alcança a alçada de <b>Nível ${nivelSomado}</b>.</p><p>Isso não bloqueia a solicitação: ela segue o fluxo normalmente. O alerta existe para a Controladoria avaliar se as compras deveriam ter sido tratadas como uma só.</p><p><a href="${link}">Abrir a solicitação</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  }),
+
+  /**
+   * Aprovação atribuída: avisa quem tem de decidir, no momento em que passa a
+   * ter de decidir.
+   *
+   * Criado em 21/08/2026, na revisão das mensagens. Era a maior lacuna do
+   * fluxo: o aprovador era designado e NADA saía. Ele descobria abrindo
+   * "Minhas Pendências" por conta própria, ou pelo cron de escalonamento, que
+   * só dispara depois de a aprovação já estar atrasada. O sistema avisava que
+   * alguém estava atrasado antes de avisar que existia trabalho.
+   *
+   * Traz o valor porque é o que decide a urgência de quem lê, e quantas
+   * assinaturas a faixa exige porque muda o que acontece depois do clique:
+   * com duas, a compra ainda espera a outra pessoa.
+   */
+  aprovacaoAtribuida: (
+    nome: string,
+    codigo: string,
+    descricao: string,
+    valor: string,
+    faixa: string,
+    assinaturas: number,
+    solicitante: string,
+    link: string
+  ) => ({
+    subject: `Aprovação pendente: ${codigo} - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A solicitação <b>${codigo}</b> (${descricao}) está aguardando a sua aprovação.</p>` +
+      `<p>Valor: <b>${valor}</b><br/>Alçada: ${faixa}<br/>Solicitante: ${solicitante}</p>` +
+      (assinaturas > 1
+        ? `<p>Esta faixa exige <b>${assinaturas} aprovadores distintos</b>: a compra só avança depois que todos decidirem.</p>`
+        : "") +
+      `<p><a href="${link}">Abrir a solicitação para decidir</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  }),
+
+  /**
+   * Exceção orçamentária aberta: avisa quem tem a alçada de decidi-la.
+   * Mesma lacuna da aprovação final, no outro ponto que trava o fluxo.
+   */
+  excecaoOrcamentariaAtribuida: (
+    nome: string,
+    codigo: string,
+    descricao: string,
+    valor: string,
+    solicitante: string,
+    motivo: string | null,
+    link: string
+  ) => ({
+    subject: `Exceção orçamentária pendente: ${codigo} - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi aberta sem linha de orçamento e depende da sua decisão sobre a exceção orçamentária.</p>` +
+      `<p>Valor: <b>${valor}</b><br/>Solicitante: ${solicitante}</p>` +
+      (motivo ? `<p>Motivo informado por quem abriu: ${motivo}</p>` : "") +
+      `<p><a href="${link}">Abrir a solicitação para decidir</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+  }),
+
+  /** Exceção aprovada: fecha a assimetria em que só a reprovação avisava. */
+  excecaoOrcamentariaAprovada: (nome: string, codigo: string, descricao: string, link: string) => ({
+    subject: `Exceção orçamentária aprovada: ${codigo} - ${descricao}`,
+    html:
+      `<p>Olá, <b>${nome}</b>!</p>` +
+      `<p>A exceção orçamentária da solicitação <b>${codigo}</b> (${descricao}) foi aprovada, e a compra seguiu no fluxo mesmo sem linha de orçamento prevista.</p>` +
+      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
 
   alertaRenovacaoContrato: (nome: string, fornecedor: string, dataLimite: string, linkNovaSolicitacao: string) => ({

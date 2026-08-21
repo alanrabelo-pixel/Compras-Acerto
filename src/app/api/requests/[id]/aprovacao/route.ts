@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { faixasAtivas, faixaDoValor, assinaturasExigidas } from "@/lib/alcadas";
+import { avisar } from "@/lib/avisar";
+import { formatCurrency } from "@/lib/format";
 import {
   canPersonifyApprover,
   nextAfterAprovacao,
+  STAGES,
   APPROVAL_ESCALATION_BUSINESS_DAYS,
   somarDiasUteis,
 } from "@/lib/workflow";
@@ -36,7 +39,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const barrado = await exigirPapel(["COMPRADOR"], "criar a aprovação desta solicitação");
   if (barrado) return barrado;
 
-  const request = await prisma.purchaseRequest.findUnique({ where: { id: params.id } });
+  // requester entra no include porque o aviso ao aprovador (no fim desta
+  // função) diz de quem é a compra: sem o nome, quem recebe precisa abrir a
+  // solicitação só para saber se aquilo lhe diz respeito.
+  const request = await prisma.purchaseRequest.findUnique({
+    where: { id: params.id },
+    include: { requester: { select: USUARIO_RESUMIDO } },
+  });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
   if (request.currentStage !== "APROVACAO") {
     return NextResponse.json({ error: "Solicitação não está na etapa de Aprovação" }, { status: 409 });
@@ -180,6 +189,51 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     approverIds.map((approverId) => prisma.approval.create({ data: { requestId: request.id, level, approverId, dueAt } }))
   );
 
+  // AVISA QUEM TEM DE DECIDIR, agora que passou a ter de decidir.
+  //
+  // Não existia. A aprovação era criada, os aprovadores atribuídos, e nada
+  // saía: eles descobriam abrindo "Minhas Pendências" por conta própria, ou
+  // pelo cron de escalonamento, que só dispara DEPOIS de a aprovação estar
+  // atrasada. O sistema avisava do atraso antes de avisar do trabalho.
+  //
+  // Depois da criação, e não dentro do Promise.all: a aprovação já está
+  // gravada quando o aviso sai, então uma falha de envio não deixa ninguém
+  // achando que existe algo a decidir que não existe.
+  const aprovadores = await prisma.user.findMany({
+    where: { id: { in: approverIds } },
+    select: { id: true, name: true, email: true },
+  });
+  const linkDaSolicitacao = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+  const valorFormatado = formatCurrency(valorDaAlcada);
+
+  await Promise.all(
+    aprovadores.map((aprovador) => {
+      const { subject, html } = templates.aprovacaoAtribuida(
+        aprovador.name,
+        request.code,
+        request.shortDescription,
+        valorFormatado,
+        faixa.label,
+        required,
+        request.requester.name,
+        linkDaSolicitacao,
+      );
+      return avisar({
+        para: aprovador.email,
+        assunto: subject,
+        html,
+        slack:
+          `*Aprovação pendente: ${request.code}*\n${request.shortDescription}\n` +
+          `Valor: ${valorFormatado} · ${faixa.label}\n` +
+          `Solicitante: ${request.requester.name}\n` +
+          (required > 1 ? `Esta faixa exige ${required} aprovadores distintos.\n` : "") +
+          `<${linkDaSolicitacao}|Abrir a solicitação para decidir>`,
+        requestId: request.id,
+        origem: "aprovacao atribuida",
+      });
+    }),
+  );
+
   return NextResponse.json({ approvals }, { status: 201 });
 }
 
@@ -298,8 +352,26 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!cancelamento.ok) {
       return NextResponse.json({ error: cancelamento.erro }, { status: cancelamento.status });
     }
-    const { subject, html } = templates.reprovado(request.requester.name, request.shortDescription, justification ?? "não informado");
-    await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+    const linkReprovada = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+    const motivo = justification ?? "não informado";
+    const reprovada = templates.reprovado(
+      request.requester.name,
+      request.code,
+      request.shortDescription,
+      "Aprovação",
+      motivo,
+      linkReprovada,
+    );
+    await avisar({
+      para: request.requester.email,
+      assunto: reprovada.subject,
+      html: reprovada.html,
+      slack:
+        `*${request.code} foi reprovada na Aprovação*\n${request.shortDescription}\n` +
+        `Motivo: ${motivo}\n<${linkReprovada}|Ver a solicitação>`,
+      requestId: request.id,
+      origem: "aprovacao reprovada",
+    });
     return NextResponse.json({ status: "REPROVADO" });
   }
 
@@ -329,8 +401,25 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: avanco.erro }, { status: avanco.status });
   }
 
-  const { subject, html } = templates.aprovado(request.requester.name, request.shortDescription);
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  const linkAprovada = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+  const proximaEtapa = STAGES[nextStage].label;
+  const aprovadaMsg = templates.aprovado(
+    request.requester.name,
+    request.code,
+    request.shortDescription,
+    proximaEtapa,
+    linkAprovada,
+  );
+  await avisar({
+    para: request.requester.email,
+    assunto: aprovadaMsg.subject,
+    html: aprovadaMsg.html,
+    slack:
+      `*${request.code} foi aprovada*\n${request.shortDescription}\n` +
+      `Próxima etapa: ${proximaEtapa}.\n<${linkAprovada}|Acompanhar a solicitação>`,
+    requestId: request.id,
+    origem: "aprovacao aprovada",
+  });
 
   return NextResponse.json(avanco.solicitacao);
 }

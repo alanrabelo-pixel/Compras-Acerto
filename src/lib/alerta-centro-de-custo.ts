@@ -61,6 +61,40 @@ export type ResumoDaSolicitacao = {
  * depois. O aviso de que não há nada a aprovar vem por último, colado no link,
  * que é onde a pessoa vai clicar.
  */
+/**
+ * Mesmo conteúdo do resumo do Slack, em HTML para o e-mail.
+ *
+ * Existe desde 21/08/2026, quando o dono do sistema definiu que comunicação
+ * geral vai pelos dois canais: o alerta ao gestor saía só no Slack, e o gestor
+ * de orçamento é justamente o perfil que costuma viver no e-mail.
+ */
+export function resumoParaOGestorEmHtml(r: ResumoDaSolicitacao): { assunto: string; html: string } {
+  const valor = r.estimatedValue !== null ? formatCurrency(r.estimatedValue) : "não informado";
+  const extra = r.extraBudget
+    ? `<p><b>Orçamento Extra:</b> aberta sem linha de orçamento prevista.<br/>` +
+      `Valor solicitado: ${valor}${r.extraBudgetBasis ? ` ${BASE_DE_ORCAMENTO_EXTRA_LABEL[r.extraBudgetBasis]}` : ""}` +
+      `${r.extraBudgetImpact ? ` · ${IMPACTO_DE_ORCAMENTO_EXTRA_LABEL[r.extraBudgetImpact]}` : ""}` +
+      `${
+        r.extraBudgetStart && r.extraBudgetEnd
+          ? `<br/>Vigência: ${formatDateOnly(r.extraBudgetStart)} a ${formatDateOnly(r.extraBudgetEnd)}`
+          : ""
+      }</p>`
+    : "";
+
+  return {
+    assunto: `Nova solicitação no centro de custo ${r.costCenterName}: ${r.code}`,
+    html:
+      `<p><b>${r.code}</b> · ${r.shortDescription}</p>` +
+      `<p>Valor estimado: <b>${valor}</b><br/>` +
+      `Solicitante: ${r.requesterName}<br/>` +
+      `Tipo: ${rotulo(DEMAND_TYPE_LABEL, r.demandType)} · Prioridade: ${rotulo(PRIORITY_LABEL, r.priority)}<br/>` +
+      `Prazo sugerido: ${formatDateOnly(r.suggestedDeadline)}</p>` +
+      extra +
+      `<p>Este é um aviso, não um pedido de aprovação: a solicitação já seguiu para a Triagem com o time de Compras e não depende de nenhuma ação sua.</p>` +
+      `<p><a href="${r.linkDaSolicitacao}">Ver a solicitação completa</a></p>`,
+  };
+}
+
 export function resumoParaOGestor(r: ResumoDaSolicitacao): string {
   const valor = r.estimatedValue !== null ? formatCurrency(r.estimatedValue) : "não informado";
 

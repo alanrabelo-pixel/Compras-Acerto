@@ -36,7 +36,7 @@ import { bypassAuthAtivo } from "@/lib/bypass";
  * junto. Etapa fora da lista (Solicitação, Aguardando Entrega no que depende
  * do fornecedor, Concluído, Cancelado) cai no recorte por parte e por quadro.
  */
-const PAPEIS_QUE_ATUAM_NA_ETAPA: Partial<Record<Stage, RoleName[]>> = {
+export const PAPEIS_QUE_ATUAM_NA_ETAPA: Partial<Record<Stage, RoleName[]>> = {
   // APROVACAO_GESTOR saiu daqui em 21/08/2026 junto com a etapa (ver a nota de
   // legado em STAGES). Solicitação antiga parada nela, se existir em algum
   // ambiente, cai no recorte por parte e por quadro, que é mais restritivo:

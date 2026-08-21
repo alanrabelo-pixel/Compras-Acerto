@@ -51,12 +51,12 @@ vi.mock("next-auth", () => ({
   getServerSession: async () => session.current,
 }));
 
-vi.mock("@/lib/integrations/gmail", () => ({
+// Templates REAIS, transporte simulado: o objeto parcial que existia aqui
+// deixava os demais templates undefined e quebrava a cada template novo.
+vi.mock("@/lib/integrations/gmail", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/integrations/gmail")>()),
   sendPurchaseEmail: async (params: { to: string }) => {
     emails.destinatarios.push(params.to);
-  },
-  templates: {
-    confirmacaoRecebimento: () => ({ subject: "Confirmação de teste", html: "<p>teste</p>" }),
   },
 }));
 

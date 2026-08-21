@@ -19,13 +19,12 @@ vi.mock("@/lib/integrations/slack", () => ({
     enviados.push(p);
   },
 }));
-vi.mock("@/lib/integrations/gmail", () => ({
+vi.mock("@/lib/integrations/gmail", async (importOriginal) => ({
+  // Templates REAIS: sao funcoes puras que so montam texto, e mockar so
+  // algumas quebrava a suite inteira a cada template novo. Simula-se apenas o
+  // transporte, que e o que nao pode sair de verdade no teste.
+  ...(await importOriginal<typeof import("@/lib/integrations/gmail")>()),
   sendPurchaseEmail: async () => {},
-  templates: {
-    confirmacaoRecebimento: () => ({ subject: "s", html: "<p>h</p>" }),
-    atualizacaoEtapa: () => ({ subject: "s", html: "<p>h</p>" }),
-    reprovado: () => ({ subject: "s", html: "<p>h</p>" }),
-  },
 }));
 
 const { POST } = await import("./route");
@@ -33,6 +32,15 @@ const { POST } = await import("./route");
 beforeEach(() => {
   enviados.length = 0;
 });
+
+/**
+ * Só os alertas AO GESTOR. Desde 21/08/2026 a criação também manda Slack ao
+ * SOLICITANTE (a confirmação de recebimento, que passou a ir pelos dois
+ * canais), e contar tudo faria este arquivo medir duas coisas ao mesmo tempo.
+ */
+function alertasAoGestor() {
+  return enviados.filter((e) => e.text.includes("Nova solicitação no centro de custo"));
+}
 
 afterAll(async () => {
   const usuarios = await prisma.user.findMany({ where: { email: { contains: TEST_PREFIX } }, select: { id: true } });
@@ -95,7 +103,7 @@ describe("POST /api/requests: alerta ao gestor do centro de custo", () => {
     const res = await abrirSolicitacao(solicitante.id, cc.id);
 
     expect(res.status).toBe(201);
-    expect(enviados.map((e) => e.slackUserEmail).sort()).toEqual([gestorA.email, gestorB.email].sort());
+    expect(alertasAoGestor().map((e) => e.slackUserEmail).sort()).toEqual([gestorA.email, gestorB.email].sort());
   });
 
   it("NÃO avisa o gestor que abriu a própria solicitação, e avisa o outro", async () => {
@@ -106,8 +114,8 @@ describe("POST /api/requests: alerta ao gestor do centro de custo", () => {
     const res = await abrirSolicitacao(gestorA.id, cc.id);
 
     expect(res.status).toBe(201);
-    expect(enviados).toHaveLength(1);
-    expect(enviados[0].slackUserEmail).toBe(gestorB.email);
+    expect(alertasAoGestor()).toHaveLength(1);
+    expect(alertasAoGestor()[0].slackUserEmail).toBe(gestorB.email);
   });
 
   it("não manda DM nenhum quando o único gestor é quem abriu", async () => {
@@ -119,7 +127,7 @@ describe("POST /api/requests: alerta ao gestor do centro de custo", () => {
     const res = await abrirSolicitacao(gestor.id, cc.id);
 
     expect(res.status).toBe(201);
-    expect(enviados).toHaveLength(0);
+    expect(alertasAoGestor()).toHaveLength(0);
   });
 
   it("centro de custo sem gestor não impede a abertura", async () => {
@@ -129,7 +137,7 @@ describe("POST /api/requests: alerta ao gestor do centro de custo", () => {
     const res = await abrirSolicitacao(solicitante.id, cc.id);
 
     expect(res.status).toBe(201);
-    expect(enviados).toHaveLength(0);
+    expect(alertasAoGestor()).toHaveLength(0);
   });
 
   it("o DM leva o resumo, e diz que não é aprovação", async () => {
@@ -139,8 +147,8 @@ describe("POST /api/requests: alerta ao gestor do centro de custo", () => {
 
     await abrirSolicitacao(solicitante.id, cc.id);
 
-    expect(enviados).toHaveLength(1);
-    const texto = enviados[0].text;
+    expect(alertasAoGestor()).toHaveLength(1);
+    const texto = alertasAoGestor()[0].text;
     expect(texto).toContain("Licenças de observabilidade");
     expect(texto).toContain(solicitante.name);
     expect(texto).toContain("24.000,00");

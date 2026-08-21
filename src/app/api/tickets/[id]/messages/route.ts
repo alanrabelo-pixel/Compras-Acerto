@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES } from "@/lib/tickets";
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
+import { avisar } from "@/lib/avisar";
 
 // POST /api/tickets/[id]/messages: adiciona uma mensagem ao histórico do chamado
 // (usado tanto pelo solicitante quanto pelo atendente, cada um digita o próprio nome).
@@ -36,7 +37,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const config = TICKET_CATEGORIES[categorySlug as keyof typeof TICKET_CATEGORIES];
     const link = `${process.env.APP_URL}/chamados/${categorySlug}/${ticket.id}`;
     const { subject, html } = templates.chamadoNovaMensagem(ticket.requesterName, config.label, ticket.code, link);
-    await sendPurchaseEmail({ to: ticket.requesterEmail, subject, html });
+    await avisar({
+      para: ticket.requesterEmail,
+      assunto: subject,
+      html,
+      slack:
+        `*Nova mensagem no chamado *
+
+` +
+        `<|Ver e responder>`,
+      origem: "chamado nova mensagem",
+    });
   }
 
   return NextResponse.json(message, { status: 201 });

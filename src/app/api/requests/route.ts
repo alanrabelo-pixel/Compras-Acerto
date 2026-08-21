@@ -6,7 +6,8 @@ import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
 import { campo } from "@/lib/rotulos";
 import { BASES_DE_ORCAMENTO_EXTRA, IMPACTOS_DE_ORCAMENTO_EXTRA } from "@/lib/orcamento-extra";
-import { gestoresParaAvisar, resumoParaOGestor } from "@/lib/alerta-centro-de-custo";
+import { gestoresParaAvisar, resumoParaOGestor, resumoParaOGestorEmHtml } from "@/lib/alerta-centro-de-custo";
+import { avisar } from "@/lib/avisar";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import { atorDaSessao, exigirQuadro } from "@/lib/acesso";
 
@@ -223,9 +224,25 @@ export async function POST(req: NextRequest) {
     data: { requestId: request.id, toStage: "SOLICITACAO", actorId: solicitanteId },
   });
 
-  // Comunicação automática: confirmação de recebimento (ver seção 3.1 do doc de referência)
-  const { subject, html } = templates.confirmacaoRecebimento(request.requester.name, shortDescription);
-  await sendPurchaseEmail({ to: request.requester.email, subject, html, requestId: request.id });
+  // Confirmação de recebimento ao solicitante, pelos dois canais.
+  const linkDaSolicitacao = `${process.env.APP_URL}/solicitacoes/${request.id}`;
+  const confirmacao = templates.confirmacaoRecebimento(
+    request.requester.name,
+    request.code,
+    shortDescription,
+    linkDaSolicitacao,
+  );
+  await avisar({
+    para: request.requester.email,
+    assunto: confirmacao.subject,
+    html: confirmacao.html,
+    slack:
+      `*Solicitação ${request.code} recebida*\n${shortDescription}\n` +
+      `Seguiu para a Homologação e Triagem, com o time de Compras.\n` +
+      `<${linkDaSolicitacao}|Acompanhar a solicitação>`,
+    requestId: request.id,
+    origem: "confirmacao de recebimento",
+  });
 
   // Alerta ao gestor do centro de custo, por Slack. É AVISO, não convocação:
   // a etapa Aprovação do Gestor saiu do fluxo em 21/08/2026 e a solicitação
@@ -236,7 +253,7 @@ export async function POST(req: NextRequest) {
   // ignorar a notificação. Regra e texto em @/lib/alerta-centro-de-custo,
   // onde têm teste próprio.
   const gestoresAvisados = gestoresParaAvisar(costCenter.managers, solicitanteId);
-  const resumo = resumoParaOGestor({
+  const dadosDoResumo = {
     code: request.code,
     shortDescription: request.shortDescription,
     requesterName: request.requester.name,
@@ -251,20 +268,27 @@ export async function POST(req: NextRequest) {
     extraBudgetStart: request.extraBudgetStart,
     extraBudgetEnd: request.extraBudgetEnd,
     linkDaSolicitacao: `${process.env.APP_URL}/solicitacoes/${request.id}`,
-  });
+  };
 
+  // Pelos dois canais desde 21/08/2026: o gestor de orçamento é justamente o
+  // perfil que costuma viver no e-mail, e o alerta saía só no Slack. Os dois
+  // formatos saem dos MESMOS dados, para não divergirem com o tempo.
+  const resumo = resumoParaOGestor(dadosDoResumo);
+  const resumoEmail = resumoParaOGestorEmHtml(dadosDoResumo);
   await Promise.all(
     gestoresAvisados.map((manager) =>
-      sendSlackDM({
-        slackUserEmail: manager.email,
-        text: resumo,
+      avisar({
+        para: manager.email,
+        assunto: resumoEmail.assunto,
+        html: resumoEmail.html,
+        slack: resumo,
         requestId: request.id,
-      }).catch(() => {
-        // Falha de Slack não deve bloquear a criação da solicitação, já registrada em Notification.
-      })
-    )
+        origem: "alerta ao gestor do centro de custo",
+      }),
+    ),
   );
 
+  // Link reaproveitado do aviso acima; nao recalcula.
   // Vai direto para a Triagem. A Aprovação do Gestor saiu do fluxo em
   // 21/08/2026 (ver a nota de legado em STAGES.APROVACAO_GESTOR): quem faz o
   // primeiro crivo é o comprador. Gasto sem orçamento continua controlado,
