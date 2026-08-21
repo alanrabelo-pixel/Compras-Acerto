@@ -13,7 +13,12 @@ import { AppShell } from "@/components/AppShell";
 import { Breadcrumb, Badge, WarningNotice } from "@/components/ui";
 import { PRIORITY_BADGE_VARIANT } from "@/lib/badge-variants";
 import { PRIORITY_LABEL, DEMAND_TYPE_LABEL, rotulo } from "@/lib/rotulos";
-import { checarComprovanteDoFpa, CATEGORIA_COMPROVANTE_FPA } from "@/lib/orcamento-extra";
+import {
+  checarComprovanteDoFpa,
+  CATEGORIA_COMPROVANTE_FPA,
+  BASE_DE_ORCAMENTO_EXTRA_LABEL,
+  IMPACTO_DE_ORCAMENTO_EXTRA_LABEL,
+} from "@/lib/orcamento-extra";
 import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
 
 export const dynamic = "force-dynamic";
@@ -205,6 +210,45 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           <WarningNotice className="section-gap">
             Sinalizada por risco de fracionamento: a soma das compras deste fornecedor nos últimos 12 meses ultrapassa a alçada individual desta solicitação. Revisão da Controladoria recomendada.
           </WarningNotice>
+        )}
+
+        {/*
+          Detalhamento do Orçamento Extra, preenchido no modal da abertura.
+          Fica ACIMA do painel de Detalhes de propósito: quem abre esta tela
+          para decidir a exceção (Coordenação ou Gerente F&NC, conforme a
+          alçada) precisa do impacto antes dos dados operacionais da compra.
+          O painel de Detalhes logo abaixo completa o quadro com prazo,
+          fornecedor indicado, centro de custo e o resto.
+
+          Só aparece quando há detalhamento gravado: solicitações abertas antes
+          de 21/08/2026 são Orçamento Extra sem estes campos, e um painel com
+          cinco traços não informa nada.
+        */}
+        {request.extraBudget && request.extraBudgetBasis && (
+          <section className="card section-gap">
+            <h2 className="card-title">Orçamento Extra: detalhamento do solicitante</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px", fontSize: 12.5 }}>
+              <p style={{ margin: 0 }}>
+                <span className="text-muted">Valor solicitado:</span>{" "}
+                {request.estimatedValue !== null ? formatCurrency(Number(request.estimatedValue)) : "não informado"}{" "}
+                {BASE_DE_ORCAMENTO_EXTRA_LABEL[request.extraBudgetBasis]}
+              </p>
+              <p style={{ margin: 0 }}>
+                <span className="text-muted">Impacto financeiro:</span>{" "}
+                {request.extraBudgetImpact ? IMPACTO_DE_ORCAMENTO_EXTRA_LABEL[request.extraBudgetImpact] : "não informado"}
+              </p>
+              <p style={{ margin: 0, gridColumn: "1 / -1" }}>
+                <span className="text-muted">Vigência:</span>{" "}
+                {request.extraBudgetStart && request.extraBudgetEnd
+                  ? `${formatDateOnly(request.extraBudgetStart)} a ${formatDateOnly(request.extraBudgetEnd)}`
+                  : "não informada"}
+              </p>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <span className="text-muted">Motivo de não estar no orçamento original:</span>
+                <p style={{ margin: "4px 0 0", whiteSpace: "pre-wrap" }}>{request.extraBudgetJustification}</p>
+              </div>
+            </div>
+          </section>
         )}
 
         <section className="card section-gap">

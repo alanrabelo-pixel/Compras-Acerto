@@ -237,6 +237,24 @@ enum ValueType {
   VARIAVEL
 }
 
+// Base do valor informado no Orçamento Extra. O número é o estimatedValue da
+// solicitação; isto diz o que ele significa. Sem esta distinção, "R$ 10 mil"
+// não permite saber se o impacto no ano é 10 mil ou 120 mil, que é
+// exatamente o que a Coordenação ou o Gerente F&NC precisam para decidir.
+enum ExtraBudgetBasis {
+  MENSAL
+  ANUAL
+  TOTAL
+}
+
+// Se o gasto extra se repete depois do período informado ou morre com ele.
+// Separado da base de propósito: um valor ANUAL pode ser pontual (uma licença
+// comprada uma vez para o ano) ou recorrente (renova todo ano).
+enum ExtraBudgetImpact {
+  RECORRENTE
+  PONTUAL
+}
+
 // Faixa de risco do processo (revisão: reintroduz o modelo de lanes já
 // validado antes, já que nem toda compra precisa do fluxo completo)
 enum Lane {
@@ -318,6 +336,27 @@ model PurchaseRequest {
   /// Orçamentária não tem como exigir o comprovante do FP&A.
   extraBudget    Boolean  @default(false)
   budgetLineText String?
+
+  /// Detalhamento do Orçamento Extra, coletado num modal na abertura (pedido
+  /// do dono do sistema em 21/08/2026). Existe para que a Coordenação ou o
+  /// Gerente F&NC decidam a exceção com o quadro na frente, em vez de com o
+  /// valor solto: quanto, por quanto tempo, se repete, e por que não estava
+  /// previsto.
+  ///
+  /// Todos anuláveis porque só se aplicam quando extraBudget é true, e porque
+  /// as solicitações que já existiam não têm como preenchê-los. A
+  /// obrigatoriedade é da rota de criação (POST /api/requests), não do banco:
+  /// uma CHECK condicional aqui travaria os registros antigos.
+  ///
+  /// NÃO existe um "valor do orçamento extra": o valor é o estimatedValue da
+  /// própria solicitação, que passa a ser obrigatório quando extraBudget é
+  /// true. Dois números concorrentes deixariam ambíguo qual deles define a
+  /// alçada em budgetExceptionLevel().
+  extraBudgetBasis         ExtraBudgetBasis?
+  extraBudgetStart         DateTime?
+  extraBudgetEnd           DateTime?
+  extraBudgetImpact        ExtraBudgetImpact?
+  extraBudgetJustification String?            @db.Text
 
   priority         Priority
   demandType       DemandType

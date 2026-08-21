@@ -2764,3 +2764,43 @@ body.com-faixa-de-ambiente .painel-expandido-fundo {
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Modal centrado (detalhamento do Orçamento Extra na abertura).
+
+   Reaproveita .painel-expandido-fundo, que já resolve a sobreposição, a
+   animação e, principalmente, o respeito à faixa de ambiente: o fundo começa
+   abaixo dela quando existe, para o aviso de Sandbox não ser encoberto. Aqui
+   só muda o alinhamento, porque este diálogo é um cartão no meio da tela e
+   não um painel de tela cheia.
+--------------------------------------------------------------------------- */
+.modal-centrado-fundo {
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-centrado {
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.28);
+}
+
+.modal-centrado-conteudo {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-centrado-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-muted);
+}

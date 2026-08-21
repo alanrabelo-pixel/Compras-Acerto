@@ -29,6 +29,28 @@ import { prisma } from "@/lib/db";
  */
 export const CATEGORIA_COMPROVANTE_FPA: AttachmentCategory = "APROVACAO_EXTRA_ORCAMENTARIA";
 
+/**
+ * Detalhamento do Orçamento Extra, coletado no modal da abertura.
+ *
+ * As listas existem para a rota validar o que chega pelo corpo: o enum do
+ * Prisma vive no banco e não sobrevive a um JSON, então sem elas um POST
+ * direto com extraBudgetBasis: "SEMESTRAL" só falharia lá no create, com erro
+ * de driver em vez de mensagem para quem preencheu.
+ */
+export const BASES_DE_ORCAMENTO_EXTRA = ["MENSAL", "ANUAL", "TOTAL"] as const;
+export const IMPACTOS_DE_ORCAMENTO_EXTRA = ["RECORRENTE", "PONTUAL"] as const;
+
+export const BASE_DE_ORCAMENTO_EXTRA_LABEL: Record<(typeof BASES_DE_ORCAMENTO_EXTRA)[number], string> = {
+  MENSAL: "por mês",
+  ANUAL: "por ano",
+  TOTAL: "no total",
+};
+
+export const IMPACTO_DE_ORCAMENTO_EXTRA_LABEL: Record<(typeof IMPACTOS_DE_ORCAMENTO_EXTRA)[number], string> = {
+  RECORRENTE: "Recorrente",
+  PONTUAL: "Custo pontual",
+};
+
 export type ChecagemDoComprovante =
   | { ok: true; comprovante: Attachment | null }
   | { ok: false; erro: string };

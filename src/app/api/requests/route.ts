@@ -5,6 +5,7 @@ import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { sendSlackDM } from "@/lib/integrations/slack";
 import { proximoCodigo } from "@/lib/codigo";
 import { campo } from "@/lib/rotulos";
+import { BASES_DE_ORCAMENTO_EXTRA, IMPACTOS_DE_ORCAMENTO_EXTRA } from "@/lib/orcamento-extra";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import { atorDaSessao, exigirQuadro } from "@/lib/acesso";
 
@@ -43,6 +44,11 @@ export async function POST(req: NextRequest) {
     leadershipPreApproved,
     budgetLineText,
     extraBudget,
+    extraBudgetBasis,
+    extraBudgetStart,
+    extraBudgetEnd,
+    extraBudgetImpact,
+    extraBudgetJustification,
     priority,
     demandType,
     shortDescription,
@@ -97,6 +103,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Informe a Linha do Orçamento, ou marque Orçamento Extra se não houver uma." }, { status: 400 });
   }
 
+  // Detalhamento do Orçamento Extra: obrigatório na rota, não no banco. As
+  // colunas são anuláveis porque as solicitações que já existiam não têm como
+  // preenchê-las, e uma CHECK condicional travaria o histórico.
+  //
+  // estimatedValue entra na lista SÓ neste caso, e é a exceção à regra da
+  // linha 76: em compra comum o valor pode faltar e a Triagem cobra depois,
+  // mas aqui ele é o que define se decide a Coordenação ou o Gerente F&NC
+  // (budgetExceptionLevel). Sem valor não há alçada, e a solicitação chegaria
+  // à Validação Orçamentária sem ninguém definido para decidi-la.
+  if (extraBudget) {
+    const detalhamento = {
+      estimatedValue,
+      extraBudgetBasis,
+      extraBudgetStart,
+      extraBudgetEnd,
+      extraBudgetImpact,
+      extraBudgetJustification,
+    };
+    for (const [chave, valor] of Object.entries(detalhamento)) {
+      if (valor === undefined || valor === null || valor === "") {
+        return NextResponse.json(
+          { error: `Orçamento Extra exige o detalhamento completo. Preencha o campo ${campo(chave)}.` },
+          { status: 400 },
+        );
+      }
+    }
+    if (!BASES_DE_ORCAMENTO_EXTRA.includes(extraBudgetBasis)) {
+      return NextResponse.json({ error: "Base do valor inválida. Use mensal, anual ou total." }, { status: 400 });
+    }
+    if (!IMPACTOS_DE_ORCAMENTO_EXTRA.includes(extraBudgetImpact)) {
+      return NextResponse.json({ error: "Impacto financeiro inválido. Use recorrente ou pontual." }, { status: 400 });
+    }
+    if (new Date(extraBudgetEnd) < new Date(extraBudgetStart)) {
+      return NextResponse.json({ error: "O fim da vigência não pode ser anterior ao início." }, { status: 400 });
+    }
+  }
+
   // Orçamento Extra: o comprovante de aprovação do FP&A NÃO é exigido aqui, e
   // isso é decisão, não esquecimento. O anexo só pode existir depois que a
   // solicitação existe, porque POST /api/requests/[id]/attachments precisa do
@@ -145,6 +188,15 @@ export async function POST(req: NextRequest) {
       // Validação Orçamentária perdia como saber que precisa exigir o
       // comprovante de aprovação do FP&A.
       extraBudget: Boolean(extraBudget),
+      // Só gravados quando é Orçamento Extra. Se alguém mandar o detalhamento
+      // junto de uma linha de orçamento comum, o campo é ignorado em vez de
+      // gravado: solicitação com linha prevista não tem vigência de exceção, e
+      // deixar o resíduo faria o painel do aprovador mostrar dado sem sentido.
+      extraBudgetBasis: extraBudget ? extraBudgetBasis : null,
+      extraBudgetStart: extraBudget ? new Date(extraBudgetStart) : null,
+      extraBudgetEnd: extraBudget ? new Date(extraBudgetEnd) : null,
+      extraBudgetImpact: extraBudget ? extraBudgetImpact : null,
+      extraBudgetJustification: extraBudget ? extraBudgetJustification : null,
       priority,
       demandType,
       shortDescription,

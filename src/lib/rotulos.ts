@@ -88,6 +88,12 @@ export const CAMPO_LABEL: Record<string, string> = {
   suggestedDeadline: "Prazo Sugerido",
   quantity: "Quantidade",
   estimatedValue: "Valor Estimado",
+  // Detalhamento do Orçamento Extra (modal da abertura).
+  extraBudgetBasis: "Base do valor (mensal, anual ou total)",
+  extraBudgetStart: "Início da vigência",
+  extraBudgetEnd: "Fim da vigência",
+  extraBudgetImpact: "Impacto financeiro (recorrente ou pontual)",
+  extraBudgetJustification: "Motivo de não estar no orçamento original",
   // Pedido de Compra
   supplierLegalName: "Razão Social do fornecedor",
   supplierCnpj: "CNPJ do fornecedor",

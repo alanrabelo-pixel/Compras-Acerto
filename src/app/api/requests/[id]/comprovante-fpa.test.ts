@@ -151,6 +151,18 @@ describe("Comprovante do FP&A: criação e ramo de orçamento disponível", () =
             costCenterId: costCenter.id,
             leadershipPreApproved: true,
             extraBudget: true,
+            // Detalhamento obrigatório desde 21/08/2026 (ver
+            // orcamento-extra-detalhamento.test.ts). Entra aqui porque o que
+            // este caso prova é OUTRA coisa: que o ANEXO não é exigido na
+            // criação, já que ele só pode existir depois que a solicitação tem
+            // id. Sem estes campos o 400 viria da regra errada e o teste
+            // passaria a não provar nada.
+            estimatedValue: 20000,
+            extraBudgetBasis: "TOTAL",
+            extraBudgetStart: "2027-01-01",
+            extraBudgetEnd: "2027-06-30",
+            extraBudgetImpact: "PONTUAL",
+            extraBudgetJustification: "Necessidade surgida depois do fechamento do orçamento.",
             priority: "MEDIA",
             demandType: "COMPRA_SERVICO",
             shortDescription: "Compra extra-orçamentária aberta pelo formulário",

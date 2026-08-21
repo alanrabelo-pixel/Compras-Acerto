@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
 import { Button, Field, AiTag, WarningNotice } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
+import {
+  OrcamentoExtraModal,
+  detalhamentoCompleto,
+  type DetalhamentoDeOrcamentoExtra,
+} from "@/components/OrcamentoExtraModal";
+import { BASE_DE_ORCAMENTO_EXTRA_LABEL, IMPACTO_DE_ORCAMENTO_EXTRA_LABEL } from "@/lib/orcamento-extra";
 
 type CostCenter = { id: string; name: string; managers: { name: string }[] };
 
@@ -118,6 +124,32 @@ export function NovaSolicitacaoForm({
   const isExtraBudget = budgetLineChoice === EXTRA_BUDGET;
   const isOtherBudget = budgetLineChoice === OTHER_BUDGET;
 
+  // Detalhamento do Orçamento Extra. O valor NÃO mora aqui: ele é o
+  // estimatedValue logo acima, que passou a ser obrigatório quando é Orçamento
+  // Extra. O modal recebe os dois compostos num objeto só, por ser o formato
+  // que ele valida, e devolve pelo mesmo caminho. Dois estados para o mesmo
+  // número dariam duas verdades, e a tela mostraria uma enquanto o POST
+  // mandaria a outra.
+  const [modalExtraAberto, setModalExtraAberto] = useState(false);
+  const [detalheExtra, setDetalheExtra] = useState<Omit<DetalhamentoDeOrcamentoExtra, "estimatedValue">>({
+    basis: "", start: "", end: "", impact: "", justification: "",
+  });
+  const detalhamentoExtra: DetalhamentoDeOrcamentoExtra = { ...detalheExtra, estimatedValue };
+  const extraPronto = isExtraBudget && detalhamentoCompleto(detalhamentoExtra);
+
+  function aplicarDetalhamento({ estimatedValue: valorDoModal, ...resto }: DetalhamentoDeOrcamentoExtra) {
+    setEstimatedValue(valorDoModal);
+    setDetalheExtra(resto);
+  }
+
+  function escolherLinhaDoOrcamento(escolha: string) {
+    setBudgetLineChoice(escolha);
+    // O modal abre junto da escolha, e não num botão separado: as cinco
+    // perguntas existem por causa dela, e um botão "detalhar" à parte seria
+    // fácil de ignorar até o envio falhar.
+    if (escolha === EXTRA_BUDGET) setModalExtraAberto(true);
+  }
+
   // Assistente de preenchimento (Fase 1 de IA). Lê a Descrição Detalhada já
   // digitada e sugere demandType/priority + um alerta antecipado de
   // Due Diligence. Nunca preenche sozinho sem clique, e cada campo alterado
@@ -196,6 +228,15 @@ export function NovaSolicitacaoForm({
           leadershipPreApproved: leadershipPreApproved === "SIM",
           budgetLineText: isExtraBudget ? undefined : (budgetLineText || undefined),
           extraBudget: isExtraBudget,
+          ...(isExtraBudget
+            ? {
+                extraBudgetBasis: detalhamentoExtra.basis,
+                extraBudgetStart: detalhamentoExtra.start,
+                extraBudgetEnd: detalhamentoExtra.end,
+                extraBudgetImpact: detalhamentoExtra.impact,
+                extraBudgetJustification: detalhamentoExtra.justification,
+              }
+            : {}),
           demandType, shortDescription, longDescription,
           priority, suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
           quantity, estimatedValue: estimatedValue === "" ? undefined : estimatedValue,
@@ -237,7 +278,7 @@ export function NovaSolicitacaoForm({
   const canSubmit =
     requesterId && costCenterId && leadershipPreApproved && budgetLineChoice &&
     shortDescription && longDescription && suggestedDeadline && quantity > 0 &&
-    (!isExtraBudget || extraBudgetFileSelected) &&
+    (!isExtraBudget || (extraBudgetFileSelected && extraPronto)) &&
     (!isOtherBudget || budgetLineText.trim());
 
   return (
@@ -341,7 +382,7 @@ export function NovaSolicitacaoForm({
             required
             help="Indicar o nome da linha do orçamento responsável por absorver essa solicitação de compra."
           >
-            <select className="input" value={budgetLineChoice} onChange={(e) => setBudgetLineChoice(e.target.value)}>
+            <select className="input" value={budgetLineChoice} onChange={(e) => escolherLinhaDoOrcamento(e.target.value)}>
               <option value="">Selecione</option>
               <option value={EXTRA_BUDGET}>Orçamento Extra</option>
               <option value={OTHER_BUDGET}>Outros</option>
@@ -361,9 +402,36 @@ export function NovaSolicitacaoForm({
               </>
             )}
             {isExtraBudget && (
-              <WarningNotice className="section-gap">
-                Orçamento Extra exige anexo obrigatório: o print da validação do orçamento pelo time de FP&A, no campo logo abaixo.
-              </WarningNotice>
+              <>
+                <WarningNotice className="section-gap">
+                  Orçamento Extra exige anexo obrigatório: o print da validação do orçamento pelo time de FP&A, no campo logo abaixo.
+                </WarningNotice>
+                {extraPronto ? (
+                  <div className="hint-box hint-box-neutral section-gap" style={{ display: "grid", gap: 6 }}>
+                    <strong>Detalhamento preenchido</strong>
+                    <span>
+                      {Number(estimatedValue).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{" "}
+                      {BASE_DE_ORCAMENTO_EXTRA_LABEL[detalheExtra.basis as keyof typeof BASE_DE_ORCAMENTO_EXTRA_LABEL]}
+                      {" · "}
+                      {IMPACTO_DE_ORCAMENTO_EXTRA_LABEL[detalheExtra.impact as keyof typeof IMPACTO_DE_ORCAMENTO_EXTRA_LABEL]}
+                      {" · vigência de "}
+                      {new Date(`${detalheExtra.start}T00:00:00`).toLocaleDateString("pt-BR")} a{" "}
+                      {new Date(`${detalheExtra.end}T00:00:00`).toLocaleDateString("pt-BR")}
+                    </span>
+                    <button type="button" className="btn btn-secondary" style={{ justifySelf: "start" }} onClick={() => setModalExtraAberto(true)}>
+                      Editar detalhamento
+                    </button>
+                  </div>
+                ) : (
+                  <div className="hint-box hint-box-warning section-gap" style={{ display: "grid", gap: 6 }}>
+                    <strong>Falta o detalhamento do Orçamento Extra</strong>
+                    <span>Valor e base, vigência, impacto financeiro e o motivo de não estar no orçamento original.</span>
+                    <button type="button" className="btn btn-secondary" style={{ justifySelf: "start" }} onClick={() => setModalExtraAberto(true)}>
+                      Preencher detalhamento
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </Field>
 
@@ -544,6 +612,14 @@ export function NovaSolicitacaoForm({
           </Button>
         </div>
       </div>
+
+      <OrcamentoExtraModal
+        aberto={modalExtraAberto}
+        valor={detalhamentoExtra}
+        onChange={aplicarDetalhamento}
+        onFechar={() => setModalExtraAberto(false)}
+        onConfirmar={() => setModalExtraAberto(false)}
+      />
     </main>
   );
 }
