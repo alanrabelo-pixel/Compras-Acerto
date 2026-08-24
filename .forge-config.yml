@@ -1,0 +1,98 @@
+stack: nodejs
+gitopsType: github-flow
+# trigger: forca um novo commit hash para testar se o Provider gera o
+# script atualizado (teoria: cache do Dynamic Pipelines por commit).
+
+# Desligados no primeiro deploy — revisar/habilitar depois de estabilizar
+# (mesmo motivo de bug conhecido do Sonar com Java 17 no golden-pipeline).
+quality:
+  sonarqube:
+    enabled: false
+
+security:
+  gitleaks:
+    enabled: false
+
+# Sem "nodejs.mode" — o default (classic: Install -> Lint+Test -> Build ->
+# Docker) é o que queremos. "docker-only" pularia o Run Tests inteiro,
+# jogando fora o trabalho de Testcontainers (ver vitest.config.ts).
+
+docker:
+  registry: 571600836220.dkr.ecr.sa-east-1.amazonaws.com
+  imageName: acerto-compras
+
+projects:
+  # parseProjects (config-loader.js) só lê name/buildName/gitopsDir — não
+  # existe override de "dockerfile" por projeto. O template Node.js sempre
+  # monta o caminho como deploy/<name>/Dockerfile (mesma convenção real já
+  # usada pelo meu-acerto-negociacao) — por isso o Dockerfile deste repo
+  # está em deploy/acerto-compras/Dockerfile, não na raiz.
+  - name: acerto-compras
+    buildName: acerto-compras
+    gitopsDir: acerto-compras
+
+gitops:
+  repository:
+    cloneUrl: https://bitbucket.org/acertodevs/gitops-applications-overlays.git
+    defaultBranch: gitops
+  overlayPathTemplate: apps/{gitopsDir}/overlays/{environment}
+  # TODO: confirmar se roda numa conta prd real ou na conta de serviços
+  # (svc) — mesma decisão que já foi tomada pro acerto-metrics-backend.
+  productionEnvironment: svc
+
+eks:
+  clusters:
+    dev:
+      region: sa-east-1
+      clusterName: dev-sae1-eks-workload
+      namespace: default
+      roleArn: arn:aws:iam::361769603440:role/AcertoGoldenPipeline
+      serviceAccount: acerto-golden-pipeline
+    hml:
+      region: sa-east-1
+      clusterName: hml-sae1-eks-workload
+      namespace: default
+      roleArn: arn:aws:iam::557690576743:role/AcertoGoldenPipeline
+      serviceAccount: acerto-golden-pipeline
+    svc:
+      region: sa-east-1
+      clusterName: svc-sae1-eks-workload
+      namespace: default
+      # TODO: confirmar se esta role já existe na conta de serviços (mesma
+      # pendência que o acerto-metrics-backend teve).
+      roleArn: arn:aws:iam::156469584520:role/AcertoGoldenPipeline
+      serviceAccount: acerto-golden-pipeline
+
+# Migrations: arquivos planos gerados a partir do Prisma (ver
+# sql/acerto-compras/README.md e scripts/sync-migration-sql.ts) — mesmo
+# formato/mecanismo que acerto-blocklist/acerto-credito-poc-backend/
+# acerto-metrics-backend já usam, sem precisar de mudança no golden-pipeline.
+dbMigrations:
+  enabled: true
+  environments:
+    dev:
+      eksClusterRef: dev
+      targets:
+        # TODO: confirmar/criar a chave "rdsCommonConnectionStringAcertoCompras"
+        # dentro do secret compartilhado dev-sae1-secrets-golden-pipeline —
+        # mesmo padrão do acerto-metrics-backend/acerto-credito-poc-backend.
+        - id: dev-sae1-rds-postgresql-common
+          secretName: dev-sae1-secrets-golden-pipeline
+          secretKey: rdsCommonConnectionStringAcertoCompras
+          path: sql/acerto-compras
+    hml:
+      eksClusterRef: hml
+      targets:
+        - id: hml-sae1-rds-postgresql-common
+          secretName: hml-sae1-secrets-golden-pipeline
+          secretKey: rdsCommonConnectionStringAcertoCompras
+          path: sql/acerto-compras
+    svc:
+      eksClusterRef: svc
+      targets:
+        # TODO: confirmar o id real da instância RDS na conta de serviços
+        # (pode não ser "rds-postgresql-common" lá — verificar antes do 1o deploy).
+        - id: svc-sae1-rds-postgresql-common
+          secretName: svc-sae1-secrets-golden-pipeline
+          secretKey: rdsCommonConnectionStringAcertoCompras
+          path: sql/acerto-compras

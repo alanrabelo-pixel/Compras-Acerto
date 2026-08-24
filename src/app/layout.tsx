@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// next/font/local em vez de next/font/google: o build (docker build, sem
+// egress liberado pra fonts.gstatic.com na Golden Pipeline) ficava tentando
+// baixar a fonte pela rede e travava por até ~30min sem erro claro, só
+// esgotando o timeout. O arquivo abaixo é a mesma fonte variável (pesos
+// 400–700, subset latin) que o Google Fonts servia, baixada uma vez e
+// versionada no repo — zero rede no build a partir de agora.
+const montserrat = localFont({
+  src: "../fonts/montserrat-latin-variable.woff2",
+  weight: "400 700",
   variable: "--font-montserrat",
   display: "swap",
 });

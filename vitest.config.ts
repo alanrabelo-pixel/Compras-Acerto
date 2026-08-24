@@ -28,6 +28,16 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Sobe um Postgres real e descartável via Testcontainers antes da suíte
+    // (ver src/test-helpers/global-setup.ts) e derruba no final — sobrescreve
+    // o DATABASE_URL carregado do .env acima só pra duração dos testes.
+    // Requer Docker disponível (Docker Desktop local, ou o serviço `docker`
+    // declarado no step "Run Tests" da Golden Pipeline em CI).
+    globalSetup: "./src/test-helpers/global-setup.ts",
+    // Testcontainers sobe/derruba um container real — mais lento que um
+    // mock, mas roda uma vez só pra suíte inteira (não por arquivo).
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
   resolve: {
     alias: {

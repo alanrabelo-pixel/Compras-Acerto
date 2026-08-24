@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate",
+    "preinstall": "if command -v apk >/dev/null 2>&1; then apk add --no-cache openssl; fi",
+    "postinstall": "prisma generate && node scripts/verify-prisma-engine.cjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -12,16 +13,17 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:studio": "prisma studio",
+    "migrations:sync": "tsx scripts/sync-migration-sql.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.4",
+    "@aws-sdk/client-s3": "^3.700.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.20.0",
     "@react-pdf/renderer": "^4.5.1",
     "@slack/web-api": "^7.5.0",
-    "@vercel/blob": "^2.6.1",
     "googleapis": "^144.0.0",
     "lucide-react": "^1.31.0",
     "next": "^14.2.35",
@@ -32,9 +34,12 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "^10.13.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
     "prisma": "^5.20.0",
     "tsx": "^4.19.1",
     "typescript": "^5",

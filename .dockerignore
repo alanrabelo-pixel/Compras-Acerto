@@ -1,0 +1,23 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+uploads
+dev-server.log
+dev-stderr.log
+dev-stdout.log
+.claude
+docs
+*.md
+sql
+# scripts/verify-prisma-engine.cjs roda no postinstall (dentro da imagem);
+# o resto da pasta (ex.: sync-migration-sql.ts, só usado localmente pelo
+# dev) continua fora.
+scripts
+!scripts/verify-prisma-engine.cjs
+.eslintrc.json
+vitest.config.ts
+src/**/*.test.ts
+src/test-helpers

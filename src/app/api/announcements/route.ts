@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { loadCurrentUser } from "@/lib/current-user";
 
+// Sem parâmetro no GET, o Next.js tenta pré-renderizar esta rota em tempo de
+// build (acha que é "estática") — e quebra o build sem banco disponível
+// (ex.: no runner de CI). force-dynamic desliga essa tentativa.
+export const dynamic = "force-dynamic";
+
 // GET /api/announcements — lista os comunicados mais recentes (leitura
 // aberta a qualquer pessoa autenticada/bypass, sem alçada).
 export async function GET() {

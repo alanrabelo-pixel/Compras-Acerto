@@ -51,7 +51,7 @@ export default async function CentrosDeCustoPage({
         <h1 className="page-title">Centros de Custo</h1>
         <p className="page-subtitle">
           Cada centro de custo tem um ou mais gestores que aprovam automaticamente as solicitações de compra assim
-          que o formulário é enviado, antes do comprador atuar (etapa "Aprovação do Gestor") — qualquer um deles pode
+          que o formulário é enviado, antes do comprador atuar (etapa &quot;Aprovação do Gestor&quot;) — qualquer um deles pode
           decidir, reduzindo a necessidade de ajuste manual quando um titular está ausente. Trocar os gestores aqui
           também atualiza as solicitações que já estão paradas nessa etapa aguardando decisão. Prefira desativar um
           centro de custo a renomeá-lo ou excluí-lo — preserva o histórico das solicitações já vinculadas a ele.
@@ -104,7 +104,7 @@ export default async function CentrosDeCustoPage({
           <div className="section-gap">
             <p className="page-subtitle" style={{ marginBottom: 14 }}>
               Aprovador(es) padrão de cada alçada de valor, atribuído(s) automaticamente ao criar a Aprovação na etapa
-              "Aprovação" (depois de Cotação/Mapa de Cotação) — mais de um é permitido, qualquer um pode decidir.
+              &quot;Aprovação&quot; (depois de Cotação/Mapa de Cotação) — mais de um é permitido, qualquer um pode decidir.
             </p>
             <TableWrap>
               <TableHeadRow columns="1.6fr 2fr">
@@ -125,8 +125,8 @@ export default async function CentrosDeCustoPage({
           <div className="section-gap">
             <p className="page-subtitle" style={{ marginBottom: 14 }}>
               Visão inversa da tabela de Centros de Custo: escolha, por pessoa, quais centros de custo ela pode
-              aprovar. Quem não estiver marcado para um centro de custo não vê a solicitação em "Minhas Pendências"
-              quando ela chega na etapa "Aprovação do Gestor".
+              aprovar. Quem não estiver marcado para um centro de custo não vê a solicitação em &quot;Minhas Pendências&quot;
+              quando ela chega na etapa &quot;Aprovação do Gestor&quot;.
             </p>
             <TableWrap>
               <TableHeadRow columns="1.6fr 2.4fr">
