@@ -36,8 +36,6 @@ gitops:
     cloneUrl: https://bitbucket.org/acertodevs/gitops-applications-overlays.git
     defaultBranch: gitops
   overlayPathTemplate: apps/{gitopsDir}/overlays/{environment}
-  # TODO: confirmar se roda numa conta prd real ou na conta de serviços
-  # (svc) — mesma decisão que já foi tomada pro acerto-metrics-backend.
   productionEnvironment: svc
 
 eks:
@@ -73,9 +71,6 @@ dbMigrations:
     dev:
       eksClusterRef: dev
       targets:
-        # TODO: confirmar/criar a chave "rdsCommonConnectionStringAcertoCompras"
-        # dentro do secret compartilhado dev-sae1-secrets-golden-pipeline —
-        # mesmo padrão do acerto-metrics-backend/acerto-credito-poc-backend.
         - id: dev-sae1-rds-postgresql-common
           secretName: dev-sae1-secrets-golden-pipeline
           secretKey: rdsCommonConnectionStringAcertoCompras
@@ -90,8 +85,6 @@ dbMigrations:
     svc:
       eksClusterRef: svc
       targets:
-        # TODO: confirmar o id real da instância RDS na conta de serviços
-        # (pode não ser "rds-postgresql-common" lá — verificar antes do 1o deploy).
         - id: svc-sae1-rds-postgresql-common
           secretName: svc-sae1-secrets-golden-pipeline
           secretKey: rdsCommonConnectionStringAcertoCompras
