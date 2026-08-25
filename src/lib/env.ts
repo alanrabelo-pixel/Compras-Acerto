@@ -45,7 +45,12 @@ const RECOMENDADAS_EM_PRODUCAO = [
   "ERP_API_KEY",
   "SLACK_BOT_TOKEN",
   "SLACK_SIGNING_SECRET",
-  "BLOB_READ_WRITE_TOKEN",
+  // AWS_S3_BUCKET substituiu BLOB_READ_WRITE_TOKEN em 25/08/2026, junto com a
+  // troca do Vercel Blob pelo S3 (ver src/lib/storage.ts). A lista continuava
+  // avisando sobre a variável morta e calada sobre a viva, o que é pior que não
+  // avisar: quem configurasse produção pela mensagem preencheria o token do
+  // Blob, que hoje não é lido em lugar nenhum, e seguiria sem bucket.
+  "AWS_S3_BUCKET",
   "GOOGLE_SERVICE_ACCOUNT_EMAIL",
   "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY",
 ] as const;
@@ -56,7 +61,7 @@ const CONSEQUENCIA: Record<string, string> = {
   ERP_API_KEY: "a API de integração com o ERP recusa toda chamada",
   SLACK_BOT_TOKEN: "nenhuma mensagem de Slack é enviada",
   SLACK_SIGNING_SECRET: "o webhook do Slack recusa todos os eventos recebidos",
-  BLOB_READ_WRITE_TOKEN: "anexos vão para disco efêmero e somem no próximo deploy",
+  AWS_S3_BUCKET: "anexos e fotos de perfil vão para o disco do pod, que é efêmero, e somem no próximo deploy",
   GOOGLE_SERVICE_ACCOUNT_EMAIL: "nenhum e-mail é enviado",
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "nenhum e-mail é enviado",
 };

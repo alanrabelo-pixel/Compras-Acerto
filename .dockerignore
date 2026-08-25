@@ -12,11 +12,19 @@ dev-stdout.log
 docs
 *.md
 sql
-# scripts/verify-prisma-engine.cjs roda no postinstall (dentro da imagem);
-# o resto da pasta (ex.: sync-migration-sql.ts, só usado localmente pelo
-# dev) continua fora.
+# Dois scripts rodam DENTRO da imagem, no npm ci, e por isso precisam entrar:
+# openssl-no-alpine.cjs no preinstall e verify-prisma-engine.cjs no postinstall
+# (ver "scripts" no package.json). O resto da pasta, como o
+# sync-migration-sql.ts que só o desenvolvimento usa, continua fora.
+#
+# A reinclusão do openssl-no-alpine.cjs faltava e QUEBRAVA O BUILD DA IMAGEM:
+# o COPY do Dockerfile trazia a pasta sem ele, o npm ci disparava o preinstall,
+# o node não achava o arquivo e a construção morria antes de instalar qualquer
+# dependência. Passou despercebido porque o script nasceu em 25/08/2026 para
+# consertar o npm install no Windows, e localmente a pasta inteira existe.
 scripts
 !scripts/verify-prisma-engine.cjs
+!scripts/openssl-no-alpine.cjs
 .eslintrc.json
 vitest.config.ts
 src/**/*.test.ts
