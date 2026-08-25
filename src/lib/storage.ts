@@ -72,5 +72,29 @@ export async function readFile(storageUrl: string): Promise<Buffer> {
     return Buffer.from(await response.Body.transformToByteArray());
   }
 
+  // ANEXO ANTIGO, DA ÉPOCA DO VERCEL BLOB.
+  //
+  // O Blob não guardava esquema próprio: gravava em Attachment.storageUrl a
+  // URL pública inteira, "https://<algo>.public.blob.vercel-storage.com/...".
+  // Toda linha criada antes da migração para o S3 está assim, e sem este
+  // trecho ela caía no erro de esquema desconhecido logo abaixo: o anexo
+  // continua listado na tela, e abrir devolve 500. Quem subiu o arquivo não
+  // tem como saber que ele virou inacessível.
+  //
+  // Ler é seguro e não recria o risco antigo: a URL pública já existe e já
+  // está gravada, e o que a substituição do storage corrige é a GRAVAÇÃO de
+  // novas URLs assim, que saveFile() acima não faz mais. Enquanto os arquivos
+  // não forem copiados para o bucket, este é o único caminho para eles.
+  if (storageUrl.startsWith("https://")) {
+    const resposta = await fetch(storageUrl);
+    if (!resposta.ok) {
+      throw new Error(
+        `Anexo antigo (Vercel Blob) não pôde ser lido: ${resposta.status} em ${storageUrl}. ` +
+          "Se o Blob já foi desligado, o arquivo precisa ser recuperado do backup e reenviado.",
+      );
+    }
+    return Buffer.from(await resposta.arrayBuffer());
+  }
+
   throw new Error(`storageUrl com esquema desconhecido (esperado local:// ou s3://): ${storageUrl}`);
 }
