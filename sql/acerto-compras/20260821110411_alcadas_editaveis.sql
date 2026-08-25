@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "ApprovalTier" (
+CREATE TABLE IF NOT EXISTS "ApprovalTier" (
     "level" INTEGER NOT NULL,
     "label" TEXT NOT NULL,
     "maxValue" DECIMAL(14,2),
@@ -12,7 +12,7 @@ CREATE TABLE "ApprovalTier" (
 );
 
 -- CreateIndex
-CREATE INDEX "ApprovalTier_active_maxValue_idx" ON "ApprovalTier"("active", "maxValue");
+CREATE INDEX IF NOT EXISTS "ApprovalTier_active_maxValue_idx" ON "ApprovalTier"("active", "maxValue");
 
 
 -- Semente das tres faixas que ate aqui eram constantes em src/lib/workflow.ts
@@ -23,4 +23,9 @@ CREATE INDEX "ApprovalTier_active_maxValue_idx" ON "ApprovalTier"("active", "max
 INSERT INTO "ApprovalTier" ("level", "label", "maxValue", "requiredApprovers", "active", "createdAt", "updatedAt") VALUES
   (1, 'Nivel 1 (ate R$ 50 mil)', 50000.00, 1, true, NOW(), NOW()),
   (2, 'Nivel 2 (ate R$ 500 mil)', 500000.00, 2, true, NOW(), NOW()),
-  (3, 'Nivel 3 (acima de R$ 500 mil)', NULL, 2, true, NOW(), NOW());
+  (3, 'Nivel 3 (acima de R$ 500 mil)', NULL, 2, true, NOW(), NOW())
+-- DO NOTHING, e nao DO UPDATE: estas tres linhas sao a semente inicial, e as
+-- faixas passaram a ser editaveis pela tela em 21/08/2026. Reaplicar este
+-- arquivo (a Golden Pipeline reenvia todo SQL que mudar num commit) nao pode
+-- desfazer o que alguem configurou depois.
+ON CONFLICT ("level") DO NOTHING;
