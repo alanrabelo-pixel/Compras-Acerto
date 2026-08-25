@@ -37,14 +37,24 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // O padrão do Vitest é 5s, curto demais aqui. Estes são testes de
-    // integração de verdade: batem no Postgres, e os arquivos rodam em
-    // paralelo disputando o mesmo banco de desenvolvimento. Num arranque frio
-    // (logo após prisma generate, por exemplo) o tempo de import passou de 50s
-    // para 118s e uma corrida inteira falhou por timeout, sem nada de errado no
-    // comportamento testado. Falha por timeout aqui é ruído que esconde
-    // regressão de verdade, que é o que a suíte precisa apontar.
-    testTimeout: 15_000,
+
+    // BANCO EFÊMERO VIA TESTCONTAINERS, trazido do time de engenharia em
+    // 25/08/2026. Sobe um Postgres real e descartável antes da suíte e derruba
+    // no fim, sobrescrevendo o DATABASE_URL só durante os testes (ver
+    // src/test-helpers/global-setup.ts). Requer Docker disponível.
+    //
+    // Resolve de raiz um problema que este arquivo documentava como conhecido:
+    // a suíte rodava contra o banco de DESENVOLVIMENTO, com prefixo aleatório
+    // por arquivo fazendo as vezes de isolamento. Em 21/08/2026 isso já tinha
+    // deixado 1172 linhas de lixo lá (439 usuários de teste para 22 reais), e
+    // a disputa pelo mesmo banco fazia a suíte falhar de forma intermitente
+    // sem nenhuma regressão de comportamento.
+    globalSetup: "./src/test-helpers/global-setup.ts",
+
+    // Testcontainers sobe e derruba um container real: mais lento que um mock,
+    // mas uma vez só para a suíte inteira, não por arquivo.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
   resolve: {
     alias: {

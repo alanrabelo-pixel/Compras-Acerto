@@ -3,6 +3,12 @@ import { prisma } from "@/lib/db";
 import { loadCurrentUser } from "@/lib/current-user";
 import { bypassAuthAtivo } from "@/lib/bypass";
 
+// Sem parâmetro no GET, o Next.js tenta pré-renderizar esta rota em tempo de
+// build (acha que é "estática") e quebra o build sem banco disponível, por
+// exemplo no runner de CI. force-dynamic desliga essa tentativa. Veio da
+// versão de infraestrutura do time de engenharia, em 25/08/2026.
+export const dynamic = "force-dynamic";
+
 // GET /api/announcements: lista os comunicados mais recentes (leitura
 // aberta a qualquer pessoa autenticada/bypass, sem alçada).
 export async function GET() {

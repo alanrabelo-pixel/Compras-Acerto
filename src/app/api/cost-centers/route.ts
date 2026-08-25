@@ -6,6 +6,12 @@ import { bypassAuthAtivo } from "@/lib/bypass";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import { garantirPapelDeAprovador } from "@/lib/papel-de-gestor";
 
+// Sem parâmetro no GET, o Next.js tenta pré-renderizar esta rota em tempo de
+// build (acha que é "estática") e quebra o build sem banco disponível, por
+// exemplo no runner de CI. force-dynamic desliga essa tentativa. Veio da
+// versão de infraestrutura do time de engenharia, em 25/08/2026.
+export const dynamic = "force-dynamic";
+
 // GET /api/cost-centers: lista centros de custo ativos, para o formulário de
 // Nova Solicitação. Inclui os gestores (nome) para exibir quem vai aprovar
 // antes de enviar (ver APROVACAO_GESTOR em src/lib/workflow.ts). Mais de um

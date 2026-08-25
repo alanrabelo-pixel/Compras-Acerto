@@ -32,6 +32,18 @@ export function bypassAuthAtivo(): boolean {
  * valendo quando não está.
  */
 export function assertBypassNaoEstaEmProducao(): void {
+  // O BUILD não é execução em produção. `next build` roda com
+  // NODE_ENV=production e carrega o .env da máquina, onde a flag está ligada
+  // para desenvolvimento: sem esta exceção, `npm run build` falha na coleta de
+  // dados das páginas, e falha por uma configuração que não vai para lugar
+  // nenhum, já que o .env local não entra na imagem (ver .dockerignore).
+  //
+  // Descoberto em 25/08/2026, ao rodar o build pela primeira vez, na
+  // integração com a versão de infraestrutura do time de engenharia. A
+  // proteção que importa continua inteira: NEXT_PHASE só vale enquanto o
+  // compilador roda, e no processo que atende requisição ela não existe.
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+
   if (process.env.NODE_ENV === "production" && process.env.LOCAL_BYPASS_AUTH === "true") {
     throw new Error(
       "LOCAL_BYPASS_AUTH está ligada com NODE_ENV=production. Essa flag desliga " +

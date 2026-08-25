@@ -110,7 +110,7 @@ export default async function ContratosPage({
               </TableRow>
             );
           })}
-          {contracts.length === 0 && <TableEmpty>Nenhum contrato encontrado com estes filtros. Use "Limpar filtros" acima para ver todos.</TableEmpty>}
+          {contracts.length === 0 && <TableEmpty>Nenhum contrato encontrado com estes filtros. Use &quot;Limpar filtros&quot; acima para ver todos.</TableEmpty>}
         </TableWrap>
 
         {totalPages > 1 && (

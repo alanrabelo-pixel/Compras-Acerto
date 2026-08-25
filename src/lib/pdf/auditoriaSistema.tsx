@@ -457,7 +457,7 @@ function DiagramPage() {
 
       <View style={{ position: "absolute", bottom: 30, left: 40, right: 40, borderTop: `0.5pt solid ${BORDER}`, paddingTop: 8 }}>
         <Text style={{ fontSize: 7, color: MUTED }}>
-          Não representado neste diagrama (ver seção "Override administrativo"): um ADMIN pode mover uma solicitação para qualquer etapa, em qualquer direção, sem revalidar nenhuma regra. É um mecanismo de exceção, fora do fluxo normal.
+          Não representado neste diagrama (ver seção &quot;Override administrativo&quot;): um ADMIN pode mover uma solicitação para qualquer etapa, em qualquer direção, sem revalidar nenhuma regra. É um mecanismo de exceção, fora do fluxo normal.
         </Text>
       </View>
     </Page>

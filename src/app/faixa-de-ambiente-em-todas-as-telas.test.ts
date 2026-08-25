@@ -26,10 +26,19 @@ import path from "path";
  *    "a faixa não chega", e isso não se vê testando o componente sozinho.
  */
 
-// next/font/google é resolvido pelo compilador do Next, não em tempo de
-// execução: importado direto, o pacote não entrega função nenhuma.
+// next/font é resolvido pelo compilador do Next, não em tempo de execução:
+// importado direto, o pacote não entrega função nenhuma.
+//
+// A entrada `next/font/local` chegou em 25/08/2026, quando o layout trocou a
+// fonte do Google por um arquivo versionado no repositório (o build da Golden
+// Pipeline não tem saída para fonts.gstatic.com e travava tentando baixar).
+// Sem este mock, os cinco casos deste arquivo falham com "default is not a
+// function", que não diz nada sobre o que eles testam.
 vi.mock("next/font/google", () => ({
   Montserrat: () => ({ variable: "__variable_teste", className: "", style: {} }),
+}));
+vi.mock("next/font/local", () => ({
+  default: () => ({ variable: "__variable_teste", className: "", style: {} }),
 }));
 
 const RAIZ = process.cwd();

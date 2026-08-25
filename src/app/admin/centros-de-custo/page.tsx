@@ -98,7 +98,7 @@ export default async function CentrosDeCustoPage({
                   <span><CostCenterActiveToggle costCenterId={cc.id} active={cc.active} /></span>
                 </TableRow>
               ))}
-              {costCenters.length === 0 && <TableEmpty>Nenhum centro de custo encontrado com estes filtros. Use "Limpar filtros" acima para ver todos.</TableEmpty>}
+              {costCenters.length === 0 && <TableEmpty>Nenhum centro de custo encontrado com estes filtros. Use &quot;Limpar filtros&quot; acima para ver todos.</TableEmpty>}
             </TableWrap>
           </div>
 

@@ -92,7 +92,7 @@ export default async function AcessosPage({
               </TableRow>
             );
           })}
-          {users.length === 0 && <TableEmpty>Nenhuma pessoa encontrada com estes filtros. Use "Limpar filtros" acima para ver todas.</TableEmpty>}
+          {users.length === 0 && <TableEmpty>Nenhuma pessoa encontrada com estes filtros. Use &quot;Limpar filtros&quot; acima para ver todas.</TableEmpty>}
         </TableWrap>
       </main>
     </AppShell>

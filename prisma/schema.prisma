@@ -5,6 +5,14 @@
 
 generator client {
   provider = "prisma-client-js"
+  // "native": ambiente local (Windows/Mac/dev). "linux-musl-openssl-3.0.x":
+  // fixo para o node:20-alpine da Golden Pipeline. A autodetecção do Prisma
+  // depende de conseguir ler as libs de openssl no momento exato do
+  // `generate`, e isso se mostrou frágil (cache do node_modules entre steps,
+  // ordem do preinstall). Declarando explícito aqui, o client gerado SEMPRE
+  // inclui o engine certo para o Alpine, independente de detecção de
+  // ambiente. Veio do time de engenharia em 25/08/2026.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

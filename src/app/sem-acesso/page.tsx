@@ -11,7 +11,7 @@ export default async function SemAcessoPage() {
         <p style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 10, lineHeight: 1.6 }}>
           {session?.user?.email ? <>Você está autenticado como <strong>{session.user.email}</strong>, mas ainda</> : "Você"} não tem
           acesso ao quadro de Solicitações, Contratos ou Dashboards. Peça a um administrador para liberar seu acesso em
-          "/admin/acessos".
+          &quot;/admin/acessos&quot;.
         </p>
         <p style={{ fontSize: 13, marginTop: 16 }}>
           <a href="/solicitacoes/nova" style={{ color: "var(--acerto-green-dark)", fontWeight: 600, textDecoration: "none" }}>

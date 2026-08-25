@@ -93,6 +93,24 @@ function nomeDoBanco(url: string): string {
 }
 
 export function validarAmbiente(): void {
+  // COMPILAR NÃO É OPERAR. `next build` roda com NODE_ENV=production e importa
+  // cada rota para coletar dados de página, então esta função rodava no meio
+  // do build, num ambiente que por definição não tem segredo de produção
+  // nenhum: o build acontece no runner de CI, e as variáveis só existem no
+  // cluster, na hora de subir o pod.
+  //
+  // Sem esta saída, `npm run build` falha com "Variáveis obrigatórias ausentes
+  // em produção: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET" e o `docker build` da
+  // Golden Pipeline nunca conclui. Encontrado em 25/08/2026, na integração com
+  // a versão de infraestrutura do time de engenharia: esta validação nasceu em
+  // 19/08, DEPOIS de eles terem partido daqui, então o pipeline deles nunca
+  // tinha topado com ela.
+  //
+  // A proteção continua inteira onde importa. NEXT_PHASE só existe enquanto o
+  // compilador roda; o processo que atende requisição não a define, e ali a
+  // validação roda igual, no import de @/lib/auth.
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+
   const producao = process.env.NODE_ENV === "production";
 
   // DATABASE_URL vale em qualquer ambiente: sem ela nada funciona.
