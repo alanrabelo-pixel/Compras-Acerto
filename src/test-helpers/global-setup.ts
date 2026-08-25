@@ -15,6 +15,7 @@
  */
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { execSync } from "node:child_process";
+import { exigirBancoLocal } from "@/lib/guarda-banco";
 
 export default async function setup() {
   // Fallbacks pra CI (que não tem .env real, só a máquina local tem — ver
@@ -64,6 +65,18 @@ export default async function setup() {
       );
     }
   }
+
+  // A GUARDA DE BANCO, AGORA QUE HÁ UM DATABASE_URL PARA JULGAR.
+  //
+  // O vitest.config.ts só consegue conferir o que veio do .env, e no CI não há
+  // .env: quem define o banco é o container acima. Este é o primeiro ponto em
+  // que a URL final existe nos dois caminhos, o do container e o degradado, e
+  // por isso é aqui que a conferência fecha. Sem ela, o caminho degradado
+  // poderia rodar contra qualquer banco que estivesse no ambiente.
+  //
+  // O container do Testcontainers atende em localhost numa porta aleatória,
+  // então passa. Ver src/lib/guarda-banco.ts.
+  exigirBancoLocal("A suíte de testes (vitest, apos resolver o banco)");
 
   // node:20-alpine (imagem do step "Run Tests" na Golden Pipeline) não traz
   // openssl por padrão — sem ele, o binário nativo do schema-engine do
