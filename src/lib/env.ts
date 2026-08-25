@@ -1,5 +1,5 @@
 import { logger } from "@/lib/logger";
-import { ambienteAtual } from "@/lib/ambiente";
+import { ambienteAtual, ambienteFoiDeclarado } from "@/lib/ambiente";
 // Uma definição só de "banco local" no repositório inteiro. Este arquivo tinha
 // a sua, /@(localhost|127\.0\.0\.1)[:/]/, que exigia arroba e portanto exigia
 // credenciais na string: `postgresql://localhost:5433/acerto` era local para a
@@ -28,19 +28,32 @@ import { bancoEhLocal } from "@/lib/guarda-banco";
  * compras, então isso só avisa.
  */
 
-/** Sem estas, o sistema não pode operar com segurança em produção. */
+/**
+ * Sem estas, o sistema não pode operar com segurança em produção.
+ *
+ * O CRITÉRIO É AUTENTICAÇÃO, não conveniência. Cada uma aqui é o que separa um
+ * sistema com controle de acesso de um sem. Faltando qualquer uma, o boot para.
+ *
+ * APP_URL e AI_KEY_ENCRYPTION_SECRET saíram desta lista em 25/08/2026, por
+ * decisão do dono do sistema. Elas não guardam a porta: sem APP_URL os links dos
+ * e-mails saem quebrados, e sem AI_KEY_ENCRYPTION_SECRET a funcionalidade de
+ * chave de IA por usuário para de funcionar. As duas degradam algo, nenhuma abre
+ * o sistema. Derrubar produção inteira por causa delas era desproporcional, e na
+ * prática foi o que impediu a primeira implantação. Continuam avisadas alto em
+ * RECOMENDADAS_EM_PRODUCAO, com a consequência escrita.
+ */
 const OBRIGATORIAS_EM_PRODUCAO = [
   "DATABASE_URL",
   "NEXTAUTH_SECRET",
   "NEXTAUTH_URL",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
-  "AI_KEY_ENCRYPTION_SECRET",
-  "APP_URL",
 ] as const;
 
 /** Sem estas, alguma funcionalidade para de funcionar, mas o sistema opera. */
 const RECOMENDADAS_EM_PRODUCAO = [
+  "APP_URL",
+  "AI_KEY_ENCRYPTION_SECRET",
   "CRON_SECRET",
   "ERP_API_KEY",
   "SLACK_BOT_TOKEN",
@@ -57,6 +70,8 @@ const RECOMENDADAS_EM_PRODUCAO = [
 
 /** O que cada variável recomendada quebra quando falta. */
 const CONSEQUENCIA: Record<string, string> = {
+  APP_URL: "os links dos e-mails saem como \"undefined/solicitacoes/...\" e ninguém percebe até alguém clicar",
+  AI_KEY_ENCRYPTION_SECRET: "cadastrar ou usar chave de IA por usuário falha; o resto do sistema opera normalmente",
   CRON_SECRET: "os crons de escalonamento e de alerta de contrato recusam toda chamada",
   ERP_API_KEY: "a API de integração com o ERP recusa toda chamada",
   SLACK_BOT_TOKEN: "nenhuma mensagem de Slack é enviada",
@@ -128,6 +143,7 @@ export function validarAmbiente(): void {
   // Roda em qualquer NODE_ENV de propósito: o Sandbox compilado como produção
   // é o caso normal, não a exceção.
   const ambiente = ambienteAtual();
+  const declarado = ambienteFoiDeclarado();
   const url = process.env.DATABASE_URL;
   // Um ambiente que se declara produção e aponta para um Postgres na própria
   // máquina é erro de configuração, não escolha.
@@ -156,7 +172,16 @@ export function validarAmbiente(): void {
   // a produção, então o critério é o inverso: para gravar em banco remoto, o
   // Sandbox tem que estar num banco que se declara Sandbox pelo nome. Banco
   // local segue liberado, que é o desenvolvimento de todo dia.
-  if (ambiente === "sandbox" && !bancoLocal && !bancoParecSandbox) {
+  // SÓ DERRUBA QUEM SE DECLAROU SANDBOX. Um ambiente que não define APP_ENV não
+  // está afirmando ser Sandbox: está calado. Tratar silêncio como declaração
+  // custou caro em 25/08/2026, porque o overlay do Kubernetes do time de
+  // engenharia foi escrito antes desta variável existir, e a produção de
+  // verdade, remota e sem marca de sandbox no nome, caía exatamente aqui.
+  //
+  // A proteção que importa continua inteira: o caso perigoso é alguém provisionar
+  // um Sandbox copiando as variáveis da produção, e aí APP_ENV=sandbox está lá,
+  // escrito, e este erro dispara. O caso omisso vira aviso alto logo abaixo.
+  if (ambiente === "sandbox" && declarado && !bancoLocal && !bancoParecSandbox) {
     throw new Error(
       `APP_ENV=sandbox com DATABASE_URL apontando para o banco remoto "${banco}", ` +
         "que não tem marca de Sandbox no nome. Se este banco for o de produção, o " +
@@ -165,6 +190,22 @@ export function validarAmbiente(): void {
         "Renomeie o banco do Sandbox incluindo \"sandbox\" ou \"sbx\", ou aponte " +
         "para o banco certo. Ver docs/runbook-ambientes.md."
     );
+  }
+
+  // O mesmo desenho, sem declaração: avisa alto e deixa subir. Não dá para
+  // saber se isto é a produção que esqueceu de se declarar ou um Sandbox que
+  // esqueceu, e derrubar o boot escolhia a segunda hipótese sempre. O aviso
+  // nomeia a consequência real de continuar sem declarar: a trava de envio
+  // trata tudo como Sandbox, então nenhum e-mail e nenhum Slack sai.
+  if (ambiente === "sandbox" && !declarado && !bancoLocal && !bancoParecSandbox) {
+    logger.warn("ambiente_nao_declarado_com_banco_remoto", {
+      banco,
+      efeito:
+        "sem APP_ENV, este processo se comporta como Sandbox: não envia e-mail nem Slack " +
+        "e mostra a faixa de Sandbox na tela, mesmo gravando neste banco remoto.",
+      acao: "Se este É o ambiente de produção, defina APP_ENV=producao. Se é o Sandbox, " +
+        "aponte para um banco com \"sandbox\" ou \"sbx\" no nome. Ver docs/runbook-ambientes.md.",
+    });
   }
 
   if (!producao) return;

@@ -22,9 +22,31 @@ export type Ambiente = "producao" | "sandbox";
 
 const VALIDOS: Ambiente[] = ["producao", "sandbox"];
 
+function bruto(): string {
+  return (process.env.APP_ENV ?? "").trim().toLowerCase();
+}
+
 export function ambienteAtual(): Ambiente {
-  const bruto = (process.env.APP_ENV ?? "").trim().toLowerCase();
-  return (VALIDOS as string[]).includes(bruto) ? (bruto as Ambiente) : "sandbox";
+  return (VALIDOS as string[]).includes(bruto()) ? (bruto() as Ambiente) : "sandbox";
+}
+
+/**
+ * Se APP_ENV traz mesmo um dos dois valores válidos, ou se o "sandbox" acima é
+ * apenas o padrão de quem não disse nada.
+ *
+ * A distinção existe porque as duas situações têm gravidades opostas para quem
+ * está validando a configuração. "Declarei que sou Sandbox e estou ligado ao
+ * banco de produção" é um erro grave e conhecido. "Não declarei nada" é uma
+ * lacuna, e tratá-la como se fosse a primeira derrubava a subida de um ambiente
+ * de produção legítimo que só não conhecia esta variável, como aconteceu em
+ * 25/08/2026 com o overlay do time de engenharia, escrito antes de APP_ENV
+ * existir. Ver src/lib/env.ts.
+ *
+ * O padrão seguro de ambienteAtual() continua igual: quem não se declara não
+ * manda e-mail nem Slack, e vê a faixa de Sandbox na tela.
+ */
+export function ambienteFoiDeclarado(): boolean {
+  return (VALIDOS as string[]).includes(bruto());
 }
 
 export function ehProducao(): boolean {
