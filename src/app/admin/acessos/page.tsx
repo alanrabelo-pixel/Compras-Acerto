@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { RoleAccessToggles } from "@/components/RoleAccessToggles";
 import { UserActiveToggle } from "@/components/UserActiveToggle";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
+import { BulkUserImportForm } from "@/components/BulkUserImportForm";
 import { TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/components/ui";
 import { ACCESS_ROLES, STAGE_ROLES } from "@/lib/roles";
 import type { Prisma, RoleName } from "@prisma/client";
@@ -50,6 +51,8 @@ export default async function AcessosPage({
           Qualquer pessoa @acerto.com.br já pode abrir uma Nova Solicitação, independente desta lista.
           Desativar uma pessoa bloqueia o acesso (inclusive login), mas preserva todo o histórico dela no sistema.
         </p>
+
+        <BulkUserImportForm />
 
         <SearchFilterBar
           searchPlaceholder="Nome ou e-mail..."
