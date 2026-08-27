@@ -41,6 +41,14 @@ vi.mock("next/font/local", () => ({
   default: () => ({ variable: "__variable_teste", className: "", style: {} }),
 }));
 
+// Suporte à gambiarra temporária de src/app/layout.tsx (estaNoDominioDeProducaoConhecido):
+// host configurável por teste, "outro-host.exemplo" por padrão para não afetar os
+// casos que já existiam antes dela.
+const HOST_DO_TESTE = vi.hoisted(() => ({ atual: "outro-host.exemplo" }));
+vi.mock("next/headers", () => ({
+  headers: () => new Map([["host", HOST_DO_TESTE.atual]]),
+}));
+
 const RAIZ = process.cwd();
 const PASTA_APP = path.resolve(RAIZ, "src/app");
 
@@ -108,6 +116,7 @@ function arquivosFonte(pasta: string, achados: string[] = []): string[] {
 describe("RootLayout: o que a faixa mostra em cada ambiente", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    HOST_DO_TESTE.atual = "outro-host.exemplo";
   });
 
   it("avisa que é Sandbox, e diz o que isso significa na prática", async () => {
@@ -156,17 +165,42 @@ describe("RootLayout: o que a faixa mostra em cada ambiente", () => {
     // Com Produção e Sandbox abertos lado a lado, as duas abas se chamavam
     // "Acerto Compras". A faixa só resolve depois de escolher a aba errada.
     vi.stubEnv("APP_ENV", "sandbox");
-    expect((await carregarLayout()).metadata.title).toBe("[SANDBOX] Acerto Compras");
+    expect((await (await carregarLayout()).generateMetadata()).title).toBe("[SANDBOX] Acerto Compras");
 
     vi.stubEnv("APP_ENV", "producao");
-    expect((await carregarLayout()).metadata.title).toBe("Acerto Compras");
+    expect((await (await carregarLayout()).generateMetadata()).title).toBe("Acerto Compras");
   });
 
   it("o rótulo vem na frente do título, porque é o fim que a aba corta", async () => {
     vi.stubEnv("APP_ENV", "sandbox");
-    const titulo = (await carregarLayout()).metadata.title as string;
+    const titulo = (await (await carregarLayout()).generateMetadata()).title as string;
 
     expect(titulo.startsWith("[SANDBOX]")).toBe(true);
+  });
+});
+
+describe("Gambiarra temporária: produção sem APP_ENV não mostra sandbox neste host", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    HOST_DO_TESTE.atual = "outro-host.exemplo";
+  });
+
+  it("esconde a faixa e o título de sandbox só para compras.acerto.com.br, mesmo sem APP_ENV declarado", async () => {
+    vi.stubEnv("APP_ENV", "");
+    HOST_DO_TESTE.atual = "compras.acerto.com.br";
+    const { default: RootLayout, generateMetadata } = await carregarLayout();
+
+    const texto = textoDaArvore(RootLayout({ children: "conteúdo da tela" }));
+    expect(texto).not.toContain("SANDBOX");
+    expect((await generateMetadata()).title).toBe("Acerto Compras");
+  });
+
+  it("continua avisando em qualquer outro host, que é onde o Sandbox de fato vive", async () => {
+    vi.stubEnv("APP_ENV", "");
+    HOST_DO_TESTE.atual = "compras-dev.acerto.com.br";
+    const { default: RootLayout } = await carregarLayout();
+
+    expect(textoDaArvore(RootLayout({ children: null }))).toContain("SANDBOX");
   });
 });
 

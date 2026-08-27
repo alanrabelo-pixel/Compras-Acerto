@@ -1,7 +1,27 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { rotuloDoAmbiente, tituloDaAba } from "@/lib/ambiente";
 import "./globals.css";
+
+/**
+ * GAMBIARRA TEMPORÁRIA (27/08/2026, decisão consciente do Alan). Produção real
+ * (compras.acerto.com.br) está subindo sem APP_ENV declarado — pendência
+ * registrada com o Daniel/Engenharia, correção real fica no overlay `svc` do
+ * gitops-applications-overlays. Até lá, ambienteAtual() cai no padrão seguro
+ * "sandbox" (ver src/lib/ambiente.ts), e a faixa/título de sandbox aparecem
+ * mesmo sendo produção de verdade.
+ *
+ * Isto aqui esconde só a FAIXA VISUAL e o título da aba para este domínio
+ * específico. NÃO muda ambienteAtual()/ehProducao(): o bloqueio de e-mail e
+ * Slack para ambiente não declarado continua valendo, exatamente como antes
+ * — só o aviso na tela some, então ninguém vê mais o sintoma até a causa (a
+ * variável de ambiente) ser corrigida de verdade. Remover assim que APP_ENV
+ * estiver declarado no ambiente de produção.
+ */
+function estaNoDominioDeProducaoConhecido(): boolean {
+  return (headers().get("host") ?? "") === "compras.acerto.com.br";
+}
 
 // FONTE LOCAL, e não next/font/google. Trazido do time de engenharia em
 // 25/08/2026: o `docker build` da Golden Pipeline não tem saída liberada para
@@ -18,13 +38,15 @@ const montserrat = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  // Fora de produção o título vira "[SANDBOX] Acerto Compras" (ver
-  // src/lib/ambiente.ts). É a única marca que aparece com a aba em segundo
-  // plano, que é onde a confusão entre os dois ambientes começa.
-  title: tituloDaAba("Acerto Compras"),
-  description: "Sistema de processo de compras da Acerto (Compras | F&NC)",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    // Fora de produção o título vira "[SANDBOX] Acerto Compras" (ver
+    // src/lib/ambiente.ts). É a única marca que aparece com a aba em segundo
+    // plano, que é onde a confusão entre os dois ambientes começa.
+    title: estaNoDominioDeProducaoConhecido() ? "Acerto Compras" : tituloDaAba("Acerto Compras"),
+    description: "Sistema de processo de compras da Acerto (Compras | F&NC)",
+  };
+}
 
 // Aplica o tema salvo ANTES da primeira pintura. Sem isso, a página sempre
 // nasceria clara por uma fração de segundo mesmo com tema escuro escolhido
@@ -59,7 +81,7 @@ const THEME_INIT_SCRIPT = `
  * a classe do <body> existem: o HTML fica idêntico ao de antes desta mudança.
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const rotuloAmbiente = rotuloDoAmbiente();
+  const rotuloAmbiente = estaNoDominioDeProducaoConhecido() ? null : rotuloDoAmbiente();
 
   return (
     <html lang="pt-BR" className={montserrat.variable}>
