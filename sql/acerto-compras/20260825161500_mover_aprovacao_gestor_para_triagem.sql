@@ -15,6 +15,17 @@
 --
 -- IDEMPOTENTE. O id do evento e derivado do id da solicitacao, entao rodar de
 -- novo nao cria historico duplicado, e o UPDATE nao encontra mais nada.
+--
+-- POR QUE ESTE ARQUIVO FOI TOCADO DE NOVO EM 27/08/2026, SEM MUDAR O SQL. A
+-- Golden Pipeline aplica migration olhando `git diff COMMIT^1 COMMIT` sobre
+-- sql/acerto-compras/: só o que MUDOU naquele commit é executado. Este arquivo
+-- e o semear_contador_com_codigos_existentes entraram na main pelo merge do
+-- time de engenharia (PR #5, a partir do commit 551ddf9) ANTES de o pull
+-- request do produto ser mergeado (#4). Na hora de calcular a diferença desse
+-- segundo merge os dois já estavam idênticos dos dois lados, git não via
+-- mudança nenhuma, e "Migration Services" pulou os dois em silêncio. Este
+-- comentário é a mudança de conteúdo que faz o arquivo aparecer de novo no
+-- diff do próximo commit, para a migration rodar de verdade.
 
 -- 1. Registra a passagem no historico ANTES de mover, para o StageEvent contar a
 --    verdade: veio de APROVACAO_GESTOR. Depois do UPDATE essa informacao some.

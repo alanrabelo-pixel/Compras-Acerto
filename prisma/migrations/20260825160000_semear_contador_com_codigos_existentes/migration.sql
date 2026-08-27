@@ -16,6 +16,19 @@
 -- IDEMPOTENTE E SEGURA POR CONSTRUCAO: o GREATEST no ON CONFLICT nunca REDUZ um
 -- contador. Rodar de novo, ou rodar num banco onde o contador ja passou a
 -- frente dos codigos historicos, nao tem efeito nenhum.
+--
+-- POR QUE ESTE ARQUIVO FOI TOCADO DE NOVO EM 27/08/2026, SEM MUDAR O SQL. A
+-- Golden Pipeline aplica migration olhando `git diff COMMIT^1 COMMIT` sobre
+-- sql/acerto-compras/: só o que MUDOU naquele commit é executado. Este arquivo
+-- e o mover_aprovacao_gestor_para_triagem entraram na main pelo merge do time
+-- de engenharia (PR #5, a partir do commit 551ddf9) ANTES de o pull request
+-- do produto ser mergeado (#4), então na hora de calcular a diferença do
+-- merge #4 os dois já estavam idênticos dos dois lados — git não via mudança
+-- nenhuma, e o passo "Migration Services" pulou os dois em silêncio. A tabela
+-- CodeCounter chegou a ser criada (outra migration) mas ficou vazia, o que
+-- teria quebrado a criação de solicitação na primeira tentativa depois do
+-- deploy. Este comentário é a mudança de conteúdo que faz o arquivo aparecer
+-- de novo no diff do próximo commit, para a migration rodar de verdade.
 INSERT INTO "CodeCounter" ("prefix", "value")
 SELECT escopo, MAX(sequencial)
 FROM (
