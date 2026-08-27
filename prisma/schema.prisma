@@ -403,6 +403,10 @@ model PurchaseRequest {
   extraBudgetJustification String?            @db.Text
 
   priority         Priority
+  // Exigido pela rota de criação (POST /api/requests) quando priority é ALTA
+  // ou CRITICA: por que a urgência é real e por que não foi antecipada. Nulo
+  // pra Baixa/Média (e para solicitações abertas antes deste campo existir).
+  urgencyJustification String? @db.Text
   demandType       DemandType
   shortDescription String
   longDescription  String   @db.Text

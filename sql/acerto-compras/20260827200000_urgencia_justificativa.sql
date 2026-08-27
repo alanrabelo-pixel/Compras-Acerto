@@ -1,0 +1,12 @@
+-- Adiciona o motivo da urgência (Prioridade Alta/Crítica).
+--
+-- POR QUE. Alta/Crítica furam a fila e pressionam prazo de outras
+-- solicitações (ver o aviso já existente na tela). O sistema pedia para
+-- confirmar que a urgência era real, mas não pedia o porquê nem se registrava
+-- em lugar nenhum -- quem revisava depois não tinha como saber se a urgência
+-- fazia sentido. A rota de criação (POST /api/requests) passa a exigir este
+-- campo quando priority for ALTA ou CRITICA; nulo para Baixa/Média e para
+-- solicitações abertas antes desta migration.
+--
+-- IDEMPOTENTE: IF NOT EXISTS não falha rodando de novo.
+ALTER TABLE "PurchaseRequest" ADD COLUMN IF NOT EXISTS "urgencyJustification" TEXT;

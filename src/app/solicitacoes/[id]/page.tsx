@@ -279,6 +279,12 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
           {request.affectedUsers && (
             <p style={{ fontSize: 12.5, marginTop: 10 }}><span className="text-muted">Usuários afetados:</span> {request.affectedUsers}</p>
           )}
+          {request.urgencyJustification && (
+            <div style={{ marginTop: 10 }}>
+              <span className="text-muted" style={{ fontSize: 12.5 }}>Motivo da urgência ({rotulo(PRIORITY_LABEL, request.priority)}):</span>
+              <p style={{ fontSize: 12.5, margin: "4px 0 0", whiteSpace: "pre-wrap" }}>{request.urgencyJustification}</p>
+            </div>
+          )}
         </section>
 
         <RequestActions request={serializableRequest} sessionActor={sessionActor} declaredByNames={declaredByNames} />

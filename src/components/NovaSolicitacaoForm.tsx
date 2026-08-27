@@ -112,6 +112,7 @@ export function NovaSolicitacaoForm({
       : ""
   );
   const [priority, setPriority] = useState("MEDIA");
+  const [urgencyJustification, setUrgencyJustification] = useState("");
   const [suggestedDeadline, setSuggestedDeadline] = useState("");
   const [indicatedSupplierName, setIndicatedSupplierName] = useState(contratoDeOrigem?.fornecedor ?? "");
   const [indicatedSupplierPhone, setIndicatedSupplierPhone] = useState("");
@@ -124,6 +125,7 @@ export function NovaSolicitacaoForm({
   const [extraBudgetFileSelected, setExtraBudgetFileSelected] = useState(false);
   const isExtraBudget = budgetLineChoice === EXTRA_BUDGET;
   const isOtherBudget = budgetLineChoice === OTHER_BUDGET;
+  const isUrgentPriority = priority === "ALTA" || priority === "CRITICA";
 
   // Detalhamento do Orçamento Extra. O valor NÃO mora aqui: ele é o
   // estimatedValue logo acima, que passou a ser obrigatório quando é Orçamento
@@ -239,7 +241,8 @@ export function NovaSolicitacaoForm({
               }
             : {}),
           demandType, shortDescription, longDescription,
-          priority, suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
+          priority, urgencyJustification: isUrgentPriority ? urgencyJustification : undefined,
+          suggestedDeadline, indicatedSupplierName, indicatedSupplierPhone, indicatedSupplierEmail,
           quantity, estimatedValue: estimatedValue === "" ? undefined : estimatedValue,
           indicatedSupplierWebsite, affectedUsers: demandType === "FERRAMENTA_USUARIOS" ? affectedUsers : undefined,
         }),
@@ -283,7 +286,8 @@ export function NovaSolicitacaoForm({
     // exceção passou a ser registrada no próprio sistema. O que Orçamento
     // Extra exige agora é o detalhamento do modal, que é o que o aprovador lê.
     (!isExtraBudget || extraPronto) &&
-    (!isOtherBudget || budgetLineText.trim());
+    (!isOtherBudget || budgetLineText.trim()) &&
+    (!isUrgentPriority || urgencyJustification.trim());
 
   return (
     <main className="page-narrow" style={{ paddingTop: 28 }}>
@@ -526,10 +530,28 @@ export function NovaSolicitacaoForm({
               ))}
             </select>
             {aiSuggestedFields.has("priority") && <div style={{ marginTop: 4 }}><AiTag /></div>}
-            {(priority === "ALTA" || priority === "CRITICA") && (
-              <WarningNotice className="section-gap">
-                Prioridades altas têm custo: geram fila fora de ordem e podem pressionar prazos de outras solicitações. Confirma que essa é mesmo uma urgência real?
-              </WarningNotice>
+            {isUrgentPriority && (
+              <>
+                <WarningNotice className="section-gap">
+                  Prioridades altas têm custo: geram fila fora de ordem e podem pressionar prazos de outras solicitações. Confirma que essa é mesmo uma urgência real?
+                </WarningNotice>
+                <div className="section-gap">
+                  <label className="label" htmlFor="urgencyJustification">Motivo da urgência</label>
+                  <textarea
+                    id="urgencyJustification"
+                    className="input"
+                    rows={3}
+                    placeholder="Por que essa urgência é real e por que não foi antecipada?"
+                    value={urgencyJustification}
+                    onChange={(e) => setUrgencyJustification(e.target.value)}
+                  />
+                  {!urgencyJustification.trim() && (
+                    <p className="help" style={{ margin: "4px 0 0" }}>
+                      Obrigatório para Alta/Crítica. Se não houver um motivo real, considere Média ou Baixa.
+                    </p>
+                  )}
+                </div>
+              </>
             )}
           </Field>
 

@@ -38,6 +38,7 @@ const camposDeFormato = z.object({
     .optional(),
   shortDescription: z.string().max(500).optional(),
   longDescription: z.string().max(5000).optional(),
+  urgencyJustification: z.string().max(2000).optional(),
   indicatedSupplierName: z.string().max(200).optional(),
   indicatedSupplierPhone: z.string().max(50).optional(),
   indicatedSupplierEmail: z.string().email().max(200).optional().or(z.literal("")),
@@ -94,6 +95,7 @@ export async function POST(req: NextRequest) {
     demandType,
     shortDescription,
     longDescription,
+    urgencyJustification,
     suggestedDeadline,
     indicatedSupplierName,
     indicatedSupplierPhone,
@@ -142,6 +144,20 @@ export async function POST(req: NextRequest) {
   }
   if (!budgetLineText && !extraBudget) {
     return NextResponse.json({ error: "Informe a Linha do Orçamento, ou marque Orçamento Extra se não houver uma." }, { status: 400 });
+  }
+
+  // Prioridade Alta/Crítica fura fila e pressiona prazo de outras
+  // solicitações (ver o aviso na tela). Pedido do usuário: exigir o motivo da
+  // urgência e por que não foi antecipada, mesmo princípio do detalhamento do
+  // Orçamento Extra logo abaixo. Validado aqui (não no banco) pelo mesmo
+  // motivo: Baixa/Média e o histórico anterior a esta coluna não têm como
+  // preenchê-la.
+  const ehUrgente = priority === "ALTA" || priority === "CRITICA";
+  if (ehUrgente && !urgencyJustification?.trim()) {
+    return NextResponse.json(
+      { error: "Prioridade Alta/Crítica exige o motivo da urgência e por que não foi antecipada." },
+      { status: 400 },
+    );
   }
 
   // Detalhamento do Orçamento Extra: obrigatório na rota, não no banco. As
@@ -239,6 +255,7 @@ export async function POST(req: NextRequest) {
       extraBudgetImpact: extraBudget ? extraBudgetImpact : null,
       extraBudgetJustification: extraBudget ? extraBudgetJustification : null,
       priority,
+      urgencyJustification: ehUrgente ? urgencyJustification : null,
       demandType,
       shortDescription,
       longDescription,
