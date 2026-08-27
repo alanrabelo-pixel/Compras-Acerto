@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { slaDaysForDiretoria } from "@/lib/workflow";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
@@ -10,6 +11,40 @@ import { gestoresParaAvisar, resumoParaOGestor, resumoParaOGestorEmHtml } from "
 import { avisar } from "@/lib/avisar";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import { atorDaSessao, exigirQuadro } from "@/lib/acesso";
+import { validarCorpo, comExcecaoControlada } from "@/lib/validacao-api";
+
+/**
+ * Achado do DAST de 25/08/2026: string de ~120 caracteres aleatórios no campo
+ * "priority" derrubava a rota com 500. priority é enum no Prisma
+ * (BAIXA/MEDIA/ALTA/CRITICA); um valor fora da lista chegava direto ao
+ * create() e o Prisma lançava exceção de validação não tratada. Este schema
+ * valida só o FORMATO — a presença dos campos obrigatórios continua no laço
+ * `required` logo abaixo, que já existia e trata a lógica condicional de
+ * Orçamento Extra, mais específica do que um schema genérico daria conta.
+ */
+const camposDeFormato = z.object({
+  diretoria: z.enum(["CORPORATIVO", "REVENUE", "TECNOLOGIA"]).optional(),
+  priority: z.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]).optional(),
+  demandType: z
+    .enum([
+      "COMPRA_PRODUTO",
+      "COMPRA_SERVICO",
+      "FERRAMENTA_NOVA",
+      "FERRAMENTA_USUARIOS",
+      "FERRAMENTA_UPGRADE_DOWNGRADE",
+      "RENOVACAO_CONTRATO",
+      "CANCELAMENTO",
+    ])
+    .optional(),
+  shortDescription: z.string().max(500).optional(),
+  longDescription: z.string().max(5000).optional(),
+  indicatedSupplierName: z.string().max(200).optional(),
+  indicatedSupplierPhone: z.string().max(50).optional(),
+  indicatedSupplierEmail: z.string().email().max(200).optional().or(z.literal("")),
+  indicatedSupplierWebsite: z.string().max(500).optional(),
+  quantity: z.union([z.number(), z.string()]).optional(),
+  estimatedValue: z.union([z.number(), z.string()]).optional(),
+});
 
 // GET /api/requests: lista solicitações (para o Kanban / listagem)
 export async function GET(req: NextRequest) {
@@ -37,7 +72,11 @@ export async function GET(req: NextRequest) {
 // POST /api/requests: cria uma nova Solicitação de Compra (ver Nova
 // Solicitação na UI).
 export async function POST(req: NextRequest) {
+  return comExcecaoControlada("POST /api/requests", async () => {
   const body = await req.json();
+
+  const validacaoDeFormato = validarCorpo(camposDeFormato, body);
+  if (!validacaoDeFormato.ok) return validacaoDeFormato.resposta;
 
   const {
     requesterId,
@@ -303,4 +342,5 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json(updated, { status: 201 });
+  });
 }

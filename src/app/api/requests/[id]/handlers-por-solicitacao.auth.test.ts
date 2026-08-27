@@ -87,7 +87,8 @@ function postJson(id: string, caminho: string, corpo: unknown) {
 
 function postAnexoDe(id: string, uploadedBy: string) {
   const form = new FormData();
-  form.append("file", new File(["conteúdo de teste"], "proposta-confidencial.pdf", { type: "application/pdf" }));
+  // "%PDF-" no início: assinatura real exigida por src/lib/magic-bytes.ts.
+  form.append("file", new File(["%PDF-1.4\nconteúdo de teste"], "proposta-confidencial.pdf", { type: "application/pdf" }));
   form.append("uploadedBy", uploadedBy);
   return new NextRequest(url(id, "attachments"), { method: "POST", body: form });
 }

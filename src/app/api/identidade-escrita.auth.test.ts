@@ -173,7 +173,11 @@ async function chamadoDe(requesterEmail: string) {
 
 async function postAnexoNoChamado(ticketId: string, uploadedBy: string) {
   const form = new FormData();
-  form.append("file", new File(["conteudo de teste"], "minuta-confidencial.pdf", { type: "application/pdf" }));
+  // "%PDF-" no início: bytes reais de assinatura de PDF, exigidos desde a
+  // validação de conteúdo de anexo (src/lib/magic-bytes.ts). Texto puro sem
+  // essa assinatura passa a ser recusado com 400, e este teste não é sobre
+  // isso — é sobre identidade de quem anexa.
+  form.append("file", new File(["%PDF-1.4\nconteudo de teste"], "minuta-confidencial.pdf", { type: "application/pdf" }));
   form.append("uploadedBy", uploadedBy);
 
   return anexarNoChamado(

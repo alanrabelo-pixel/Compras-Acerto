@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { saveFile } from "@/lib/storage";
-import { validarAnexo } from "@/lib/upload";
+import { validarAnexo, validarConteudoDoAnexo } from "@/lib/upload";
 import { exigirLeituraDeChamado } from "@/lib/acesso";
+import { comExcecaoControlada } from "@/lib/validacao-api";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 // POST /api/tickets/[id]/attachments: upload (multipart/form-data: file, uploadedBy).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  return comExcecaoControlada("POST /api/tickets/[id]/attachments", async () => {
   // Mesmo recorte do GET, e pelo mesmo motivo: params.id é o chamado dono do
   // anexo. Sem isto, qualquer conta autenticada com o id de um chamado alheio
   // na mão pendurava arquivo dentro dele, e o arquivo passa a ser servido por
@@ -50,6 +52,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const fileName = validacao.nomeDoArquivo;
   const buffer = Buffer.from(await (file as Blob).arrayBuffer());
+
+  const validacaoDeConteudo = validarConteudoDoAnexo(buffer, fileName);
+  if (!validacaoDeConteudo.ok) {
+    return NextResponse.json({ error: validacaoDeConteudo.erro }, { status: validacaoDeConteudo.status });
+  }
+
   const storageUrl = await saveFile(ticket.id, fileName, buffer);
 
   const attachment = await prisma.attachment.create({
@@ -59,4 +67,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // Ver comentário equivalente na rota de anexo de solicitação.
   const { storageUrl: _omitido, ...semUrlInterna } = attachment;
   return NextResponse.json(semUrlInterna, { status: 201 });
+  });
 }

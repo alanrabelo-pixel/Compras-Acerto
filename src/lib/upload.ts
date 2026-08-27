@@ -1,3 +1,5 @@
+import { conteudoBateComExtensao } from "@/lib/magic-bytes";
+
 /**
  * Validação compartilhada dos anexos (solicitações e chamados).
  *
@@ -76,5 +78,25 @@ export function validarAnexo(arquivo: unknown): ResultadoDeValidacao {
     };
   }
 
+  return { ok: true, nomeDoArquivo };
+}
+
+/**
+ * SEGUNDA CAMADA, depois de ler o buffer. validarAnexo() acima só confere
+ * metadado do Blob (nome, tamanho) — não tem como saber o conteúdo real sem
+ * ler o arquivo inteiro, o que só faz sentido depois de já ter passado no
+ * tamanho máximo. Achado do DAST de 25/08/2026: um arquivo chamado
+ * "secure.png" com conteúdo de texto puro era aceito e armazenado sem
+ * ninguém checar se aquilo era mesmo um PNG.
+ */
+export function validarConteudoDoAnexo(buffer: Buffer, nomeDoArquivo: string): ResultadoDeValidacao {
+  const extensao = nomeDoArquivo.split(".").pop()?.toLowerCase() ?? "";
+  if (!conteudoBateComExtensao(buffer, extensao)) {
+    return {
+      ok: false,
+      erro: `O conteúdo do arquivo não corresponde a um .${extensao} válido.`,
+      status: 400,
+    };
+  }
   return { ok: true, nomeDoArquivo };
 }

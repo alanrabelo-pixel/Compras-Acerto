@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { bypassAuthAtivo } from "@/lib/bypass";
 import type { Diretoria } from "@prisma/client";
 import { normalizarCnpj } from "@/lib/cnpj";
+import { comExcecaoControlada } from "@/lib/validacao-api";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,7 @@ function parseDate(row: Row, key: string): Date | undefined {
  * (ex.: Solicitações) se necessário no futuro.
  */
 export async function POST(req: NextRequest) {
+  return comExcecaoControlada("POST /api/contratos/import", async () => {
   // Antes esta rota não checava nada. Como ela cria contratos em massa e aceita
   // o e-mail do gestor vindo da planilha, dava para injetar contratos falsos
   // apontando para um executivo real: eles entram no cron de renovação e
@@ -129,7 +131,22 @@ export async function POST(req: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
+
+  // Achado do DAST de 25/08/2026: um arquivo cujo nome continha sequências de
+  // formato (%n%s repetidos) derrubava a rota com 500 sem detalhe. XLSX.read()
+  // lança uma exceção de parsing quando o conteúdo não é uma planilha válida
+  // de verdade (o mesmo problema que a validação de magic bytes resolve para
+  // os outros uploads, aqui resolvido pelo próprio parser), e nada capturava
+  // isso: virava 500 cru. Agora vira 400 com mensagem específica.
+  let wb: XLSX.WorkBook;
+  try {
+    wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
+  } catch {
+    return NextResponse.json(
+      { error: "Não foi possível ler o arquivo como planilha. Confira se é um .xlsx ou .xls válido." },
+      { status: 400 },
+    );
+  }
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rows: Row[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
@@ -247,4 +264,5 @@ export async function POST(req: NextRequest) {
   const created = results.filter((r) => r.status === "criado").length;
   const failed = results.filter((r) => r.status === "erro").length;
   return NextResponse.json({ created, failed, results });
+  });
 }
