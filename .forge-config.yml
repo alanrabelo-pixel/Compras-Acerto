@@ -5,13 +5,13 @@ gitopsType: github-flow
 
 # Desligados no primeiro deploy — revisar/habilitar depois de estabilizar
 # (mesmo motivo de bug conhecido do Sonar com Java 17 no golden-pipeline).
-quality:
-  sonarqube:
-    enabled: false
+#quality:
+#  sonarqube:
+#    enabled: false
 
-security:
-  gitleaks:
-    enabled: false
+#security:
+#  gitleaks:
+#    enabled: false
 
 # Sem "nodejs.mode" — o default (classic: Install -> Lint+Test -> Build ->
 # Docker) é o que queremos. "docker-only" pularia o Run Tests inteiro,
