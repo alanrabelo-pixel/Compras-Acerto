@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { CommandPalette } from "@/components/CommandPalette";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AnnouncementsPanel } from "@/components/AnnouncementsPanel";
+import { SignOutButton } from "@/components/SignOutButton";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { canViewBoard } from "@/lib/roles";
@@ -126,7 +127,7 @@ export async function AppShell({ active, children }: { active?: string; children
             <div className="sidebar-footer-actions">
               <AnnouncementsPanel isAdmin={Boolean(isAdmin)} authorName={currentUser?.name ?? user.name ?? ""} recentCount={recentAnnouncementsCount} align="left" dropUp />
               <ThemeToggle />
-              <a href="/api/auth/signout" className="sidebar-signout">Sair</a>
+              <SignOutButton className="sidebar-signout">Sair</SignOutButton>
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { SignOutButton } from "@/components/SignOutButton";
 
 export default async function SemAcessoPage() {
   const session = await getServerSession(authOptions);
@@ -19,7 +20,11 @@ export default async function SemAcessoPage() {
           </a>
         </p>
         <p style={{ marginTop: 20 }}>
-          <a href="/api/auth/signout" style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>Sair da conta</a>
+          <SignOutButton
+            style={{ appearance: "none", background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer", fontSize: 12.5, color: "var(--ink-muted)" }}
+          >
+            Sair da conta
+          </SignOutButton>
         </p>
       </div>
     </main>

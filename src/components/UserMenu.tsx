@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { SignOutButton } from "@/components/SignOutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AnnouncementsBody } from "@/components/AnnouncementsBody";
 import { useAnnouncementsUnseen } from "@/components/useAnnouncementsUnseen";
@@ -114,10 +115,10 @@ export function UserMenu({
 
                 <div className="user-menu-divider" />
 
-                <a href="/api/auth/signout" className="user-menu-item user-menu-item-danger" role="menuitem">
+                <SignOutButton className="user-menu-item user-menu-item-danger" role="menuitem">
                   <span aria-hidden><LogOut size={16} strokeWidth={1.75} /></span>
                   <span>Sair</span>
-                </a>
+                </SignOutButton>
               </div>
             ) : view === "acessos" ? (
               <div className="user-menu-sub">

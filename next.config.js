@@ -29,6 +29,13 @@ const nextConfig = {
   // aplicação em iframe de terceiro (mesmo objetivo do X-Frame-Options
   // abaixo, mantido para navegador antigo que não lê frame-ancestors).
   async headers() {
+    // 'unsafe-eval' só em desenvolvimento: o `next dev` usa eval() para os
+    // module wrappers com source map rápido (é assim que o HMR funciona), e
+    // sem isso o script nem carrega — quebra clique/hidratação de qualquer
+    // Client Component, não só um aviso de console. O build de produção
+    // (`next build`/`next start`) não usa eval nos chunks, então lá a CSP
+    // continua exatamente tão restrita quanto antes.
+    const scriptSrc = process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
     return [
       {
         source: "/:path*",
@@ -37,7 +44,7 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              scriptSrc,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
               "font-src 'self'",
