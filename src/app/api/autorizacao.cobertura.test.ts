@@ -98,6 +98,12 @@ const EXCECOES: { rota: string; metodo: string; motivo: string }[] = [
       "Ficaria aberta por alimentar o campo Linha do Orçamento de Nova Solicitação, aberta a qualquer colaborador. ATENÇÃO, conferido em 20/08/2026 e o motivo não se sustenta: nenhuma tela chama esta rota. O campo Linha do Orçamento é manual (só Orçamento Extra e Outros, ver EXTRA_BUDGET/OTHER_BUDGET em NovaSolicitacaoForm.tsx) e a solicitação grava budgetLineText em texto livre. A rota está sem consumidor nenhum e devolve BudgetLine inteiro, com `available`, o saldo em reais de cada linha por mês. Enquanto seguir sem consumidor, o certo é fechar com exigirQuadro ou remover a rota; esta entrada existe para essa decisão ser tomada por gente e não ficar calada.",
   },
   {
+    rota: "requests/suggest",
+    metodo: "POST",
+    motivo:
+      "Assistente de preenchimento da Nova Solicitação, aberta a qualquer colaborador (é a mesma tela do POST /api/requests, exceção 'tickets' acima). Até 27/08/2026 a rota carregava a CHAVE PESSOAL de IA de quem pedia, e por isso decidia identidade a partir da sessão; desde a troca para chave única da empresa (ver src/lib/integrations/ai.ts) não há mais cota nem conta de ninguém em jogo, a rota não lê nem grava nada — é sugestão stateless a partir de um texto livre — e não sobrou nenhuma decisão de acesso além de 'está logado', que o middleware já garante.",
+  },
+  {
     rota: "users/[id]/avatar",
     metodo: "GET",
     motivo:
@@ -125,10 +131,10 @@ function arquivosDeRota(dir: string, encontrados: string[] = []): string[] {
  * saber se o nome aparece dentro do trecho daquele método.
  */
 /**
- * Nomes de funções locais do arquivo que por sua vez fazem a checagem, como o
- * `requireSelfOrAdmin` de users/[id]/ai-keys. Sem resolver isso, o teste acusa
- * falso positivo justamente nas rotas mais bem escritas, e um teste que mente
- * em uma direção deixa de ser levado a sério na outra.
+ * Nomes de funções locais do arquivo que por sua vez fazem a checagem. Sem
+ * resolver isso, o teste acusa falso positivo justamente nas rotas mais bem
+ * escritas, e um teste que mente em uma direção deixa de ser levado a sério
+ * na outra.
  */
 function guardasLocaisDe(conteudo: string): string[] {
   const nomes: string[] = [];

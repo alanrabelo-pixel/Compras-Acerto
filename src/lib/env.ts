@@ -34,12 +34,10 @@ import { bancoEhLocal } from "@/lib/guarda-banco";
  * O CRITÉRIO É AUTENTICAÇÃO, não conveniência. Cada uma aqui é o que separa um
  * sistema com controle de acesso de um sem. Faltando qualquer uma, o boot para.
  *
- * APP_URL e AI_KEY_ENCRYPTION_SECRET saíram desta lista em 25/08/2026, por
- * decisão do dono do sistema. Elas não guardam a porta: sem APP_URL os links dos
- * e-mails saem quebrados, e sem AI_KEY_ENCRYPTION_SECRET a funcionalidade de
- * chave de IA por usuário para de funcionar. As duas degradam algo, nenhuma abre
- * o sistema. Derrubar produção inteira por causa delas era desproporcional, e na
- * prática foi o que impediu a primeira implantação. Continuam avisadas alto em
+ * APP_URL saiu desta lista em 25/08/2026, por decisão do dono do sistema: ela
+ * não guarda a porta, só os links dos e-mails saem quebrados sem ela. Derrubar
+ * produção inteira por causa dela era desproporcional, e na prática foi o que
+ * impediu a primeira implantação. Continua avisada alto em
  * RECOMENDADAS_EM_PRODUCAO, com a consequência escrita.
  */
 const OBRIGATORIAS_EM_PRODUCAO = [
@@ -53,7 +51,11 @@ const OBRIGATORIAS_EM_PRODUCAO = [
 /** Sem estas, alguma funcionalidade para de funcionar, mas o sistema opera. */
 const RECOMENDADAS_EM_PRODUCAO = [
   "APP_URL",
-  "AI_KEY_ENCRYPTION_SECRET",
+  // Chave única da empresa para os Assistentes de IA (ver
+  // src/lib/integrations/ai.ts), desde 27/08/2026: antes cada pessoa
+  // configurava a própria chave, decisão do dono do sistema foi centralizar.
+  "ANTHROPIC_API_KEY",
+  "GEMINI_API_KEY",
   "CRON_SECRET",
   "ERP_API_KEY",
   "SLACK_BOT_TOKEN",
@@ -71,7 +73,8 @@ const RECOMENDADAS_EM_PRODUCAO = [
 /** O que cada variável recomendada quebra quando falta. */
 const CONSEQUENCIA: Record<string, string> = {
   APP_URL: "os links dos e-mails saem como \"undefined/solicitacoes/...\" e ninguém percebe até alguém clicar",
-  AI_KEY_ENCRYPTION_SECRET: "cadastrar ou usar chave de IA por usuário falha; o resto do sistema opera normalmente",
+  ANTHROPIC_API_KEY: "o assistente de IA (Claude) fica indisponível na Nova Solicitação e nos painéis de etapa; o resto do sistema opera normalmente",
+  GEMINI_API_KEY: "o assistente de IA (Gemini) fica indisponível na Nova Solicitação e nos painéis de etapa; o resto do sistema opera normalmente",
   CRON_SECRET: "os crons de escalonamento e de alerta de contrato recusam toda chamada",
   ERP_API_KEY: "a API de integração com o ERP recusa toda chamada",
   SLACK_BOT_TOKEN: "nenhuma mensagem de Slack é enviada",

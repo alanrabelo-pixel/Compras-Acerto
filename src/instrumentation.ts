@@ -28,12 +28,11 @@
  * uma que está funcionando.
  *
  * O CONTEXTO DE 25/08/2026: a validação nasceu em 19/08, depois de o time de
- * engenharia ter partido daqui, e depende de três variáveis que são nossas e não
- * existem na configuração de deploy deles: APP_ENV, APP_URL e
- * AI_KEY_ENCRYPTION_SECRET. Sem APP_ENV, ambienteAtual() assume "sandbox" (ver
- * src/lib/ambiente.ts), e a trava que recusa Sandbox ligado a banco remoto sem
- * marca de sandbox no nome dispara justamente contra a produção de verdade, que
- * é remota e não tem essa marca.
+ * engenharia ter partido daqui, e depende de variáveis que são nossas e não
+ * existem na configuração de deploy deles: APP_ENV e APP_URL. Sem APP_ENV,
+ * ambienteAtual() assume "sandbox" (ver src/lib/ambiente.ts), e a trava que
+ * recusa Sandbox ligado a banco remoto sem marca de sandbox no nome dispara
+ * justamente contra a produção de verdade, que é remota e não tem essa marca.
  *
  * Isto não afrouxa nada: as mesmas regras, no mesmo lugar, só mais cedo e com a
  * consequência certa. A chamada em src/lib/auth.ts continua onde está, porque

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AiKeySettings } from "@/components/AiKeySettings";
 
 type Insight = {
   id: string;
@@ -127,8 +126,6 @@ export function AiInsightPanel({
           Selecione o responsável acima para gerar uma análise.
         </p>
       )}
-
-      <AiKeySettings actorId={actorId} />
 
       {error && <p style={{ fontSize: 12, color: "var(--danger)" }}>{error}</p>}
 

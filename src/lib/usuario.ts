@@ -3,20 +3,15 @@ import { Prisma } from "@prisma/client";
 /**
  * Colunas de User que podem sair numa resposta de API.
  *
- * O motivo de isto existir: o model User guarda `anthropicApiKey` e
- * `geminiApiKey`, e qualquer `include: { requester: true }` traz todas as
- * colunas escalares junto, chaves inclusive. Um inventário das rotas em
- * 20/08/2026 achou 24 rotas devolvendo as duas chaves no JSON, e nenhuma delas
- * fazia isso de propósito: era sempre um include genérico escrito para pegar o
- * nome de quem pediu.
+ * O motivo de isto existir: um `include: { requester: true }` (ou qualquer
+ * relação apontando para User) traz TODAS as colunas escalares do model
+ * junto, sensíveis inclusive. Um inventário das rotas em 20/08/2026 achou 24
+ * rotas devolvendo as chaves de IA pessoais (removidas em 27/08/2026) no
+ * JSON, e nenhuma delas fazia isso de propósito: era sempre um include
+ * genérico escrito para pegar o nome de quem pediu.
  *
- * Nenhum código precisa das chaves por padrão. Os três lugares que realmente
- * leem (requests/suggest, ai-insight na hora de chamar o modelo, e
- * users/[id]/ai-keys) já pedem as colunas com select explícito, e continuam
- * funcionando: quem precisa do segredo pede o segredo pelo nome.
- *
- * `googleId` também fica de fora. Não é segredo, mas é identificador de conta
- * externa e nenhuma tela usa.
+ * `googleId` fica de fora por precaução: não é segredo, mas é identificador
+ * de conta externa e nenhuma tela usa.
  */
 export const USUARIO_PUBLICO = {
   id: true,

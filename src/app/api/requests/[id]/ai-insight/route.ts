@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { faixasAtivas, faixaDoValor } from "@/lib/alcadas";
 import { requireRole } from "@/lib/rbac";
 import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
-import { decryptSecret } from "@/lib/crypto";
 import { STAGES } from "@/lib/workflow";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import {
@@ -78,13 +77,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const roleError = await requireRole(actorId, allowedRoles);
   if (roleError) return NextResponse.json({ error: roleError }, { status: 403 });
-
-  // Pedido do usuário: usa a chave pessoal de quem está atuando, não uma
-  // chave única do app; ver /api/users/[id]/ai-keys e src/lib/integrations/ai.ts.
-  const actor = await prisma.user.findUnique({
-    where: { id: actorId },
-    select: { anthropicApiKey: true, geminiApiKey: true },
-  });
 
   const estimatedValue = request.estimatedValue !== null ? Number(request.estimatedValue) : null;
 
@@ -195,10 +187,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "Etapa não suportada pelo assistente de IA." }, { status: 409 });
   }
 
-  const { anthropic, gemini } = await generateInsight(prompt, {
-    anthropicApiKey: actor?.anthropicApiKey ? decryptSecret(actor.anthropicApiKey) : null,
-    geminiApiKey: actor?.geminiApiKey ? decryptSecret(actor.geminiApiKey) : null,
-  });
+  const { anthropic, gemini } = await generateInsight(prompt);
 
   const insight = await prisma.aiInsight.create({
     data: {

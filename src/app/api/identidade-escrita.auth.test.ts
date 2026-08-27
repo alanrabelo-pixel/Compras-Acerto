@@ -6,24 +6,26 @@ import { createTestUser, createTestCostCenter, cleanupTestData, TEST_PREFIX } fr
 /**
  * Identidade em rotas de ESCRITA: quem age é quem está logado.
  *
- * Três rotas liam do CORPO da requisição quem estava agindo e nunca
+ * Duas rotas liam do CORPO da requisição quem estava agindo e nunca
  * comparavam esse valor com a sessão:
  *
  * - POST /api/requests aceitava `requesterId`, então dava para abrir uma
  *   solicitação de compra em nome de outra pessoa. Ela nem precisava passar
  *   perto: a confirmação de recebimento (sendPurchaseEmail) chegava na caixa
  *   dela e o StageEvent de abertura registrava o nome dela como autora.
- * - POST /api/requests/suggest aceitava `requesterId` e carregava a CHAVE
- *   PESSOAL de IA daquele id para chamar o modelo. Era a cota (e a conta) de
- *   outra pessoa sendo gasta, sem que ela visse nada.
  * - POST /api/tickets/[id]/attachments não tinha autorização nenhuma: com o id
  *   de um chamado alheio, qualquer conta pendurava arquivo dentro dele.
  *
- * O padrão aplicado nas duas primeiras é sessão primeiro, corpo depois
+ * O padrão aplicado na primeira é sessão primeiro, corpo depois
  * (`ator?.id ?? idDoCorpo`). Trocar o corpo pela sessão e mais nada quebraria
  * o desenvolvimento local, que roda com LOCAL_BYPASS_AUTH e sem sessão
  * nenhuma, e por isso a queda para o corpo também é testada aqui: ela é parte
  * do comportamento, não uma brecha esquecida.
+ *
+ * POST /api/requests/suggest tinha o mesmo problema (carregava a CHAVE
+ * PESSOAL de IA de quem o corpo escolhesse), mas deixou de existir em
+ * 27/08/2026: a rota passou a usar a chave única da empresa, e não precisa
+ * mais saber quem está pedindo (ver src/lib/integrations/ai.ts).
  *
  * Arquivo separado dos route.test.ts vizinhos pelo motivo de sempre nesta
  * base: a suíte roda com LOCAL_BYPASS_AUTH="true" (vem do .env via
@@ -43,10 +45,6 @@ const session = vi.hoisted(() => ({ current: null as SessaoFalsa }));
 // só a coluna requesterId.
 const emails = vi.hoisted(() => ({ destinatarios: [] as string[] }));
 
-// Qual chave pessoal de IA a rota entregou ao provedor. A chave nunca aparece
-// na resposta HTTP, então este é o único ponto onde dá para ver de quem ela é.
-const ia = vi.hoisted(() => ({ chaves: [] as { anthropicApiKey: string | null; geminiApiKey: string | null }[] }));
-
 vi.mock("next-auth", () => ({
   getServerSession: async () => session.current,
 }));
@@ -64,20 +62,6 @@ vi.mock("@/lib/integrations/slack", () => ({
   sendSlackDM: async () => {},
 }));
 
-vi.mock("@/lib/integrations/ai", () => ({
-  generateRequisitionAssist: async (
-    _descricao: string,
-    chaves: { anthropicApiKey: string | null; geminiApiKey: string | null }
-  ) => {
-    ia.chaves.push(chaves);
-    return {
-      payload: { demandType: "COMPRA_SERVICO", priority: "MEDIA", likelyDueDiligence: false, missingInfo: [], note: "ok" },
-      model: "teste",
-      error: null,
-    };
-  },
-}));
-
 // Sem gravar arquivo de verdade: o que está sob teste é quem pode anexar, não
 // o armazenamento, e assim a suíte não deixa pasta em uploads/.
 vi.mock("@/lib/storage", () => ({
@@ -85,7 +69,6 @@ vi.mock("@/lib/storage", () => ({
 }));
 
 const { POST: criarSolicitacao } = await import("./requests/route");
-const { POST: sugerir } = await import("./requests/suggest/route");
 const { POST: anexarNoChamado } = await import("./tickets/[id]/attachments/route");
 
 /**
@@ -139,20 +122,6 @@ async function postSolicitacao(corpo: Record<string, unknown>) {
 }
 
 // ----------------------------------------------------------------------------
-// POST /api/requests/suggest
-// ----------------------------------------------------------------------------
-
-async function postSugestao(requesterId: string | undefined) {
-  return sugerir(
-    new NextRequest("http://localhost/api/requests/suggest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requesterId, description: "Preciso contratar uma ferramenta de assinatura eletrônica." }),
-    })
-  );
-}
-
-// ----------------------------------------------------------------------------
 // POST /api/tickets/[id]/attachments
 // ----------------------------------------------------------------------------
 
@@ -191,7 +160,6 @@ describe("Identidade em rotas de escrita", () => {
     vi.stubEnv("LOCAL_BYPASS_AUTH", "false");
     session.current = null;
     emails.destinatarios = [];
-    ia.chaves = [];
   });
 
   afterAll(async () => {
@@ -296,53 +264,6 @@ describe("Identidade em rotas de escrita", () => {
       expect(res.status).toBe(201);
       const criada = (await res.json()) as { requesterId: string };
       expect(criada.requesterId).toBe(autor.id);
-    });
-  });
-
-  describe("POST /api/requests/suggest", () => {
-    /**
-     * As chaves ficam em texto puro de propósito neste cenário:
-     * decryptSecret() devolve o valor como veio quando ele não está no formato
-     * "v1:...", justamente para não quebrar chaves salvas antes da criptografia
-     * (ver src/lib/crypto.ts). Assim o teste não depende de
-     * AI_KEY_ENCRYPTION_SECRET e a asserção fica sobre o valor exato.
-     */
-    async function duasPessoasComChave() {
-      const autor = await createTestUser(["SOLICITANTE"]);
-      const vitima = await createTestUser(["SOLICITANTE"]);
-      await prisma.user.update({
-        where: { id: autor.id },
-        data: { anthropicApiKey: "chave-anthropic-de-quem-esta-logado", geminiApiKey: "chave-gemini-de-quem-esta-logado" },
-      });
-      await prisma.user.update({
-        where: { id: vitima.id },
-        data: { anthropicApiKey: "chave-anthropic-da-vitima", geminiApiKey: "chave-gemini-da-vitima" },
-      });
-      return { autor, vitima };
-    }
-
-    it("gasta a chave de IA de quem está logado, nunca a do id escolhido por quem chama", async () => {
-      const { autor, vitima } = await duasPessoasComChave();
-      session.current = await sessaoDe(autor.id);
-
-      const res = await postSugestao(vitima.id);
-
-      expect(res.status).toBe(200);
-      expect(ia.chaves).toHaveLength(1);
-      expect(ia.chaves[0].anthropicApiKey).toBe("chave-anthropic-de-quem-esta-logado");
-      expect(ia.chaves[0].geminiApiKey).toBe("chave-gemini-de-quem-esta-logado");
-      expect(JSON.stringify(ia.chaves[0])).not.toContain("vitima");
-    });
-
-    it("aceita o corpo quando não há sessão nenhuma, que é como o formulário local roda", async () => {
-      vi.stubEnv("LOCAL_BYPASS_AUTH", "true");
-      const { vitima } = await duasPessoasComChave();
-      session.current = null;
-
-      const res = await postSugestao(vitima.id);
-
-      expect(res.status).toBe(200);
-      expect(ia.chaves[0].anthropicApiKey).toBe("chave-anthropic-da-vitima");
     });
   });
 

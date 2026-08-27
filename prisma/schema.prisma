@@ -70,25 +70,6 @@ model User {
   // real, porque sem isso não há identidade confiável para anexar a foto.
   avatarUrl     String?
 
-  // Chaves de IA pessoais (pedido do usuário): todo mundo na Acerto já tem
-  // acesso próprio a Claude e Gemini, então os Assistentes de IA (ver
-  // AiInsight/src/lib/integrations/ai.ts) usam a chave de quem está atuando
-  // na etapa no momento, e não uma chave única da empresa/app.
-  //
-  // Guardadas cifradas em repouso (ver src/lib/crypto.ts). Duas coisas que
-  // quem mexer aqui precisa saber:
-  //
-  // 1. NUNCA devolva estas colunas numa resposta. Um `include` de relação que
-  //    aponta para User traz todas as colunas escalares junto: foi assim que
-  //    24 rotas passaram a vazar as chaves sem ninguém decidir isso. Use
-  //    USUARIO_PUBLICO de src/lib/usuario.ts; src/lib/usuario.test.ts trava a
-  //    regressão.
-  // 2. A chave de cifra é única e compartilhada (achado 16 da auditoria, em
-  //    aberto). O caminho durável é mover estas duas colunas para uma tabela
-  //    própria, aí nenhum include de User alcança, mas isso exige migration.
-  anthropicApiKey String?
-  geminiApiKey    String?
-
   requestsMade      PurchaseRequest[] @relation("Requester")
   requestsBuying    PurchaseRequest[] @relation("Buyer")
   requestsApproving PurchaseRequest[] @relation("ApproverManager")

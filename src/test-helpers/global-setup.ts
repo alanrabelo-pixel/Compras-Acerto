@@ -18,14 +18,12 @@ import { execSync } from "node:child_process";
 import { exigirBancoLocal } from "@/lib/guarda-banco";
 
 export default async function setup() {
-  // Fallbacks pra CI (que não tem .env real, só a máquina local tem — ver
-  // vitest.config.ts): sem eles, requireRole() (src/lib/rbac.ts) cai no
+  // Fallback pra CI (que não tem .env real, só a máquina local tem — ver
+  // vitest.config.ts): sem ele, requireRole() (src/lib/rbac.ts) cai no
   // fluxo de sessão real e chama getServerSession -> next/headers fora de
   // um request scope (rotas chamadas direto no teste, sem servidor Next
-  // de verdade), e encryptSecret()/decryptSecret() (src/lib/crypto.ts)
-  // lançam por falta de chave. Não sobrescreve se já vier do .env local.
+  // de verdade). Não sobrescreve se já vier do .env local.
   process.env.LOCAL_BYPASS_AUTH ??= "true";
-  process.env.AI_KEY_ENCRYPTION_SECRET ??= "test-only-secret-nao-usar-em-producao";
 
   // SEM DOCKER, CAI PARA O BANCO LOCAL EM VEZ DE TRAVAR.
   //

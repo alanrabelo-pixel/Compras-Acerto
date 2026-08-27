@@ -5,9 +5,9 @@ import { register } from "./instrumentation";
  * O CENÁRIO REAL QUE ESTES TESTES REPRODUZEM.
  *
  * Em 25/08/2026, ao integrar a infraestrutura do time de engenharia, ficou claro
- * que a produção em compras.acerto.com.br não define APP_ENV, APP_URL nem
- * AI_KEY_ENCRYPTION_SECRET: as três nasceram aqui em 19/08, depois de eles terem
- * partido, e o Dockerfile deles só define NODE_ENV, PORT e HOSTNAME.
+ * que a produção em compras.acerto.com.br não define APP_ENV nem APP_URL: as
+ * duas nasceram aqui em 19/08, depois de eles terem partido, e o Dockerfile
+ * deles só define NODE_ENV, PORT e HOSTNAME.
  *
  * Sem APP_ENV, ambienteAtual() assume "sandbox", e a trava que recusa Sandbox
  * ligado a banco remoto sem marca de sandbox no nome dispara justamente contra a
@@ -35,7 +35,6 @@ describe("register (instrumentation)", () => {
     vi.stubEnv("NEXTAUTH_URL", "https://compras.acerto.com.br");
     vi.stubEnv("GOOGLE_CLIENT_ID", "x");
     vi.stubEnv("GOOGLE_CLIENT_SECRET", "x");
-    vi.stubEnv("AI_KEY_ENCRYPTION_SECRET", "x");
     vi.stubEnv("APP_URL", "https://compras.acerto.com.br");
   }
 
@@ -75,10 +74,9 @@ describe("register (instrumentation)", () => {
     expect(sair).not.toHaveBeenCalled();
   });
 
-  it("sobe sem APP_URL e sem a chave de IA, que só degradam funcionalidade", async () => {
+  it("sobe sem APP_URL, que só degrada funcionalidade", async () => {
     producaoCompleta();
     vi.stubEnv("APP_URL", undefined);
-    vi.stubEnv("AI_KEY_ENCRYPTION_SECRET", undefined);
     const sair = vi.fn();
 
     await register(sair);

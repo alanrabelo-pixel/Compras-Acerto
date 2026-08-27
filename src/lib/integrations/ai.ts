@@ -13,12 +13,12 @@
  * silenciosamente: é uma ação sob demanda (a pessoa clica um botão e espera
  * uma resposta), não um efeito colateral em segundo plano.
  *
- * Pedido do usuário: as chamadas usam a CHAVE PESSOAL de quem está atuando
- * na etapa (User.anthropicApiKey/geminiApiKey, ver /api/users/[id]/ai-keys),
- * não uma chave única configurada para o app inteiro: todo mundo na Acerto
- * já tem acesso próprio a Claude e Gemini. O modelo (ANTHROPIC_MODEL/
- * GEMINI_MODEL) continua vindo do .env por ser uma escolha técnica do app,
- * não uma credencial pessoal.
+ * As chamadas usam uma CHAVE ÚNICA DA EMPRESA (ANTHROPIC_API_KEY/
+ * GEMINI_API_KEY no ambiente), não mais a chave pessoal de quem está atuando
+ * na etapa. Antes de 27/08/2026 cada pessoa precisava configurar e colar a
+ * própria chave (ver User.anthropicApiKey/geminiApiKey, removidas do schema);
+ * decisão do dono do sistema foi centralizar numa conta administradora da
+ * empresa, para ninguém mais precisar disso para usar o assistente.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -80,9 +80,10 @@ function parseInsightPayload(text: string): AiInsightPayload {
   };
 }
 
-async function callAnthropic(prompt: string, apiKey: string | null): Promise<ProviderResult> {
+async function callAnthropic(prompt: string): Promise<ProviderResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY || null;
   if (!apiKey) {
-    return { payload: null, model: null, error: "Você ainda não configurou sua chave pessoal da Anthropic (Claude)." };
+    return { payload: null, model: null, error: "A chave da Anthropic (Claude) da empresa não está configurada. Contate o time de TI." };
   }
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
   try {
@@ -108,9 +109,10 @@ async function callAnthropic(prompt: string, apiKey: string | null): Promise<Pro
   }
 }
 
-async function callGemini(prompt: string, apiKey: string | null): Promise<ProviderResult> {
+async function callGemini(prompt: string): Promise<ProviderResult> {
+  const apiKey = process.env.GEMINI_API_KEY || null;
   if (!apiKey) {
-    return { payload: null, model: null, error: "Você ainda não configurou sua chave pessoal do Gemini." };
+    return { payload: null, model: null, error: "A chave do Gemini da empresa não está configurada. Contate o time de TI." };
   }
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   try {
@@ -129,18 +131,11 @@ async function callGemini(prompt: string, apiKey: string | null): Promise<Provid
 }
 
 /**
- * Chama os dois provedores em paralelo, cada um com a chave pessoal de quem
- * está atuando (não uma chave única do app), e cada um falha/responde de
- * forma independente.
+ * Chama os dois provedores em paralelo, com a chave única da empresa, e cada
+ * um falha/responde de forma independente.
  */
-export async function generateInsight(
-  prompt: string,
-  keys: { anthropicApiKey: string | null; geminiApiKey: string | null }
-): Promise<{ anthropic: ProviderResult; gemini: ProviderResult }> {
-  const [anthropic, gemini] = await Promise.all([
-    callAnthropic(prompt, keys.anthropicApiKey),
-    callGemini(prompt, keys.geminiApiKey),
-  ]);
+export async function generateInsight(prompt: string): Promise<{ anthropic: ProviderResult; gemini: ProviderResult }> {
+  const [anthropic, gemini] = await Promise.all([callAnthropic(prompt), callGemini(prompt)]);
   return { anthropic, gemini };
 }
 
@@ -473,15 +468,16 @@ Responda APENAS com um JSON válido (sem markdown, sem texto antes ou depois), n
 }
 
 export async function generateRequisitionAssist(
-  description: string,
-  keys: { anthropicApiKey: string | null; geminiApiKey: string | null }
+  description: string
 ): Promise<{ payload: RequisitionAssistPayload | null; model: string | null; error: string | null }> {
   const prompt = buildRequisitionAssistPrompt(description);
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY || null;
+  const geminiApiKey = process.env.GEMINI_API_KEY || null;
 
-  if (keys.anthropicApiKey) {
+  if (anthropicApiKey) {
     const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
     try {
-      const client = new Anthropic({ apiKey: keys.anthropicApiKey });
+      const client = new Anthropic({ apiKey: anthropicApiKey });
       const response = await client.messages.create({
         model,
         max_tokens: 800,
@@ -497,10 +493,10 @@ export async function generateRequisitionAssist(
     }
   }
 
-  if (keys.geminiApiKey) {
+  if (geminiApiKey) {
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     try {
-      const client = new GoogleGenerativeAI(keys.geminiApiKey);
+      const client = new GoogleGenerativeAI(geminiApiKey);
       const generativeModel = client.getGenerativeModel({ model, generationConfig: { responseMimeType: "application/json" } });
       const result = await generativeModel.generateContent(prompt);
       const text = result.response.text();
@@ -511,5 +507,5 @@ export async function generateRequisitionAssist(
     }
   }
 
-  return { payload: null, model: null, error: "Configure sua chave pessoal da Anthropic ou do Gemini para usar o assistente." };
+  return { payload: null, model: null, error: "A chave de IA da empresa não está configurada. Contate o time de TI." };
 }

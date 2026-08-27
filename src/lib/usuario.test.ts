@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { USUARIO_PUBLICO, USUARIO_RESUMIDO } from "@/lib/usuario";
+import { USUARIO_PUBLICO } from "@/lib/usuario";
 
 /**
- * Trava contra o vazamento das chaves de IA.
+ * Trava contra o vazamento de colunas sensíveis de User.
  *
- * O model User guarda `anthropicApiKey` e `geminiApiKey`. Um `include` de
- * relação que aponta para User, escrito como `requester: true`, traz todas as
- * colunas escalares junto, as duas chaves inclusive. Foi assim que 24 rotas
- * passaram a devolver segredo de usuário no JSON sem ninguém decidir isso: o
- * include era escrito para pegar o nome de quem pediu.
+ * Um `include` de relação que aponta para User, escrito como
+ * `requester: true`, traz TODAS as colunas escalares junto. Foi assim que 24
+ * rotas passaram a devolver as chaves de IA pessoais (removidas em
+ * 27/08/2026) no JSON sem ninguém decidir isso: o include era escrito para
+ * pegar o nome de quem pediu.
  *
  * Este teste é a única coisa que impede a próxima rota de repetir o erro. Ele
  * não roda o sistema: lê o código. Isso tem limite conhecido, registrado no
@@ -50,16 +50,10 @@ function arquivosDeCodigo(dir: string, encontrados: string[] = []): string[] {
   return encontrados;
 }
 
-describe("chaves de IA não podem sair numa resposta", () => {
-  it("o select público não expõe as duas chaves nem o googleId", () => {
+describe("colunas sensíveis não podem sair numa resposta", () => {
+  it("o select público não expõe o googleId", () => {
     const campos = Object.keys(USUARIO_PUBLICO);
-    expect(campos).not.toContain("anthropicApiKey");
-    expect(campos).not.toContain("geminiApiKey");
     expect(campos).not.toContain("googleId");
-
-    const resumido = Object.keys(USUARIO_RESUMIDO);
-    expect(resumido).not.toContain("anthropicApiKey");
-    expect(resumido).not.toContain("geminiApiKey");
   });
 
   it("nenhum include traz uma relação de usuário sem select", () => {
@@ -88,10 +82,10 @@ describe("chaves de IA não podem sair numa resposta", () => {
 
     expect(
       infracoes,
-      `Relação de usuário incluída sem select. Cada uma destas devolve ` +
-        `anthropicApiKey e geminiApiKey no resultado. Troque por ` +
-        `{ select: USUARIO_PUBLICO } de @/lib/usuario, ou adicione o arquivo em ` +
-        `EXCECOES com o motivo:\n\n${infracoes.join("\n")}\n`
+      `Relação de usuário incluída sem select. Cada uma destas devolve TODAS ` +
+        `as colunas escalares de User no resultado, sensíveis inclusive. Troque ` +
+        `por { select: USUARIO_PUBLICO } de @/lib/usuario, ou adicione o arquivo ` +
+        `em EXCECOES com o motivo:\n\n${infracoes.join("\n")}\n`
     ).toEqual([]);
   });
 });
@@ -106,8 +100,4 @@ describe("chaves de IA não podem sair numa resposta", () => {
  * 2. Include montado em variável, ou espalhado com spread, em vez de escrito
  *    literalmente na chamada.
  * 3. Relação nova apontando para User que ninguém acrescentou na lista acima.
- *
- * A defesa de verdade contra os três seria tirar as chaves da tabela User e
- * pôr numa tabela própria, aí nenhum include de User poderia alcançá-las.
- * Isso exige migration e está proposto, não feito.
  */

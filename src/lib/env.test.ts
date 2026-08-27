@@ -55,12 +55,11 @@ describe("validarAmbiente", () => {
   });
 
   /**
-   * APP_URL e AI_KEY_ENCRYPTION_SECRET saíram das obrigatórias em 25/08/2026.
-   * Nenhuma das duas guarda a porta: a primeira quebra links de e-mail, a
-   * segunda desliga a chave de IA por usuário. Derrubar a produção inteira por
-   * causa delas era desproporcional, e foi o que impediu a primeira implantação.
+   * APP_URL saiu das obrigatórias em 25/08/2026: não guarda a porta, só quebra
+   * links de e-mail. Derrubar a produção inteira por causa dela era
+   * desproporcional, e foi o que impediu a primeira implantação.
    */
-  it("não derruba o boot por APP_URL nem pela chave de IA, que só degradam", () => {
+  it("não derruba o boot por APP_URL, que só degrada", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("APP_ENV", "producao");
     vi.stubEnv("DATABASE_URL", "postgresql://u:p@rds.sa-east-1.rds.amazonaws.com:5432/acertocompras");
@@ -69,7 +68,6 @@ describe("validarAmbiente", () => {
     vi.stubEnv("GOOGLE_CLIENT_ID", "x");
     vi.stubEnv("GOOGLE_CLIENT_SECRET", "x");
     vi.stubEnv("APP_URL", undefined);
-    vi.stubEnv("AI_KEY_ENCRYPTION_SECRET", undefined);
 
     expect(() => validarAmbiente()).not.toThrow();
   });
@@ -80,7 +78,7 @@ describe("validarAmbiente", () => {
     // checagem de coerência (ambiente x banco) barra antes de chegar na parte
     // que este teste quer exercer, e o teste passaria a medir outra coisa.
     vi.stubEnv("APP_ENV", "producao");
-    for (const nome of ["NEXTAUTH_SECRET", "NEXTAUTH_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AI_KEY_ENCRYPTION_SECRET", "APP_URL"]) {
+    for (const nome of ["NEXTAUTH_SECRET", "NEXTAUTH_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "APP_URL"]) {
       vi.stubEnv(nome, "valor");
     }
     vi.stubEnv("DATABASE_URL", "postgresql://u:p@db.provedor.com:5432/acerto");
