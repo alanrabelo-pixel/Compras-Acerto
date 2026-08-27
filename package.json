@@ -17,7 +17,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
     "migrations:sync": "tsx scripts/sync-migration-sql.ts",
-    "test": "vitest run",
+    "test": "prisma generate && vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
