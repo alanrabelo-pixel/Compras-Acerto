@@ -6,7 +6,7 @@
     "dev": "next dev",
     "preinstall": "node scripts/openssl-no-alpine.cjs",
     "postinstall": "prisma generate && node scripts/verify-prisma-engine.cjs",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",

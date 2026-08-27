@@ -15,6 +15,7 @@
  */
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { execSync } from "node:child_process";
+import { exigirBancoLocal } from "@/lib/guarda-banco";
 
 export default async function setup() {
   // Fallbacks pra CI (que não tem .env real, só a máquina local tem — ver
@@ -65,6 +66,18 @@ export default async function setup() {
     }
   }
 
+  // A GUARDA DE BANCO, AGORA QUE HÁ UM DATABASE_URL PARA JULGAR.
+  //
+  // O vitest.config.ts só consegue conferir o que veio do .env, e no CI não há
+  // .env: quem define o banco é o container acima. Este é o primeiro ponto em
+  // que a URL final existe nos dois caminhos, o do container e o degradado, e
+  // por isso é aqui que a conferência fecha. Sem ela, o caminho degradado
+  // poderia rodar contra qualquer banco que estivesse no ambiente.
+  //
+  // O container do Testcontainers atende em localhost numa porta aleatória,
+  // então passa. Ver src/lib/guarda-banco.ts.
+  exigirBancoLocal("A suíte de testes (vitest, apos resolver o banco)");
+
   // node:20-alpine (imagem do step "Run Tests" na Golden Pipeline) não traz
   // openssl por padrão — sem ele, o binário nativo do schema-engine do
   // Prisma quebra em runtime ao carregar libssl (fica só o aviso "Prisma
@@ -87,22 +100,71 @@ export default async function setup() {
   // independente de qual node_modules foi restaurado neste step.
   execSync("node scripts/verify-prisma-engine.cjs", { stdio: "inherit" });
 
-  // `db push` (não `migrate deploy`): banco efêmero e descartável não precisa
-  // de histórico de migration, só do schema atual aplicado direto. É a
-  // abordagem recomendada pela própria documentação do Prisma para bancos de
-  // teste.
+  // `migrate deploy`, E NÃO `db push`. Era push aqui, escolha do time de
+  // engenharia com a justificativa razoável de que banco efêmero não precisa de
+  // histórico. O problema é que push não reproduz a produção, e a diferença não
+  // é acadêmica: ele monta o banco a partir do prisma/schema.prisma, que não
+  // sabe expressar duas coisas que só existem nas migrations.
   //
-  // SÓ NO CONTAINER. No caminho degradado, o alvo é o banco de
-  // desenvolvimento, e `--accept-data-loss` ali significa deixar o Prisma
-  // reformar um banco com dado dentro para casar com o schema, apagando
-  // coluna e tabela sem perguntar. O banco local já está migrado pelo fluxo
-  // normal; se estiver desatualizado, os testes falham dizendo qual coluna
-  // falta, que é infinitamente melhor que um push silencioso.
+  // Custou 18 testes vermelhos na pipeline de 25/08/2026:
+  //
+  //   - as 11 constraints CHECK de 20260819210000_constraints_de_coerencia não
+  //     existiam, então o banco aceitava status inválido e decisão de gestor
+  //     sem data, e src/lib/constraints.test.ts falhava justamente por o banco
+  //     NÃO recusar o que deveria;
+  //   - a escada de alçada de 20260821110411_alcadas_editaveis nasce dentro de
+  //     uma migration, então ApprovalTier ficava vazia e faixaDoValor()
+  //     devolvia null, derrubando 15 testes de aprovação.
+  //
+  // Nada disso aparecia enquanto a suíte rodava contra o banco de
+  // desenvolvimento, que recebeu tudo pelo fluxo normal. O Postgres limpo do
+  // Testcontainers expôs a diferença, que é exatamente para isso que ele serve.
+  //
+  // `migrate deploy` é o mesmo caminho que leva o schema a produção, então o
+  // banco de teste passa a ser o banco de verdade. As migrations posteriores a
+  // 18/08 são idempotentes (ver scripts/tornar-migrations-idempotentes.cjs), e
+  // num banco novo o histórico nasce limpo, sem conflito de checksum.
+  //
+  // SÓ NO CONTAINER. No caminho degradado o alvo é o banco de desenvolvimento,
+  // já migrado pelo fluxo normal; se estiver desatualizado, os testes falham
+  // dizendo qual coluna falta, que é melhor que mexer nele por conta própria.
   if (pararContainer) {
-    execSync("npx prisma db push --skip-generate --accept-data-loss", {
-      stdio: "inherit",
-      env: process.env,
+    execSync("npx prisma migrate deploy", { stdio: "inherit", env: process.env });
+  }
+
+  // SEMENTE DAS FAIXAS DE ALÇADA.
+  //
+  // `db push` cria o schema a partir do prisma/schema.prisma e NÃO roda
+  // migration nenhuma. A escada padrão de aprovação nasce dentro de uma
+  // migration (20260821110411_alcadas_editaveis), então num banco criado por
+  // push a tabela ApprovalTier existe e está VAZIA.
+  //
+  // Isso passava despercebido enquanto os testes rodavam contra o banco de
+  // desenvolvimento, que recebeu a semente pelo fluxo normal de migration. O
+  // Postgres efêmero do Testcontainers, trazido do time de engenharia, é limpo
+  // de verdade, e em 25/08/2026 derrubou 15 testes de aprovação de uma vez:
+  // faixaDoValor() devolve null com a tabela vazia (src/lib/alcadas.ts), e a
+  // rota de aprovação não tem alçada para rotear. Um banco limpo revelando uma
+  // dependência escondida é exatamente para isso que ele serve.
+  //
+  // Os valores são os mesmos da migration de propósito: o teste tem que
+  // exercitar a escada que produção realmente usa, não uma inventada aqui.
+  //
+  // skipDuplicates deixa isto seguro no caminho degradado, onde o banco local
+  // já tem as faixas, e também se alguém rodar o setup duas vezes.
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
+  try {
+    await prisma.approvalTier.createMany({
+      data: [
+        { level: 1, label: "Nivel 1 (ate R$ 50 mil)", maxValue: 50000, requiredApprovers: 1, active: true },
+        { level: 2, label: "Nivel 2 (ate R$ 500 mil)", maxValue: 500000, requiredApprovers: 2, active: true },
+        { level: 3, label: "Nivel 3 (acima de R$ 500 mil)", maxValue: null, requiredApprovers: 2, active: true },
+      ],
+      skipDuplicates: true,
     });
+  } finally {
+    await prisma.$disconnect();
   }
 
   return async () => {

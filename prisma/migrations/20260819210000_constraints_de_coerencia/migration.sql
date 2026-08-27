@@ -17,10 +17,14 @@
 
 -- Status da solicitação de compra.
 ALTER TABLE "PurchaseRequest"
+  DROP CONSTRAINT IF EXISTS "PurchaseRequest_status_valido";
+ALTER TABLE "PurchaseRequest"
   ADD CONSTRAINT "PurchaseRequest_status_valido"
   CHECK ("status" IN ('ABERTO', 'CANCELADO', 'CONCLUIDO'));
 
 -- Decisão do gestor do centro de custo (etapa 2). Nulo enquanto não decidiu.
+ALTER TABLE "PurchaseRequest"
+  DROP CONSTRAINT IF EXISTS "PurchaseRequest_decisao_do_gestor_valida";
 ALTER TABLE "PurchaseRequest"
   ADD CONSTRAINT "PurchaseRequest_decisao_do_gestor_valida"
   CHECK ("managerApprovalDecision" IS NULL OR "managerApprovalDecision" IN ('APROVADO', 'REPROVADO'));
@@ -29,6 +33,8 @@ ALTER TABLE "PurchaseRequest"
 -- significa decisão sem data ou data sem decisão, e as duas contam a mesma
 -- história pela metade numa auditoria.
 ALTER TABLE "PurchaseRequest"
+  DROP CONSTRAINT IF EXISTS "PurchaseRequest_decisao_do_gestor_coerente";
+ALTER TABLE "PurchaseRequest"
   ADD CONSTRAINT "PurchaseRequest_decisao_do_gestor_coerente"
   CHECK (
     ("managerApprovalDecision" IS NULL AND "managerApprovalDecidedAt" IS NULL)
@@ -36,17 +42,25 @@ ALTER TABLE "PurchaseRequest"
   );
 
 ALTER TABLE "Contract"
+  DROP CONSTRAINT IF EXISTS "Contract_status_valido";
+ALTER TABLE "Contract"
   ADD CONSTRAINT "Contract_status_valido"
   CHECK ("status" IN ('ATIVO', 'RENOVACAO_EM_ANDAMENTO', 'CANCELADO'));
 
+ALTER TABLE "Payment"
+  DROP CONSTRAINT IF EXISTS "Payment_status_valido";
 ALTER TABLE "Payment"
   ADD CONSTRAINT "Payment_status_valido"
   CHECK ("status" IN ('PROGRAMADO', 'PAGO'));
 
 ALTER TABLE "Notification"
+  DROP CONSTRAINT IF EXISTS "Notification_canal_valido";
+ALTER TABLE "Notification"
   ADD CONSTRAINT "Notification_canal_valido"
   CHECK ("channel" IN ('EMAIL', 'SLACK'));
 
+ALTER TABLE "Notification"
+  DROP CONSTRAINT IF EXISTS "Notification_status_valido";
 ALTER TABLE "Notification"
   ADD CONSTRAINT "Notification_status_valido"
   CHECK ("status" IN ('ENVIADO', 'FALHA'));
@@ -54,17 +68,25 @@ ALTER TABLE "Notification"
 -- EMAIL_E_SLACK entrou quando o registro passou a refletir os dois canais:
 -- antes gravava sempre EMAIL, mesmo quando o Slack também saía.
 ALTER TABLE "ContractAlert"
+  DROP CONSTRAINT IF EXISTS "ContractAlert_canal_valido";
+ALTER TABLE "ContractAlert"
   ADD CONSTRAINT "ContractAlert_canal_valido"
   CHECK ("channel" IN ('EMAIL', 'SLACK', 'EMAIL_E_SLACK'));
 
+ALTER TABLE "RequestChatMessage"
+  DROP CONSTRAINT IF EXISTS "RequestChatMessage_papel_do_autor_valido";
 ALTER TABLE "RequestChatMessage"
   ADD CONSTRAINT "RequestChatMessage_papel_do_autor_valido"
   CHECK ("authorRole" IN ('COMPRADOR', 'SOLICITANTE'));
 
 ALTER TABLE "RequestChatMessage"
+  DROP CONSTRAINT IF EXISTS "RequestChatMessage_origem_valida";
+ALTER TABLE "RequestChatMessage"
   ADD CONSTRAINT "RequestChatMessage_origem_valida"
   CHECK ("source" IN ('APP', 'SLACK'));
 
+ALTER TABLE "SimpleTicket"
+  DROP CONSTRAINT IF EXISTS "SimpleTicket_tipo_de_pedido_valido";
 ALTER TABLE "SimpleTicket"
   ADD CONSTRAINT "SimpleTicket_tipo_de_pedido_valido"
   CHECK ("requestKind" IS NULL OR "requestKind" IN ('NDA', 'CONTRATO'));

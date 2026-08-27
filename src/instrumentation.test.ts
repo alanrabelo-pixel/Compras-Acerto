@@ -39,35 +39,62 @@ describe("register (instrumentation)", () => {
     vi.stubEnv("APP_URL", "https://compras.acerto.com.br");
   }
 
-  it("ENCERRA O PROCESSO quando a produção não declara APP_ENV", async () => {
+  it("ENCERRA O PROCESSO quando um segredo de autenticação falta", async () => {
+    producaoCompleta();
+    vi.stubEnv("NEXTAUTH_SECRET", undefined);
+    const sair = vi.fn();
+
+    await register(sair);
+
+    expect(sair).toHaveBeenCalledWith(1);
+  });
+
+  it("encerra quando o ambiente SE DECLARA sandbox ligado a banco remoto", async () => {
+    producaoCompleta();
+    vi.stubEnv("APP_ENV", "sandbox");
+    const sair = vi.fn();
+
+    await register(sair);
+
+    expect(sair).toHaveBeenCalledWith(1);
+  });
+
+  /**
+   * O caso que derrubou a primeira implantação, em 25/08/2026: o overlay do
+   * Kubernetes do time de engenharia nasceu antes de APP_ENV existir, e o
+   * silêncio dele era lido como "declarei que sou Sandbox". Silêncio agora vira
+   * aviso, não recusa. A trava acima continua valendo para quem se declara.
+   */
+  it("SOBE, com aviso, quando ninguém declarou APP_ENV", async () => {
     producaoCompleta();
     vi.stubEnv("APP_ENV", undefined);
     const sair = vi.fn();
 
     await register(sair);
 
-    expect(sair).toHaveBeenCalledWith(1);
+    expect(sair).not.toHaveBeenCalled();
   });
 
-  it("encerra também quando falta um segredo obrigatório", async () => {
+  it("sobe sem APP_URL e sem a chave de IA, que só degradam funcionalidade", async () => {
     producaoCompleta();
+    vi.stubEnv("APP_URL", undefined);
     vi.stubEnv("AI_KEY_ENCRYPTION_SECRET", undefined);
     const sair = vi.fn();
 
     await register(sair);
 
-    expect(sair).toHaveBeenCalledWith(1);
+    expect(sair).not.toHaveBeenCalled();
   });
 
   it("escreve o motivo antes de morrer, para o log do pod ser acionável", async () => {
     producaoCompleta();
-    vi.stubEnv("AI_KEY_ENCRYPTION_SECRET", undefined);
+    vi.stubEnv("NEXTAUTH_SECRET", undefined);
     const erro = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await register(vi.fn());
 
     const escrito = erro.mock.calls.map((c) => String(c[0])).join("\n");
-    expect(escrito).toMatch(/AI_KEY_ENCRYPTION_SECRET/);
+    expect(escrito).toMatch(/NEXTAUTH_SECRET/);
     expect(escrito).toMatch(/NAO VAI SUBIR/);
     erro.mockRestore();
   });

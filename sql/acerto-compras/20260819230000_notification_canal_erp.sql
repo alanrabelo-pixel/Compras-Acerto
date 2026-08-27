@@ -10,5 +10,7 @@ ALTER TABLE "Notification"
   DROP CONSTRAINT IF EXISTS "Notification_canal_valido";
 
 ALTER TABLE "Notification"
+  DROP CONSTRAINT IF EXISTS "Notification_canal_valido";
+ALTER TABLE "Notification"
   ADD CONSTRAINT "Notification_canal_valido"
   CHECK ("channel" IN ('EMAIL', 'SLACK', 'ERP'));

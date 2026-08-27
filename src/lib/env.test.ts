@@ -41,7 +41,7 @@ describe("validarAmbiente", () => {
     vi.stubEnv("DATABASE_URL", "postgresql://u:p@localhost:5433/acerto");
     vi.stubEnv("NEXTAUTH_SECRET", undefined);
     vi.stubEnv("GOOGLE_CLIENT_ID", undefined);
-    vi.stubEnv("APP_URL", undefined);
+    vi.stubEnv("NEXTAUTH_URL", undefined);
 
     try {
       validarAmbiente();
@@ -50,8 +50,28 @@ describe("validarAmbiente", () => {
       const mensagem = (erro as Error).message;
       expect(mensagem).toContain("NEXTAUTH_SECRET");
       expect(mensagem).toContain("GOOGLE_CLIENT_ID");
-      expect(mensagem).toContain("APP_URL");
+      expect(mensagem).toContain("NEXTAUTH_URL");
     }
+  });
+
+  /**
+   * APP_URL e AI_KEY_ENCRYPTION_SECRET saíram das obrigatórias em 25/08/2026.
+   * Nenhuma das duas guarda a porta: a primeira quebra links de e-mail, a
+   * segunda desliga a chave de IA por usuário. Derrubar a produção inteira por
+   * causa delas era desproporcional, e foi o que impediu a primeira implantação.
+   */
+  it("não derruba o boot por APP_URL nem pela chave de IA, que só degradam", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ENV", "producao");
+    vi.stubEnv("DATABASE_URL", "postgresql://u:p@rds.sa-east-1.rds.amazonaws.com:5432/acertocompras");
+    vi.stubEnv("NEXTAUTH_SECRET", "x");
+    vi.stubEnv("NEXTAUTH_URL", "https://compras.acerto.com.br");
+    vi.stubEnv("GOOGLE_CLIENT_ID", "x");
+    vi.stubEnv("GOOGLE_CLIENT_SECRET", "x");
+    vi.stubEnv("APP_URL", undefined);
+    vi.stubEnv("AI_KEY_ENCRYPTION_SECRET", undefined);
+
+    expect(() => validarAmbiente()).not.toThrow();
   });
 
   it("apenas avisa sobre credencial de integração, sem derrubar o boot", () => {

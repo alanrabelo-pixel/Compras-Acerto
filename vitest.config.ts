@@ -24,7 +24,22 @@ if (fs.existsSync(envPath)) {
 // (src/test-helpers/fixtures.ts). Apontada para Produção ou Sandbox, ela grava
 // e apaga lá, sem desfazer. Lançar aqui aborta a corrida inteira ainda na
 // leitura da configuração. Ver src/lib/guarda-banco.ts.
-exigirBancoLocal("A suíte de testes (vitest)");
+//
+// SÓ QUANDO JÁ EXISTE UM DATABASE_URL PARA JULGAR. Ausência não é o perigo que
+// esta guarda existe para pegar: o perigo é uma URL apontando para longe. E no
+// CI a variável está ausente por construção, porque não há .env e quem fornece
+// o banco é o Testcontainers, que só sobe no globalSetup, depois deste arquivo
+// ser lido. Abortar aqui derrubava o passo "Run Tests" da Golden Pipeline antes
+// do primeiro teste, com uma mensagem sobre banco de produção que não tinha
+// nada a ver com o que estava acontecendo. Visto em 25/08/2026, na pipeline #33.
+//
+// A cobertura não diminui: o mesmo exigirBancoLocal roda de novo no
+// src/test-helpers/global-setup.ts, depois de o DATABASE_URL estar definido,
+// venha ele do container ou do .env da máquina. O caso perigoso, .env local
+// apontando para produção, continua barrado aqui, antes de qualquer teste.
+if (process.env.DATABASE_URL) {
+  exigirBancoLocal("A suíte de testes (vitest)");
+}
 
 export default defineConfig({
   // O tsconfig do app usa jsx:"preserve" (o build do Next.js faz essa parte via
