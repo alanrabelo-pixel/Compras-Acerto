@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { atorDaSessao, exigirLeituraDeSolicitacao } from "@/lib/acesso";
 import { saveFile } from "@/lib/storage";
-import { validarAnexo } from "@/lib/upload";
+import { validarAnexo, validarConteudoDoAnexo } from "@/lib/upload";
 import { AttachmentCategory, Stage } from "@prisma/client";
+import { comExcecaoControlada } from "@/lib/validacao-api";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 // POST /api/requests/[id]/attachments: upload (multipart/form-data: file, uploadedBy, stage).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  return comExcecaoControlada("POST /api/requests/[id]/attachments", async () => {
   const barrado = await exigirLeituraDeSolicitacao(params.id);
   if (barrado) return barrado;
 
@@ -61,6 +63,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const fileName = validacao.nomeDoArquivo;
   const buffer = Buffer.from(await (file as Blob).arrayBuffer());
+
+  const validacaoDeConteudo = validarConteudoDoAnexo(buffer, fileName);
+  if (!validacaoDeConteudo.ok) {
+    return NextResponse.json({ error: validacaoDeConteudo.erro }, { status: validacaoDeConteudo.status });
+  }
+
   const storageUrl = await saveFile(request.id, fileName, buffer);
 
   const attachment = await prisma.attachment.create({
@@ -73,4 +81,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // /api/attachments/[id]/file.
   const { storageUrl: _omitido, ...semUrlInterna } = attachment;
   return NextResponse.json(semUrlInterna, { status: 201 });
+  });
 }

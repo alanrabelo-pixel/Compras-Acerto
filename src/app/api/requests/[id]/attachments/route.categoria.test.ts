@@ -19,7 +19,8 @@ import { createTestUser, createTestCostCenter, createTestRequest, cleanupTestDat
 
 async function enviar(requestId: string, uploaderId: string, campos: Record<string, string>) {
   const form = new FormData();
-  form.append("file", new File(["conteudo de teste"], "evidencia.pdf", { type: "application/pdf" }));
+  // "%PDF-" no início: assinatura real exigida por src/lib/magic-bytes.ts.
+  form.append("file", new File(["%PDF-1.4\nconteudo de teste"], "evidencia.pdf", { type: "application/pdf" }));
   form.append("uploadedBy", uploaderId);
   for (const [chave, valor] of Object.entries(campos)) form.append(chave, valor);
 

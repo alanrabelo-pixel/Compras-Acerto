@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES } from "@/lib/tickets";
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
 import { avisar } from "@/lib/avisar";
+import { validarCorpo, comExcecaoControlada } from "@/lib/validacao-api";
+
+const corpoDaMensagem = z.object({
+  authorName: z.string().trim().min(1, "informe seu nome").max(200),
+  body: z.string().trim().min(1, "escreva a mensagem").max(5000),
+});
 
 // POST /api/tickets/[id]/messages: adiciona uma mensagem ao histórico do chamado
 // (usado tanto pelo solicitante quanto pelo atendente, cada um digita o próprio nome).
@@ -11,6 +18,7 @@ import { avisar } from "@/lib/avisar";
 // o do chamado) pode escrever, mesmo critério da tela de detalhe, que já
 // bloqueia abrir o chamado de outra pessoa (ver chamados-viewer.ts).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  return comExcecaoControlada("POST /api/tickets/[id]/messages", async () => {
   const ticket = await prisma.simpleTicket.findUnique({ where: { id: params.id } });
   if (!ticket) return NextResponse.json({ error: "Chamado não encontrado" }, { status: 404 });
 
@@ -19,11 +27,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: "Você não tem acesso a este chamado." }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { authorName, body: messageBody } = body;
-  if (!authorName || !messageBody) {
-    return NextResponse.json({ error: "Escreva a mensagem antes de enviar." }, { status: 400 });
-  }
+  const corpoBruto = await req.json();
+  const validacao = validarCorpo(corpoDaMensagem, corpoBruto);
+  if (!validacao.ok) return validacao.resposta;
+  const { authorName, body: messageBody } = validacao.dados;
 
   const message = await prisma.ticketMessage.create({
     data: { ticketId: ticket.id, authorName, body: messageBody },
@@ -51,4 +58,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   return NextResponse.json(message, { status: 201 });
+  });
 }

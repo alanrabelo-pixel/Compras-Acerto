@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { TICKET_CATEGORIES, isTicketCategorySlug } from "@/lib/tickets";
 import { sendPurchaseEmail, templates } from "@/lib/integrations/gmail";
@@ -6,6 +7,32 @@ import { avisar } from "@/lib/avisar";
 import { proximoCodigo } from "@/lib/codigo";
 import { resolveChamadoViewer } from "@/lib/chamados-viewer";
 import { naoAutenticado } from "@/lib/acesso";
+import { validarCorpo, comExcecaoControlada } from "@/lib/validacao-api";
+
+/**
+ * Achado do DAST de 25/08/2026: um caractere de aspas em qualquer um destes
+ * campos derrubava a rota com 500 sem detalhe nenhum, e o scanner leu isso
+ * como indício de SQL injection. Não é — todo acesso a banco aqui passa pelo
+ * Prisma, que parametriza por construção. O que faltava era isto: nada
+ * validava o formato do corpo antes de tentar usá-lo, então qualquer exceção
+ * (nem sempre a mesma) virava 500 cru. Limite de tamanho aqui também cobre o
+ * achado de "estouro de buffer" do mesmo relatório, mesma causa.
+ */
+const corpoDoChamado = z.object({
+  category: z.string(),
+  requesterName: z.string().trim().min(1, "informe seu nome").max(200),
+  requesterEmail: z.string().trim().email("e-mail inválido").max(200),
+  description: z.string().trim().min(1, "descreva o que você precisa").max(5000),
+  requestKind: z.string().max(50).optional(),
+  supplierName: z.string().max(200).optional(),
+  supplierContactName: z.string().max(200).optional(),
+  supplierContactRole: z.string().max(200).optional(),
+  supplierContactEmail: z.string().email().max(200).optional().or(z.literal("")),
+  supplierContactPhone: z.string().max(50).optional(),
+  contractId: z.string().max(200).optional(),
+  contractSupplierName: z.string().max(200).optional(),
+  contractObject: z.string().max(2000).optional(),
+});
 
 // GET /api/tickets?category=viagens|facilities: lista chamados de uma categoria.
 //
@@ -45,51 +72,53 @@ export async function GET(req: NextRequest) {
 // para Viagens/Facilities. requestKind distingue "NDA" de "CONTRATO" dentro
 // dessa mesma categoria.
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const {
-    category: categorySlug, requesterName, requesterEmail, description, requestKind,
-    supplierName, supplierContactName, supplierContactRole, supplierContactEmail, supplierContactPhone,
-    contractId, contractSupplierName, contractObject,
-  } = body;
+  return comExcecaoControlada("POST /api/tickets", async () => {
+    const corpoBruto = await req.json();
+    const validacao = validarCorpo(corpoDoChamado, corpoBruto);
+    if (!validacao.ok) return validacao.resposta;
 
-  if (!isTicketCategorySlug(categorySlug)) {
-    return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
-  }
-  if (!requesterName || !requesterEmail || !description) {
-    return NextResponse.json({ error: "Preencha seu nome, seu e-mail e a descrição do que precisa." }, { status: 400 });
-  }
+    const {
+      category: categorySlug, requesterName, requesterEmail, description, requestKind,
+      supplierName, supplierContactName, supplierContactRole, supplierContactEmail, supplierContactPhone,
+      contractId, contractSupplierName, contractObject,
+    } = validacao.dados;
 
-  const config = TICKET_CATEGORIES[categorySlug];
-  const code = await proximoCodigo(config.prefix);
+    if (!isTicketCategorySlug(categorySlug)) {
+      return NextResponse.json({ error: "Categoria inválida." }, { status: 400 });
+    }
 
-  const ticket = await prisma.simpleTicket.create({
-    data: {
-      code, category: config.enumValue, requesterName, requesterEmail, description,
-      requestKind: requestKind || undefined,
-      supplierName: supplierName || undefined,
-      supplierContactName: supplierContactName || undefined,
-      supplierContactRole: supplierContactRole || undefined,
-      supplierContactEmail: supplierContactEmail || undefined,
-      supplierContactPhone: supplierContactPhone || undefined,
-      contractId: contractId || undefined,
-      contractSupplierName: contractSupplierName || undefined,
-      contractObject: contractObject || undefined,
-    },
-  });
+    const config = TICKET_CATEGORIES[categorySlug];
+    const code = await proximoCodigo(config.prefix);
 
-  const link = `${process.env.APP_URL}/chamados/${categorySlug}/${ticket.id}`;
-  const { subject, html } = templates.chamadoAberto(requesterName, config.label, code, link);
-  await avisar({
-    para: requesterEmail,
-    assunto: subject,
-    html,
-    slack:
-      `*Chamado  recebido*
+    const ticket = await prisma.simpleTicket.create({
+      data: {
+        code, category: config.enumValue, requesterName, requesterEmail, description,
+        requestKind: requestKind || undefined,
+        supplierName: supplierName || undefined,
+        supplierContactName: supplierContactName || undefined,
+        supplierContactRole: supplierContactRole || undefined,
+        supplierContactEmail: supplierContactEmail || undefined,
+        supplierContactPhone: supplierContactPhone || undefined,
+        contractId: contractId || undefined,
+        contractSupplierName: contractSupplierName || undefined,
+        contractObject: contractObject || undefined,
+      },
+    });
+
+    const link = `${process.env.APP_URL}/chamados/${categorySlug}/${ticket.id}`;
+    const { subject, html } = templates.chamadoAberto(requesterName, config.label, code, link);
+    await avisar({
+      para: requesterEmail,
+      assunto: subject,
+      html,
+      slack:
+        `*Chamado  recebido*
 
 ` +
-      `Acompanhe as respostas por aqui: <|abrir o chamado>`,
-    origem: "chamado aberto",
-  });
+        `Acompanhe as respostas por aqui: <|abrir o chamado>`,
+      origem: "chamado aberto",
+    });
 
-  return NextResponse.json(ticket, { status: 201 });
+    return NextResponse.json(ticket, { status: 201 });
+  });
 }
