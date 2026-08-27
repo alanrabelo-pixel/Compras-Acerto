@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { CostCenterManagerPicker } from "@/components/CostCenterManagerPicker";
 import { CostCenterActiveToggle } from "@/components/CostCenterActiveToggle";
 import { CreateCostCenterForm } from "@/components/CreateCostCenterForm";
+import { CostCenterImportForm } from "@/components/CostCenterImportForm";
 import { AlcadasAdmin } from "@/components/AlcadasAdmin";
 import { ApproverCostCentersPicker } from "@/components/ApproverCostCentersPicker";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
@@ -66,6 +67,7 @@ export default async function CentrosDeCustoPage({
           ]}
         >
           <div className="section-gap">
+            <CostCenterImportForm />
             <SearchFilterBar
               searchPlaceholder="Nome do centro de custo..."
               filters={[
