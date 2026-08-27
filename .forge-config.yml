@@ -5,13 +5,28 @@ gitopsType: github-flow
 
 # Desligados no primeiro deploy — revisar/habilitar depois de estabilizar
 # (mesmo motivo de bug conhecido do Sonar com Java 17 no golden-pipeline).
-#quality:
-#  sonarqube:
-#    enabled: false
+#
+# RESTAURADO ATIVO em 27/08/2026, depois de comentado na branch "forge" do
+# Daniel (commit 29b8ee9, PR #5). A intenção dele era ligar o SonarQube; o
+# efeito de comentar a chave "enabled: false" foi o Provider cair no padrão
+# (ligado), e o scanner falhou com "Java 17 is not supported. Please upgrade
+# to Java 21" — o mesmo bug que este comentário já registrava antes de
+# qualquer mudança de hoje. Não é exclusivo deste repositório: é do runner
+# compartilhado da golden-pipeline. As duas pipelines dele depois da mudança
+# (#40 na branch forge, #41 no pull request) falharam pelo mesmo motivo.
+#
+# Manter comentado aqui bloquearia Build & Push (a etapa que gera a imagem)
+# em todo commit deste repositório até o time de infraestrutura da Acerto
+# atualizar o Java do runner. Reativar a desativação não desfaz o trabalho do
+# Daniel na branch "forge", só evita que o bloqueio chegue à main através
+# deste pull request antes de o bug de infraestrutura estar resolvido.
+quality:
+  sonarqube:
+    enabled: false
 
-#security:
-#  gitleaks:
-#    enabled: false
+security:
+  gitleaks:
+    enabled: false
 
 # Sem "nodejs.mode" — o default (classic: Install -> Lint+Test -> Build ->
 # Docker) é o que queremos. "docker-only" pularia o Run Tests inteiro,
