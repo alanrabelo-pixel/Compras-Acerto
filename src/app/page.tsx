@@ -48,7 +48,7 @@ const SECONDARY_SERVICES = [
   },
 ];
 
-const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"] };
+const LOCAL_BYPASS_USER = { name: "Modo local (sem SSO)", email: "local@acerto.com.br", roles: ["ADMIN"], canViewBoard: true };
 
 export const dynamic = "force-dynamic";
 
@@ -57,8 +57,15 @@ export default async function HomePage() {
   const session = bypass ? null : await getServerSession(authOptions);
   const user = bypass
     ? LOCAL_BYPASS_USER
-    : (session?.user as { name?: string | null; email?: string | null; roles?: string[] } | undefined);
+    : (session?.user as { name?: string | null; email?: string | null; roles?: string[]; canViewBoard?: boolean } | undefined);
   const isAdmin = user?.roles?.includes("ADMIN");
+  // Solicitações de Compra em aberto e Contratos vencendo levam pro quadro
+  // geral (/solicitacoes, /contratos), que o middleware restringe a quem tem
+  // canViewBoard (ADMIN/COMPRADOR/APROVADOR/CONTROLADORIA, ver
+  // src/lib/roles.ts). Um Solicitante puro clicava num número da empresa
+  // inteira e caía em /sem-acesso — mostrava um resumo que não era dele pra
+  // ver, e a única saída era uma tela de "sem acesso".
+  const podeVerQuadro = bypass ? true : Boolean(user?.canViewBoard);
 
   const [homeData, currentUser, recentAnnouncementsCount] = await Promise.all([
     loadHomeData(session?.user?.email ?? null),
@@ -151,33 +158,35 @@ export default async function HomePage() {
         </section>
       )}
 
-      <div className="exec-stat-strip" role="group" aria-label="Resumo geral">
-        <a className="exec-stat exec-stat-link" href="/solicitacoes?view=lista">
-          <span className="exec-stat-value">{homeData.stats.openRequests}</span>
-          <span className="exec-stat-label">Solicitações de Compra em aberto</span>
-        </a>
-        {/* Sem link direto: "abertos" soma as 3 categorias de chamados, e não existe
-            uma lista unificada pra abrir (só um board por categoria em
-            /chamados/[category]). Em vez de linkar pra uma categoria só (errado, já
-            que o número é o agregado), passar o mouse revela a distribuição real por
-            canal, cada um levando ao board certo. */}
-        <div className="exec-stat exec-stat-hoverable" tabIndex={0}>
-          <span className="exec-stat-value">{homeData.stats.openTickets}</span>
-          <span className="exec-stat-label">Chamados abertos</span>
-          <div className="exec-stat-breakdown" role="menu">
-            {homeData.stats.ticketsByCategory.map((c) => (
-              <a key={c.slug} href={`/chamados/${c.slug}`} className="exec-stat-breakdown-item" role="menuitem">
-                <span>{c.label}</span>
-                <span className="exec-stat-breakdown-count">{c.count}</span>
-              </a>
-            ))}
+      {podeVerQuadro && (
+        <div className="exec-stat-strip" role="group" aria-label="Resumo geral">
+          <a className="exec-stat exec-stat-link" href="/solicitacoes?view=lista">
+            <span className="exec-stat-value">{homeData.stats.openRequests}</span>
+            <span className="exec-stat-label">Solicitações de Compra em aberto</span>
+          </a>
+          {/* Sem link direto: "abertos" soma as 3 categorias de chamados, e não existe
+              uma lista unificada pra abrir (só um board por categoria em
+              /chamados/[category]). Em vez de linkar pra uma categoria só (errado, já
+              que o número é o agregado), passar o mouse revela a distribuição real por
+              canal, cada um levando ao board certo. */}
+          <div className="exec-stat exec-stat-hoverable" tabIndex={0}>
+            <span className="exec-stat-value">{homeData.stats.openTickets}</span>
+            <span className="exec-stat-label">Chamados abertos</span>
+            <div className="exec-stat-breakdown" role="menu">
+              {homeData.stats.ticketsByCategory.map((c) => (
+                <a key={c.slug} href={`/chamados/${c.slug}`} className="exec-stat-breakdown-item" role="menuitem">
+                  <span>{c.label}</span>
+                  <span className="exec-stat-breakdown-count">{c.count}</span>
+                </a>
+              ))}
+            </div>
           </div>
+          <a className="exec-stat exec-stat-link" href="/contratos">
+            <span className="exec-stat-value">{homeData.stats.expiringContracts}</span>
+            <span className="exec-stat-label">Contratos vencendo em 30 dias</span>
+          </a>
         </div>
-        <a className="exec-stat exec-stat-link" href="/contratos">
-          <span className="exec-stat-value">{homeData.stats.expiringContracts}</span>
-          <span className="exec-stat-label">Contratos vencendo em 30 dias</span>
-        </a>
-      </div>
+      )}
 
       <section className="exec-section">
         <div className="exec-section-header">
