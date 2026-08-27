@@ -4,6 +4,7 @@ import { RoleAccessToggles } from "@/components/RoleAccessToggles";
 import { UserActiveToggle } from "@/components/UserActiveToggle";
 import { SearchFilterBar } from "@/components/SearchFilterBar";
 import { BulkUserImportForm } from "@/components/BulkUserImportForm";
+import { GrantRoleForm } from "@/components/GrantRoleForm";
 import { TableWrap, TableHeadRow, TableRow, TableEmpty } from "@/components/ui";
 import { ACCESS_ROLES, STAGE_ROLES } from "@/lib/roles";
 import type { Prisma, RoleName } from "@prisma/client";
@@ -53,6 +54,7 @@ export default async function AcessosPage({
         </p>
 
         <BulkUserImportForm />
+        <GrantRoleForm />
 
         <SearchFilterBar
           searchPlaceholder="Nome ou e-mail..."
