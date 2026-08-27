@@ -1,5 +1,6 @@
 import { ShoppingCart, Scale, Plane, ShieldCheck, KeyRound } from "lucide-react";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { AlaiWordmark } from "@/components/AlaiWordmark";
 
 // Mapeia os códigos de erro que o NextAuth anexa na URL (?error=...).
 // AccessDenied é o caso real hoje: o callback signIn() em src/lib/auth.ts
@@ -18,18 +19,18 @@ const ERROR_MESSAGES: Record<string, string> = {
 const DESTAQUES = [
   {
     icon: <ShoppingCart size={17} strokeWidth={1.75} />,
-    title: "Solicitação de Compras",
-    description: "Triagem, cotação, aprovação e contrato em um único fluxo, do pedido à entrega.",
+    title: "Solicitações de Compras",
+    description: "Triagem, cotação, aprovação e contratos em um único fluxo, do pedido à entrega.",
   },
   {
     icon: <Scale size={17} strokeWidth={1.75} />,
     title: "Contratos e Fornecedores",
-    description: "Cadastro, NDA e consulta de contratos ativos e fornecedores homologados.",
+    description: "Cadastro de fornecedores, gestão de NDA e consulta de contratos ativos e fornecedores homologados.",
   },
   {
     icon: <Plane size={17} strokeWidth={1.75} />,
     title: "Viagens e Facilities",
-    description: "Chamados de viagem, Uber Corporativo, manutenção e eventos internos.",
+    description: "Solicitações de viagens, Uber Corporativo, manutenção e gestão de eventos internos.",
   },
 ];
 
@@ -54,7 +55,8 @@ export default function LoginPage({
             <p className="login-brand-eyebrow">Acerto Compras</p>
             <h1 className="login-brand-headline">Toda a jornada de compras da Acerto, em um só lugar.</h1>
             <p className="login-brand-sub">
-              Solicitações, contratos, chamados e aprovações — com a alAi acompanhando cada etapa.
+              Solicitações, aprovações, contratos e chamados, centralizados em uma única plataforma,
+              com a alAi acompanhando e apoiando cada etapa do processo.
             </p>
           </div>
         </div>
@@ -87,10 +89,7 @@ export default function LoginPage({
         <div className="login-card">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="login-logo" />
-          <div className="login-alai-badge">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/alai-logo.svg" alt="alAi" className="login-alai-logo" />
-          </div>
+          <AlaiWordmark className="login-alai-logo" />
           <p className="login-tagline">Certo, com inteligência.</p>
           <p className="login-subtitle">Acesso restrito a contas corporativas @acerto.com.br.</p>
 

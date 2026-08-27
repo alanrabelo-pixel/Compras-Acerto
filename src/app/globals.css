@@ -1016,6 +1016,7 @@ body.com-faixa-de-ambiente .topbar {
 }
 .form-brand-alai {
   height: 34px;
+  display: block;
 }
 
 /* Ícone da alAi (check + centelha) usado como "assinatura" nos pontos de
@@ -1032,22 +1033,10 @@ body.com-faixa-de-ambiente .topbar {
   height: 16px;
   border-radius: 4px;
 }
-/* O SVG da alAi tem o traço do wordmark em #14181c fixo (não é var(--ink)),
-   desenhado para fundo claro. Em modo escuro o .login-card vira escuro
-   também (var(--surface) do tema), e a marca some contra o próprio fundo.
-   Em vez de mudar o SVG compartilhado (mesmo arquivo em
-   NovaSolicitacaoForm.tsx, fora do escopo desta tela), a logo aqui ganha um
-   selo claro atrás, do tamanho dela, que não muda com o tema. */
-.login-alai-badge {
-  background: #ffffff;
-  border-radius: var(--radius-md);
-  padding: 8px 14px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-}
 .login-alai-logo {
   display: block;
   height: 40px;
+  margin-bottom: 14px;
 }
 .login-tagline {
   font-size: 12px;

@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/format";
 import { Badge, TableWrap, TableHeadRow, TableRow } from "@/components/ui";
 import { CommandPalette } from "@/components/CommandPalette";
 import { UserMenu } from "@/components/UserMenu";
+import { AlaiWordmark } from "@/components/AlaiWordmark";
 import { loadCurrentUser } from "@/lib/current-user";
 import { countRecentAnnouncements } from "@/lib/announcements";
 import { bypassAuthAtivo } from "@/lib/bypass";
@@ -80,7 +81,7 @@ export default async function HomePage() {
           <img src="/brand/acerto-logo.svg" alt="Acerto" className="exec-topbar-logo" />
           <span className="exec-topbar-divider" aria-hidden />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/alai-logo.svg" alt="alAi" className="exec-topbar-alai-full" />
+          <AlaiWordmark className="exec-topbar-alai-full" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/alai-mark.svg" alt="alAi" className="exec-topbar-alai-icon" />
         </div>

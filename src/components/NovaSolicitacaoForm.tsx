@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserPicker } from "@/components/UserPicker";
 import { Button, Field, AiTag, WarningNotice } from "@/components/ui";
 import { AiKeySettings } from "@/components/AiKeySettings";
+import { AlaiWordmark } from "@/components/AlaiWordmark";
 import {
   OrcamentoExtraModal,
   detalhamentoCompleto,
@@ -289,8 +290,7 @@ export function NovaSolicitacaoForm({
       <div className="form-brand-block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/acerto-logo.svg" alt="Acerto" className="form-brand-acerto" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/alai-logo.svg" alt="alAi" className="form-brand-alai" />
+        <AlaiWordmark className="form-brand-alai" />
       </div>
       <a href="/solicitacoes" className="back-link">← voltar ao quadro</a>
       <h1 className="page-title" style={{ marginTop: 12 }}>Solicitação de Compra</h1>
