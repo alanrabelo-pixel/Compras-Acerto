@@ -13,6 +13,7 @@ import { EvolucaoExpandida } from "@/components/dashboard/EvolucaoExpandida";
 import { CicloExpandido } from "@/components/dashboard/CicloExpandido";
 import { RiskMap, RiskMapExpandido } from "@/components/dashboard/RiskMap";
 import { AlertsPanel, AlertsPanelAgrupado } from "@/components/dashboard/AlertsPanel";
+import { AlertsPriorityAssist } from "@/components/dashboard/AlertsPriorityAssist";
 import { ChamadosExpandido } from "@/components/dashboard/ChamadosExpandido";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { loadDashboardData, money } from "@/lib/dashboard-data";
@@ -335,7 +336,12 @@ export default async function DashboardsPage({
               <AlertsPanel alerts={data.alerts} limite={5} />
             </Card>
           }
-          expandido={<AlertsPanelAgrupado alerts={data.alerts} />}
+          expandido={
+            <div style={{ display: "grid", gap: 16 }}>
+              <AlertsPriorityAssist alerts={data.alerts} />
+              <AlertsPanelAgrupado alerts={data.alerts} />
+            </div>
+          }
         />
       </main>
     </AppShell>

@@ -30,6 +30,12 @@ export type AiInsightPayload = {
   cautions: string[];
   recommendation: string | null;
   nextStep: string | null;
+  // Rascunho de mensagem pronto para revisão e envio a um fornecedor/terceiro
+  // (item 2.4/2.7 do diagnóstico de IA): só as etapas que pedem isso
+  // explicitamente na própria instrução do prompt (Cotação, Due Diligence)
+  // preenchem este campo — as demais etapas devolvem null, porque nada nos
+  // seus prompts pede um rascunho de mensagem.
+  draftMessage: string | null;
 };
 
 export type ProviderResult = {
@@ -47,7 +53,8 @@ Responda APENAS com um JSON válido (sem markdown, sem texto antes ou depois), n
   "highlights": ["ponto 1", "ponto 2", "..."],
   "cautions": ["ponto de atenção/risco 1", "ponto de atenção/risco 2", "..."],
   "recommendation": "recomendação objetiva (faixa, classificação, decisão sugerida), ou null se não houver base suficiente",
-  "nextStep": "próxima ação concreta recomendada, ou null"
+  "nextStep": "próxima ação concreta recomendada, ou null",
+  "draftMessage": "rascunho de mensagem pronto para revisão e envio, APENAS se a instrução acima pedir isso explicitamente; null em qualquer outro caso"
 }`;
 
 // Schema JSON exigido via output_config.format (Anthropic): garante que a
@@ -61,8 +68,9 @@ const AI_INSIGHT_JSON_SCHEMA = {
     cautions: { type: "array", items: { type: "string" } },
     recommendation: { anyOf: [{ type: "string" }, { type: "null" }] },
     nextStep: { anyOf: [{ type: "string" }, { type: "null" }] },
+    draftMessage: { anyOf: [{ type: "string" }, { type: "null" }] },
   },
-  required: ["summary", "highlights", "cautions", "recommendation", "nextStep"],
+  required: ["summary", "highlights", "cautions", "recommendation", "nextStep", "draftMessage"],
   additionalProperties: false,
 } as const;
 
@@ -77,6 +85,7 @@ function parseInsightPayload(text: string): AiInsightPayload {
     cautions: Array.isArray(parsed.cautions) ? parsed.cautions.map(String) : [],
     recommendation: parsed.recommendation ? String(parsed.recommendation) : null,
     nextStep: parsed.nextStep ? String(parsed.nextStep) : null,
+    draftMessage: parsed.draftMessage ? String(parsed.draftMessage) : null,
   };
 }
 
@@ -219,6 +228,8 @@ Dados da solicitação:
 Com base apenas na descrição (você não tem acesso ao contrato ou à política de privacidade real do fornecedor), ajude a equipe a: identificar riscos de privacidade/LGPD e de segurança da informação plausíveis para este tipo de ferramenta; listar o que normalmente deveria ser verificado com o fornecedor (ex: DPA, certificações, local de armazenamento dos dados, retenção); e recomendar se aprovar, reprovar ou pedir mais informação antes de decidir.
 
 No campo "highlights", liste os riscos de privacidade/segurança identificados. No campo "cautions", liste o que verificar com o fornecedor antes de aprovar. No campo "recommendation", indique "aprovar", "reprovar" ou "pedir mais informação" com uma frase de justificativa. Deixe claro que esta é uma triagem preliminar, não substitui a análise formal do time de Privacidade.
+
+No campo "draftMessage", escreva um rascunho de mensagem PRONTA PARA ENVIAR ao fornecedor, pedindo objetivamente os itens listados em "cautions" (ex: cópia do DPA, certificações de segurança vigentes, local de armazenamento dos dados, política de retenção) — tom direto e profissional, sem jargão interno da Acerto. É um rascunho: quem for enviar revisa e ajusta antes.
 ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
 
@@ -286,8 +297,8 @@ ${quotesBlock}
 
 ${
   isComparison
-    ? `No campo "highlights", liste os pontos fortes da cotação que parece mais vantajosa. No campo "cautions", liste riscos ou pontos de atenção de qualquer uma das cotações (ex: condição de pagamento pior apesar do preço menor). No campo "recommendation", diga qual fornecedor parece a melhor escolha geral e por quê, mas nunca decida por conta própria: é o comprador quem seleciona a vencedora no Mapa de Cotação.`
-    : `No campo "highlights", liste os pontos a abordar na negociação. No campo "cautions", liste o que evitar. No campo "recommendation", sugira uma faixa de desconto/condição-alvo (ou null se não houver base suficiente).`
+    ? `No campo "highlights", liste os pontos fortes da cotação que parece mais vantajosa. No campo "cautions", liste riscos ou pontos de atenção de qualquer uma das cotações (ex: condição de pagamento pior apesar do preço menor). No campo "recommendation", diga qual fornecedor parece a melhor escolha geral e por quê, mas nunca decida por conta própria: é o comprador quem seleciona a vencedora no Mapa de Cotação. Deixe "draftMessage" null: nesta etapa comparativa não há uma negociação em andamento para rascunhar.`
+    : `No campo "highlights", liste os pontos a abordar na negociação. No campo "cautions", liste o que evitar. No campo "recommendation", sugira uma faixa de desconto/condição-alvo (ou null se não houver base suficiente). Se houver ao menos uma cotação registrada, preencha "draftMessage" com um rascunho de e-mail de negociação PRONTO PARA ENVIAR ao fornecedor da cotação mais relevante para negociar agora (a de menor valor negociado, se houver mais de uma) — pode mencionar que há condições concorrentes sendo avaliadas, SEM revelar nomes ou valores de outros fornecedores. Se não houver nenhuma cotação registrada, deixe "draftMessage" null.`
 }
 ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
@@ -418,6 +429,35 @@ Dados do contrato sendo cadastrado:
 Ajude o comprador a revisar os DADOS ACIMA (não o texto integral do contrato) e identificar: campos que parecem incompletos, vagos ou inconsistentes (ex: prazo sem unidade clara, ausência de cláusula de rescisão); cláusulas de proteção que normalmente deveriam estar marcadas para este tipo/valor de contrato e não estão; e uma recomendação sobre se o cadastro está pronto para ser concluído.
 
 No campo "highlights", liste os pontos incompletos/vagos identificados nos dados. No campo "cautions", liste cláusulas de proteção ausentes que valeria considerar. No campo "recommendation", indique "pronto para concluir" ou "revisar antes de concluir".
+${RESPONSE_FORMAT_INSTRUCTION}`;
+}
+
+// ----------------------------------------------------------------------------
+// Priorização narrativa dos Alertas Inteligentes do Dashboard (item 2.9 do
+// diagnóstico de IA): a lista de alertas em si (severity/kind/text) já é
+// calculada por regra determinística em loadDashboardData — a IA não cria,
+// remove nem reclassifica nenhum alerta, só lê a MESMA lista e ordena por
+// urgência real, porque hoje o painel só ordena por severidade fixa (grave
+// antes de atenção), sem dizer qual atacar primeiro dentro do mesmo grupo.
+// Stateless de propósito (ver POST /api/dashboards/alerts-priority): é uma
+// leitura descartável sobre um recorte que muda a cada filtro do Dashboard.
+// ----------------------------------------------------------------------------
+
+export type AlertForPriority = { severity: "danger" | "warning"; kind: string; text: string };
+
+export function buildAlertsPriorityPrompt(alerts: AlertForPriority[]): string {
+  const lista = alerts
+    .map((a, i) => `${i + 1}. [${a.severity === "danger" ? "grave" : "atenção"} · ${a.kind}] ${a.text}`)
+    .join("\n");
+
+  return `Você é um assistente que ajuda o time de Compras da Acerto (fintech brasileira) a decidir por onde começar diante da lista de Alertas Inteligentes do Dashboard. Cada alerta já foi calculado por uma regra determinística do sistema (limiar relativo ou fato concreto, nunca uma meta inventada) — você não cria, remove nem reclassifica nenhum alerta, só ordena por urgência real e explica o porquê.
+
+Alertas ativos no recorte atual (${alerts.length} no total):
+${lista || "Nenhum alerta neste recorte."}
+
+Ordene do mais urgente para o menos urgente, considerando: risco financeiro/operacional se o alerta for ignorado, quão perto está de um prazo real e concreto (ex: contrato vencendo em poucos dias), e se o problema tende a piorar sozinho com o tempo. Gravidade "grave" não é automaticamente mais urgente que "atenção": um "atenção" a poucos dias de um prazo pode pesar mais que um "grave" com folga.
+
+No campo "summary", 1-2 frases sobre o panorama geral deste recorte. No campo "highlights", a lista ORDENADA cobrindo TODOS os alertas recebidos (nenhum de fora), um item por alerta, no formato "Prioridade N: <o texto do alerta, resumido se necessário> — <por que essa posição>". Deixe "cautions" vazio, e "recommendation"/"nextStep"/"draftMessage" como null: aqui a única saída que importa é a ordenação em "highlights".
 ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
 

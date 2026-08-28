@@ -21,6 +21,7 @@ type Payload = {
   cautions: string[];
   recommendation: string | null;
   nextStep: string | null;
+  draftMessage: string | null;
 };
 
 function parsePayload(json: string | null): Payload | null {
@@ -235,8 +236,40 @@ function ProviderColumn({
               <strong>Próximo passo:</strong> {payload.nextStep}
             </p>
           )}
+          {payload.draftMessage && <DraftMessageBlock text={payload.draftMessage} />}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Rascunho de mensagem para um terceiro externo (fornecedor), items 2.4/2.7
+ * do diagnóstico de IA: nunca enviado automaticamente, só copiado para quem
+ * for revisar e mandar pelo canal de sempre (e-mail, WhatsApp do fornecedor).
+ */
+function DraftMessageBlock({ text }: { text: string }) {
+  const [copiado, setCopiado] = useState(false);
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      setCopiado(false);
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 4, border: "1px dashed var(--border)", borderRadius: 8, padding: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+        <p style={{ fontWeight: 700, fontSize: 10.5, margin: 0 }}>Rascunho para o fornecedor — revise antes de enviar</p>
+        <button type="button" className="btn btn-secondary" style={{ fontSize: 10, padding: "3px 8px" }} onClick={copiar}>
+          {copiado ? "Copiado!" : "Copiar"}
+        </button>
+      </div>
+      <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{text}</p>
     </div>
   );
 }
