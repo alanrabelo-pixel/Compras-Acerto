@@ -134,7 +134,68 @@ describe("callback session", () => {
 });
 
 describe("validade da sessão", () => {
-  it("expira em 8 horas, não nos 30 dias padrão do NextAuth", () => {
-    expect(authOptions.session?.maxAge).toBe(8 * 60 * 60);
+  it("janela de inatividade é 30 minutos, não os 30 dias padrão do NextAuth", () => {
+    expect(authOptions.session?.maxAge).toBe(30 * 60);
+  });
+
+  it("renova bem antes do fim da janela de inatividade", () => {
+    expect(authOptions.session?.updateAge).toBeLessThan(authOptions.session!.maxAge!);
+  });
+});
+
+describe("callback jwt: teto absoluto da sessão", () => {
+  afterAll(async () => {
+    await cleanupTestData();
+  });
+
+  const OITO_HORAS_MS = 8 * 60 * 60 * 1000;
+
+  it("carimba loginAt só na chamada de login (com `user` preenchido)", async () => {
+    const user = await createTestUser(["COMPRADOR"]);
+
+    const token = await jwtCallback({
+      token: { email: user.email },
+      user: { id: user.id, email: user.email },
+    } as unknown as Parameters<typeof jwtCallback>[0]) as JWT;
+
+    expect(typeof token.loginAt).toBe("number");
+  });
+
+  it("não mexe em loginAt nas renovações seguintes (sem `user`)", async () => {
+    const user = await createTestUser(["COMPRADOR"]);
+    const loginAtOriginal = Date.now() - 1000;
+
+    const token = await chamarJwt({ email: user.email, loginAt: loginAtOriginal });
+
+    expect(token.loginAt).toBe(loginAtOriginal);
+  });
+
+  it("mantém a sessão de uso contínuo dentro do teto absoluto", async () => {
+    const user = await createTestUser(["COMPRADOR"]);
+    await prisma.user.update({ where: { id: user.id }, data: { canViewBoard: true } });
+    const loginAtRecente = Date.now() - (OITO_HORAS_MS - 60_000); // 1min antes do teto
+
+    const token = await chamarJwt({ email: user.email, loginAt: loginAtRecente });
+
+    expect(token.userId).toBe(user.id);
+    expect(token.sessaoExpirada).toBeUndefined();
+  });
+
+  it("mata a sessão que passou do teto absoluto, mesmo com uso contínuo", async () => {
+    const user = await createTestUser(["COMPRADOR"]);
+    const loginAtAntigo = Date.now() - (OITO_HORAS_MS + 60_000); // 1min depois do teto
+
+    const token = await chamarJwt({
+      email: user.email,
+      loginAt: loginAtAntigo,
+      userId: user.id,
+      roles: ["COMPRADOR"],
+      canViewBoard: true,
+    });
+
+    expect(token.sessaoExpirada).toBe(true);
+    expect(token.userId).toBeUndefined();
+    expect(token.roles).toEqual([]);
+    expect(token.canViewBoard).toBe(false);
   });
 });

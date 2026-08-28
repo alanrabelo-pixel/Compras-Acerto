@@ -40,6 +40,16 @@ import { bypassAuthAtivo } from "@/lib/bypass";
  */
 const API_COM_AUTENTICACAO_PROPRIA = ["/api/auth", "/api/cron", "/api/erp", "/api/slack"];
 
+/**
+ * Token utilizável: existe, a conta não foi desativada, e a sessão não passou
+ * do teto absoluto (ver SESSAO_TETO_ABSOLUTO_MS em src/lib/auth.ts — marcado
+ * no próprio token pelo callback jwt, sem precisar o middleware saber a
+ * regra). Mesmo critério nas quatro checagens abaixo.
+ */
+function tokenValido(token: Record<string, unknown> | null): boolean {
+  return !!token && !token.desativado && !token.sessaoExpirada;
+}
+
 export async function middleware(req: NextRequest) {
   if (bypassAuthAtivo()) {
     return NextResponse.next();
@@ -60,7 +70,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
     const token = await getToken({ req });
-    if (!token || token.desativado) {
+    if (!tokenValido(token)) {
       // Rota de API responde 401 em JSON. Redirecionar para o login, como as
       // páginas fazem, devolveria HTML para quem esperava JSON e quebraria o
       // cliente com erro de parse em vez de uma mensagem clara.
@@ -76,22 +86,22 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/chamados")
   ) {
     const token = await getToken({ req });
-    if (!token || token.desativado) return signInRedirect(req);
+    if (!tokenValido(token)) return signInRedirect(req);
     return NextResponse.next();
   }
 
   if (pathname.startsWith("/admin")) {
     const token = await getToken({ req });
-    if (!token || token.desativado) return signInRedirect(req);
-    if (!Array.isArray(token.roles) || !token.roles.includes("ADMIN")) {
+    if (!tokenValido(token)) return signInRedirect(req);
+    if (!Array.isArray(token!.roles) || !token!.roles.includes("ADMIN")) {
       return NextResponse.redirect(new URL("/sem-acesso", req.url));
     }
     return NextResponse.next();
   }
 
   const token = await getToken({ req });
-  if (!token || token.desativado) return signInRedirect(req);
-  if (!token.canViewBoard) {
+  if (!tokenValido(token)) return signInRedirect(req);
+  if (!token!.canViewBoard) {
     return NextResponse.redirect(new URL("/sem-acesso", req.url));
   }
   return NextResponse.next();

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { rotuloDoAmbiente, tituloDaAba } from "@/lib/ambiente";
+import { AuthSessionProvider } from "@/components/AuthSessionProvider";
 import "./globals.css";
 
 /**
@@ -92,13 +93,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           portanto fora do fluxo) e o que desce as duas barras grudentas, a
           lateral de Compras e a de topo de Chamados. Ver globals.css. */}
       <body className={rotuloAmbiente ? "com-faixa-de-ambiente" : undefined}>
+        {/*
+          AuthSessionProvider entra no layout raiz (não só nas telas
+          autenticadas via AppShell) de propósito: a renovação deslizante da
+          sessão (ver src/lib/auth.ts) precisa cobrir TODA área autenticada —
+          home, chamados, nova solicitação — não só quem usa o AppShell.
+          Isso custa um provider de Client Component também em /login e
+          /sem-acesso, onde não há sessão ainda (a chamada a
+          GET /api/auth/session só devolve "sem sessão", sem erro) — um custo
+          pequeno e aceito em troca de não deixar nenhuma tela autenticada de
+          fora da janela de inatividade.
+        */}
+        <AuthSessionProvider>
         {rotuloAmbiente && (
           <div className="faixa-ambiente" title={`${rotuloAmbiente}: ambiente de testes, não é produção.`}>
             {/* O mesmo triângulo do lucide (AlertTriangle), desenhado à mão em
                 vez de importado. Os ícones do lucide são Client Components, e
                 aqui o import ficaria no layout raiz, ou seja, em TODAS as
-                telas, inclusive no login, que hoje não carrega JS de
-                componente nenhum. Um aviso de 13px não justifica isso. */}
+                telas, inclusive no login. Um aviso de 13px não justifica
+                puxar mais uma biblioteca de ícones pro bundle de todo mundo,
+                mesmo já havendo o AuthSessionProvider (acima) como Client
+                Component no layout raiz. */}
             <svg
               width="13"
               height="13"
@@ -121,6 +136,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
         {children}
+        </AuthSessionProvider>
       </body>
     </html>
   );
