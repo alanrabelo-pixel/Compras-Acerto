@@ -41,3 +41,23 @@ export function destinoControladoria(): string {
 }
 
 export const DESTINO_CONTROLADORIA = destinoControladoria();
+
+/**
+ * Destinatários do resumo executivo mensal automático (ver
+ * src/app/api/cron/monthly-summary/route.ts). Diferente da Controladoria,
+ * não existe uma caixa "certa" para cair de volta: sem a lista configurada,
+ * a rota não tem para quem mandar, então não inventa destinatário nenhum —
+ * só loga e não envia (ver a própria rota).
+ *
+ * Função e não constante, pelo mesmo motivo de destinoControladoria: uma
+ * constante de módulo congelaria o valor no import e impediria testar os
+ * dois casos (configurada / vazia).
+ */
+export function destinatariosResumoExecutivo(): string[] {
+  const configurado = process.env.DESTINATARIOS_RESUMO_EXECUTIVO?.trim();
+  if (!configurado) return [];
+  return configurado
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+}

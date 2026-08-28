@@ -75,7 +75,7 @@ const CONSEQUENCIA: Record<string, string> = {
   APP_URL: "os links dos e-mails saem como \"undefined/solicitacoes/...\" e ninguém percebe até alguém clicar",
   ANTHROPIC_API_KEY: "o assistente de IA (Claude) fica indisponível na Nova Solicitação e nos painéis de etapa; o resto do sistema opera normalmente",
   GEMINI_API_KEY: "o assistente de IA (Gemini) fica indisponível na Nova Solicitação e nos painéis de etapa; o resto do sistema opera normalmente",
-  CRON_SECRET: "os crons de escalonamento e de alerta de contrato recusam toda chamada",
+  CRON_SECRET: "os crons de escalonamento, de alerta de contrato e de resumo executivo mensal recusam toda chamada",
   ERP_API_KEY: "a API de integração com o ERP recusa toda chamada",
   SLACK_BOT_TOKEN: "nenhuma mensagem de Slack é enviada",
   SLACK_SIGNING_SECRET: "o webhook do Slack recusa todos os eventos recebidos",

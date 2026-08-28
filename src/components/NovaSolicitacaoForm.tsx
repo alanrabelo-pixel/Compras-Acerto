@@ -158,7 +158,12 @@ export function NovaSolicitacaoForm({
   // continua editável normalmente. Só marcamos quais vieram de sugestão.
   const [assisting, setAssisting] = useState(false);
   const [assistError, setAssistError] = useState<string | null>(null);
-  const [assistNote, setAssistNote] = useState<{ note: string; missingInfo: string[]; likelyDueDiligence: boolean } | null>(null);
+  const [assistNote, setAssistNote] = useState<{
+    note: string;
+    missingInfo: string[];
+    likelyDueDiligence: boolean;
+    possibleDuplicateOf: { requestCode: string; reason: string } | null;
+  } | null>(null);
   const [aiSuggestedFields, setAiSuggestedFields] = useState<Set<string>>(new Set());
 
   async function requestAssist() {
@@ -168,7 +173,7 @@ export function NovaSolicitacaoForm({
       const res = await fetch("/api/requests/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: longDescription }),
+        body: JSON.stringify({ description: longDescription, costCenterId: costCenterId || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Não foi possível gerar sugestões.");
@@ -176,7 +181,12 @@ export function NovaSolicitacaoForm({
       if (data.demandType) { setDemandType(data.demandType); applied.add("demandType"); }
       if (data.priority) { setPriority(data.priority); applied.add("priority"); }
       setAiSuggestedFields(applied);
-      setAssistNote({ note: data.note, missingInfo: data.missingInfo ?? [], likelyDueDiligence: Boolean(data.likelyDueDiligence) });
+      setAssistNote({
+        note: data.note,
+        missingInfo: data.missingInfo ?? [],
+        likelyDueDiligence: Boolean(data.likelyDueDiligence),
+        possibleDuplicateOf: data.possibleDuplicateOf ?? null,
+      });
     } catch (e) {
       setAssistError(e instanceof Error ? e.message : "Erro inesperado.");
     } finally {
@@ -511,6 +521,11 @@ export function NovaSolicitacaoForm({
                 {assistNote.likelyDueDiligence && (
                   <p style={{ margin: 0, fontWeight: 600, color: "var(--warning)" }}>
                     Provavelmente vai passar por Due Diligence de Privacidade. Parece uma ferramenta nova que trata dado pessoal.
+                  </p>
+                )}
+                {assistNote.possibleDuplicateOf && (
+                  <p style={{ margin: 0, fontWeight: 600, color: "var(--warning)" }}>
+                    Pode ser duplicada da solicitação {assistNote.possibleDuplicateOf.requestCode}: {assistNote.possibleDuplicateOf.reason}
                   </p>
                 )}
               </div>

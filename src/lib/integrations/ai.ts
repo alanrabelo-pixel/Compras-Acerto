@@ -157,6 +157,15 @@ export type TriagemContext = {
   supplierApproved?: boolean;
   supplierRiskTier?: string;
   handlesPersonalData?: boolean;
+  // Dado factual, não opinião do comprador: soma real de Pedidos de Compra
+  // para este fornecedor nos últimos 12 meses (ver
+  // GET /api/requests/[id]/supplier-history) e se checkFragmentationRisk já
+  // sinaliza fracionamento somando este pedido ao histórico. Antes a IA só
+  // via o texto livre da descrição e recomendava a faixa de risco cega a
+  // esse número, que o próprio sistema já calcula em outro lugar.
+  priorRequestsValueLast12Months?: number;
+  supplierHistoryMatch?: "catalog" | "approximate" | "none";
+  fragmentationFlagged?: boolean;
 };
 
 export function buildTriagemPrompt(ctx: TriagemContext): string {
@@ -175,8 +184,13 @@ Dados da solicitação:
 - Fornecedor já homologado: ${ctx.supplierApproved === undefined ? "não informado" : ctx.supplierApproved ? "sim" : "não"}
 - Risco do fornecedor (percepção do comprador): ${ctx.supplierRiskTier ?? "não informado"}
 - Trata dado pessoal: ${ctx.handlesPersonalData === undefined ? "não informado" : ctx.handlesPersonalData ? "sim" : "não"}
+- Compras já feitas deste fornecedor nos últimos 12 meses: ${
+    ctx.priorRequestsValueLast12Months
+      ? `R$ ${ctx.priorRequestsValueLast12Months.toLocaleString("pt-BR")} (correspondência ${ctx.supplierHistoryMatch === "catalog" ? "por CNPJ, fornecedor cadastrado" : ctx.supplierHistoryMatch === "approximate" ? "aproximada por nome, sem cadastro" : "sem cadastro nem histórico"})`
+      : "nenhuma compra registrada nos últimos 12 meses"
+  }${ctx.fragmentationFlagged ? "\n- ATENÇÃO: somando este pedido ao histórico de 12 meses, o valor combinado ultrapassa a faixa individual — sinal de possível fracionamento (mesmo controle usado na Validação Orçamentária)." : ""}
 
-Ajude o comprador a: identificar informações faltantes ou ambíguas que valeria confirmar com o solicitante antes de avançar; sinalizar riscos que a faixa de risco (fast/standard/strategic) deveria considerar; e recomendar a faixa de risco mais adequada.
+Ajude o comprador a: identificar informações faltantes ou ambíguas que valeria confirmar com o solicitante antes de avançar; sinalizar riscos que a faixa de risco (fast/standard/strategic) deveria considerar, citando o valor histórico do fornecedor quando ele for relevante para a faixa recomendada; e recomendar a faixa de risco mais adequada.
 
 No campo "highlights", liste informações a confirmar/faltantes. No campo "cautions", liste sinais de risco identificados. No campo "recommendation", sugira a faixa de risco (fast/standard/strategic) com uma frase de justificativa.
 ${RESPONSE_FORMAT_INSTRUCTION}`;
@@ -321,6 +335,12 @@ export type ApprovalSummaryContext = {
   hasConflictDeclared: boolean;
   isPersonified: boolean;
   approvalLevel: number;
+  // Gasto real (Pedidos de Compra negociados) deste centro de custo nos
+  // últimos 12 meses (ver getCostCenterSpendHistory) — dá ao aprovador uma
+  // referência para julgar se o valor desta solicitação foge do padrão do
+  // centro de custo, algo que antes só existia espalhado pelo Dashboard.
+  costCenterSpendLast12Months: number;
+  costCenterOrderCountLast12Months: number;
 };
 
 export function buildApprovalSummaryPrompt(ctx: ApprovalSummaryContext): string {
@@ -347,6 +367,11 @@ Dados da solicitação:
 - Faixa de risco (lane): ${ctx.lane ?? "não definida"}
 - Precisa de contrato formal: ${ctx.needsContract === null ? "não informado" : ctx.needsContract ? "sim" : "não"}
 - Nível de alçada de aprovação calculado: ${ctx.approvalLevel}
+- Gasto deste centro de custo nos últimos 12 meses: ${
+    ctx.costCenterOrderCountLast12Months > 0
+      ? `R$ ${ctx.costCenterSpendLast12Months.toLocaleString("pt-BR")} em ${ctx.costCenterOrderCountLast12Months} Pedido(s) de Compra (média de R$ ${(ctx.costCenterSpendLast12Months / ctx.costCenterOrderCountLast12Months).toLocaleString("pt-BR")} por pedido)`
+      : "nenhum Pedido de Compra registrado nos últimos 12 meses"
+  }
 
 Cotação vencedora (Mapa de Cotação):
 ${
@@ -358,7 +383,7 @@ ${
 Sinalizações automáticas do sistema para esta solicitação:
 ${flags.length > 0 ? flags.map((f) => `- ${f}`).join("\n") : "- Nenhuma sinalização automática de risco para esta solicitação."}
 
-Monte um parecer que ajude o aprovador a decidir rapidamente sem perder nenhum ponto relevante. No campo "summary", resuma em 2-3 frases o que está sendo comprado, por quê, e o resultado da negociação (saving, se houver). No campo "highlights", liste os pontos favoráveis à aprovação (saving obtido, fornecedor adequado, processo completo). No campo "cautions", liste TODAS as sinalizações automáticas acima (se houver) mais qualquer inconsistência que você perceba nos dados (ex: valor alto sem cotação registrada, falta de saving). No campo "recommendation", indique "aprovar", "revisar antes de aprovar" ou "reprovar" com uma frase de justificativa. Deixe claro que é um parecer de apoio: a decisão final é sempre de quem tem a alçada.
+Monte um parecer que ajude o aprovador a decidir rapidamente sem perder nenhum ponto relevante. No campo "summary", resuma em 2-3 frases o que está sendo comprado, por quê, e o resultado da negociação (saving, se houver). No campo "highlights", liste os pontos favoráveis à aprovação (saving obtido, fornecedor adequado, processo completo). No campo "cautions", liste TODAS as sinalizações automáticas acima (se houver) mais qualquer inconsistência que você perceba nos dados (ex: valor alto sem cotação registrada, falta de saving), incluindo se o valor estimado desta solicitação destoa claramente da média histórica do centro de custo informada acima. No campo "recommendation", indique "aprovar", "revisar antes de aprovar" ou "reprovar" com uma frase de justificativa. Deixe claro que é um parecer de apoio: a decisão final é sempre de quem tem a alçada.
 ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
 
@@ -397,6 +422,73 @@ ${RESPONSE_FORMAT_INSTRUCTION}`;
 }
 
 // ----------------------------------------------------------------------------
+// Resumo executivo mensal (item 2.8 do diagnóstico de IA): diferente de todos
+// os prompts acima, não analisa UMA solicitação, e sim os agregados de um mês
+// inteiro já calculados por loadDashboardData (src/lib/dashboard-data.ts) —
+// mesmos números que aparecem no Dashboard, só narrados. Reaproveita o mesmo
+// generateInsight/RESPONSE_FORMAT_INSTRUCTION dos demais: só texto, nenhum
+// número novo é inventado pela IA, ela só organiza o que o sistema já
+// calculou (ver POST /api/cron/monthly-summary).
+// ----------------------------------------------------------------------------
+
+export type MonthlySummaryContext = {
+  monthLabel: string;
+  totalSpend: { value: number; deltaPct: number | null };
+  requestCount: { value: number; deltaPct: number | null };
+  poCount: { value: number; deltaPct: number | null };
+  avgCycleDays: { value: number; deltaPct: number | null };
+  totalSaving: { value: number; deltaPct: number | null };
+  savingPct: { value: number; deltaPct: number | null };
+  slaCompliancePct: { value: number; deltaPct: number | null };
+  topCostCenters: { label: string; value: number; count: number }[];
+  topSuppliers: { name: string; value: number; count: number }[];
+  riskMap: {
+    overdueCount: number;
+    fragmentationCount: number;
+    noContractCount: number;
+    budgetExceptionsPending: number;
+    personifiedApprovals: number;
+    emergencyCount: number;
+  };
+};
+
+function fmtDelta(deltaPct: number | null): string {
+  if (deltaPct === null) return "sem período anterior para comparar";
+  const sinal = deltaPct > 0 ? "+" : "";
+  return `${sinal}${deltaPct.toFixed(1)}% vs. mês anterior`;
+}
+
+export function buildMonthlySummaryPrompt(ctx: MonthlySummaryContext): string {
+  return `Você é um assistente que escreve o resumo executivo mensal de Compras da Acerto (fintech brasileira), distribuído automaticamente por e-mail/Slack no início de cada mês. Você NUNCA decide nada, só narra os números que o próprio sistema já calculou (nenhum deles foi gerado por você).
+
+Indicadores de ${ctx.monthLabel}:
+- Gasto total (Pedidos de Compra negociados): R$ ${ctx.totalSpend.value.toLocaleString("pt-BR")} (${fmtDelta(ctx.totalSpend.deltaPct)})
+- Solicitações abertas: ${ctx.requestCount.value} (${fmtDelta(ctx.requestCount.deltaPct)})
+- Pedidos de Compra gerados: ${ctx.poCount.value} (${fmtDelta(ctx.poCount.deltaPct)})
+- Ciclo médio (dias): ${ctx.avgCycleDays.value.toFixed(1)} (${fmtDelta(ctx.avgCycleDays.deltaPct)})
+- Saving total: R$ ${ctx.totalSaving.value.toLocaleString("pt-BR")} (${fmtDelta(ctx.totalSaving.deltaPct)})
+- Saving %: ${ctx.savingPct.value.toFixed(1)}% (${fmtDelta(ctx.savingPct.deltaPct)})
+- Aderência à SLA: ${ctx.slaCompliancePct.value.toFixed(1)}% (${fmtDelta(ctx.slaCompliancePct.deltaPct)})
+
+Top centros de custo do mês:
+${ctx.topCostCenters.map((c) => `- ${c.label}: R$ ${c.value.toLocaleString("pt-BR")} (${c.count} solicitação(ões))`).join("\n") || "- sem movimentação no mês"}
+
+Top fornecedores do mês:
+${ctx.topSuppliers.map((s) => `- ${s.name}: R$ ${s.value.toLocaleString("pt-BR")} (${s.count} pedido(s))`).join("\n") || "- sem movimentação no mês"}
+
+Sinalizações vigentes (situação atual, não só do mês):
+- Solicitações em atraso de SLA: ${ctx.riskMap.overdueCount}
+- Sinalizadas por risco de fracionamento: ${ctx.riskMap.fragmentationCount}
+- Sem contrato mapeado apesar de exigir: ${ctx.riskMap.noContractCount}
+- Exceções orçamentárias pendentes: ${ctx.riskMap.budgetExceptionsPending}
+- Aprovações personificadas: ${ctx.riskMap.personifiedApprovals}
+- Solicitações de prioridade crítica: ${ctx.riskMap.emergencyCount}
+
+Escreva um resumo executivo direto, para quem não vai abrir o Dashboard: no campo "summary", 2-3 frases sobre o mês (volume, saving, principal variação vs. mês anterior). No campo "highlights", os pontos positivos do mês (saving obtido, melhora de SLA, ciclo mais rápido). No campo "cautions", as sinalizações vigentes acima que merecem atenção da liderança (só as que tiverem contagem maior que zero). "recommendation" e "nextStep" podem ser null se não houver uma ação clara a apontar.
+${RESPONSE_FORMAT_INSTRUCTION}`;
+}
+
+// ----------------------------------------------------------------------------
 // Assistente de preenchimento da Nova Solicitação, diferente do
 // AiInsightPanel acima (que analisa uma PurchaseRequest já criada, em uma
 // etapa específica, com histórico persistido em AiInsight), este roda ANTES
@@ -414,7 +506,14 @@ export type RequisitionAssistPayload = {
   likelyDueDiligence: boolean;
   missingInfo: string[];
   note: string;
+  possibleDuplicateOf: { requestCode: string; reason: string } | null;
 };
+
+// Outras solicitações ABERTAS (não concluídas/canceladas) no mesmo centro de
+// custo, para a IA comparar contra a descrição nova e sinalizar duplicidade
+// antes do envio — não decide nada, só aponta o código para o comprador
+// conferir (ver POST /api/requests/suggest).
+export type OpenRequestCandidate = { code: string; shortDescription: string; longDescription: string };
 
 const REQUISITION_ASSIST_JSON_SCHEMA = {
   type: "object",
@@ -429,8 +528,14 @@ const REQUISITION_ASSIST_JSON_SCHEMA = {
     likelyDueDiligence: { type: "boolean" },
     missingInfo: { type: "array", items: { type: "string" } },
     note: { type: "string" },
+    possibleDuplicateOf: {
+      anyOf: [
+        { type: "object", properties: { requestCode: { type: "string" }, reason: { type: "string" } }, required: ["requestCode", "reason"], additionalProperties: false },
+        { type: "null" },
+      ],
+    },
   },
-  required: ["demandType", "priority", "likelyDueDiligence", "missingInfo", "note"],
+  required: ["demandType", "priority", "likelyDueDiligence", "missingInfo", "note", "possibleDuplicateOf"],
   additionalProperties: false,
 } as const;
 
@@ -444,14 +549,25 @@ function parseRequisitionAssistPayload(text: string): RequisitionAssistPayload {
     likelyDueDiligence: Boolean(parsed.likelyDueDiligence),
     missingInfo: Array.isArray(parsed.missingInfo) ? parsed.missingInfo.map(String) : [],
     note: String(parsed.note ?? ""),
+    possibleDuplicateOf:
+      parsed.possibleDuplicateOf && typeof parsed.possibleDuplicateOf === "object"
+        ? { requestCode: String(parsed.possibleDuplicateOf.requestCode ?? ""), reason: String(parsed.possibleDuplicateOf.reason ?? "") }
+        : null,
   };
 }
 
-export function buildRequisitionAssistPrompt(description: string): string {
+export function buildRequisitionAssistPrompt(description: string, openRequestsInCostCenter: OpenRequestCandidate[] = []): string {
+  const duplicateSection =
+    openRequestsInCostCenter.length > 0
+      ? `\n\nOutras solicitações ABERTAS no mesmo centro de custo (ainda não concluídas nem canceladas), para você checar se a descrição nova não é a MESMA necessidade sendo pedida de novo:\n${openRequestsInCostCenter
+          .map((r) => `- [${r.code}] ${r.shortDescription}: ${r.longDescription}`)
+          .join("\n")}\n\nSe a descrição nova claramente pedir a mesma coisa que uma dessas (mesmo fornecedor/ferramenta/serviço e mesmo objetivo), preencha possibleDuplicateOf com o código dela e o motivo. Não sinalize por semelhança superficial de categoria — só quando parecer genuinamente a mesma necessidade.`
+      : "";
+
   return `Você é um assistente que ajuda quem está abrindo uma Solicitação de Compra na Acerto (fintech brasileira) a preencher o formulário a partir de uma descrição em linguagem natural do que a pessoa precisa. Você NUNCA decide nada sozinho, só sugere valores que a pessoa vai confirmar ou corrigir antes de enviar.
 
 Descrição da necessidade, como a pessoa escreveu:
-"${description}"
+"${description}"${duplicateSection}
 
 Classifique nos valores EXATOS abaixo (não invente outros):
 - Tipo de demanda (demandType): um de COMPRA_PRODUTO, COMPRA_SERVICO, FERRAMENTA_NOVA, FERRAMENTA_USUARIOS, FERRAMENTA_UPGRADE_DOWNGRADE, RENOVACAO_CONTRATO, CANCELAMENTO; ou null se não conseguir inferir com confiança.
@@ -459,18 +575,21 @@ Classifique nos valores EXATOS abaixo (não invente outros):
 - likelyDueDiligence: true se parecer uma ferramenta/serviço NOVO que provavelmente vai tratar dados pessoais (login de usuários, CRM, dados de clientes/colaboradores). Isso adianta um alerta que hoje só apareceria depois, na etapa de Triagem.
 - missingInfo: lista curta do que falta ou está vago na descrição para abrir a solicitação com qualidade (ex: "não ficou claro o centro de custo", "não há indicação de fornecedor").
 - note: 1-2 frases resumindo o que você entendeu, em tom direto.
+- possibleDuplicateOf: null, a menos que a lista de solicitações abertas acima mostre uma que pareça ser o mesmo pedido — nesse caso, o código dela e uma frase curta do porquê.
 
 Responda APENAS com um JSON válido (sem markdown, sem texto antes ou depois), no formato exato:
 {
   "demandType": "...", "priority": "...",
-  "likelyDueDiligence": true, "missingInfo": ["..."], "note": "..."
+  "likelyDueDiligence": true, "missingInfo": ["..."], "note": "...",
+  "possibleDuplicateOf": null
 }`;
 }
 
 export async function generateRequisitionAssist(
-  description: string
+  description: string,
+  openRequestsInCostCenter: OpenRequestCandidate[] = []
 ): Promise<{ payload: RequisitionAssistPayload | null; model: string | null; error: string | null }> {
-  const prompt = buildRequisitionAssistPrompt(description);
+  const prompt = buildRequisitionAssistPrompt(description, openRequestsInCostCenter);
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY || null;
   const geminiApiKey = process.env.GEMINI_API_KEY || null;
 

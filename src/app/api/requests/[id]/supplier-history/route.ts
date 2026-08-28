@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
-import { normalizarCnpj } from "@/lib/cnpj";
+import { getSupplierHistory } from "@/lib/supplier-history";
 
 /**
  * GET /api/requests/[id]/supplier-history
@@ -35,35 +35,5 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   });
   if (!request) return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
 
-  const name = request.indicatedSupplierName?.trim();
-  if (!name) {
-    return NextResponse.json({ sum: 0, matchType: "none", matchedSupplierName: null });
-  }
-
-  const twelveMonthsAgo = new Date();
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-
-  const catalogMatch = await prisma.supplier.findFirst({
-    where: { OR: [{ legalName: { contains: name, mode: "insensitive" } }, { tradeName: { contains: name, mode: "insensitive" } }] },
-  });
-
-  if (catalogMatch) {
-    const orders = await prisma.purchaseOrder.findMany({
-      where: { supplierCnpj: normalizarCnpj(catalogMatch.cnpj) ?? catalogMatch.cnpj, createdAt: { gte: twelveMonthsAgo } },
-      select: { negotiatedValue: true },
-    });
-    const sum = orders.reduce((acc, o) => acc + Number(o.negotiatedValue), 0);
-    return NextResponse.json({ sum, matchType: "catalog", matchedSupplierName: catalogMatch.legalName });
-  }
-
-  const approximateOrders = await prisma.purchaseOrder.findMany({
-    where: { supplierLegalName: { contains: name, mode: "insensitive" }, createdAt: { gte: twelveMonthsAgo } },
-    select: { negotiatedValue: true, supplierLegalName: true },
-  });
-  const sum = approximateOrders.reduce((acc, o) => acc + Number(o.negotiatedValue), 0);
-  return NextResponse.json({
-    sum,
-    matchType: approximateOrders.length > 0 ? "approximate" : "none",
-    matchedSupplierName: approximateOrders[0]?.supplierLegalName ?? null,
-  });
+  return NextResponse.json(await getSupplierHistory(request.indicatedSupplierName));
 }

@@ -41,18 +41,41 @@ export async function GET(req: NextRequest) {
     const link = `${process.env.APP_URL}/solicitacoes/${approval.request.id}`;
     const dias = APPROVAL_ESCALATION_BUSINESS_DAYS;
 
+    // Item 2.10 do diagnóstico de IA: antes o lembrete só dizia "está
+    // atrasada", sem contexto de quanto está em jogo. Não é IA generativa
+    // (não há nada a "gerar" aqui) — é o mesmo dado que a solicitação já
+    // carrega (valor, faixa de risco, prazo geral da SLA), só que agora
+    // também aparece na mensagem que já sai automaticamente todo dia.
+    const valor =
+      approval.request.estimatedValue !== null
+        ? `R$ ${Number(approval.request.estimatedValue).toLocaleString("pt-BR")}`
+        : "não informado";
+    const faixa = approval.request.lane ?? "não definida";
+    const contexto = `Valor: ${valor} · Faixa de risco: ${faixa}`;
+
+    let alertaSla: string | null = null;
+    if (approval.request.slaDeadline) {
+      const diasParaSla = Math.ceil((approval.request.slaDeadline.getTime() - Date.now()) / 86_400_000);
+      if (diasParaSla < 0) alertaSla = `O prazo geral da SLA da solicitação também já venceu, há ${Math.abs(diasParaSla)} dia(s).`;
+      else if (diasParaSla <= 3) alertaSla = `O prazo geral da SLA da solicitação também está próximo: vence em ${diasParaSla} dia(s).`;
+    }
+
     const aoAprovador = await avisar({
       para: approval.approver.email,
       assunto: `Lembrete: ${approval.request.code} aguarda sua aprovação há mais de ${dias} dias úteis`,
       html:
         `<p>Olá, <b>${approval.approver.name}</b>!</p>` +
         `<p>A solicitação <b>${approval.request.code}</b> está aguardando a sua aprovação há mais de <b>${dias} dias úteis</b>.</p>` +
+        `<p>${contexto}</p>` +
+        (alertaSla ? `<p><b>${alertaSla}</b></p>` : "") +
         `<p>Enquanto a decisão não sai, a compra fica parada nesta etapa.</p>` +
         `<p><a href="${link}">Abrir a solicitação para decidir</a></p>` +
         `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
       slack:
         `*Lembrete: ${approval.request.code} aguarda sua aprovação*\n` +
-        `Há mais de ${dias} dias úteis. A compra fica parada até a decisão.\n` +
+        `Há mais de ${dias} dias úteis. ${contexto}\n` +
+        (alertaSla ? `${alertaSla}\n` : "") +
+        `A compra fica parada até a decisão.\n` +
         `<${link}|Abrir a solicitação para decidir>`,
       requestId: approval.request.id,
       origem: "escalonamento ao aprovador",
@@ -64,11 +87,14 @@ export async function GET(req: NextRequest) {
       html:
         `<p>A aprovação da solicitação <b>${approval.request.code}</b> está em atraso.</p>` +
         `<p>Aprovador: ${approval.approver.name}<br/>Aberta desde: ${approval.request.createdAt.toLocaleDateString("pt-BR")}</p>` +
+        `<p>${contexto}</p>` +
+        (alertaSla ? `<p><b>${alertaSla}</b></p>` : "") +
         `<p><a href="${link}">Abrir a solicitação</a></p>`,
       slack:
         `*Aprovação em atraso: ${approval.request.code}*\n` +
         `Aprovador: ${approval.approver.name}\n` +
-        `Aberta desde ${approval.request.createdAt.toLocaleDateString("pt-BR")}.\n` +
+        `Aberta desde ${approval.request.createdAt.toLocaleDateString("pt-BR")}. ${contexto}\n` +
+        (alertaSla ? `${alertaSla}\n` : "") +
         `<${link}|Abrir a solicitação>`,
       requestId: approval.request.id,
       origem: "escalonamento a controladoria",

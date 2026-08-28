@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { faixasAtivas, faixaDoValor } from "@/lib/alcadas";
 import { requireRole } from "@/lib/rbac";
 import { exigirLeituraDeSolicitacao } from "@/lib/acesso";
-import { STAGES } from "@/lib/workflow";
+import { STAGES, checkFragmentationRisk } from "@/lib/workflow";
+import { getCostCenterSpendHistory } from "@/lib/cost-center-history";
 import { USUARIO_PUBLICO } from "@/lib/usuario";
 import {
   generateInsight,
@@ -82,7 +83,26 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   let prompt: string;
   switch (request.currentStage) {
-    case "TRIAGEM":
+    case "TRIAGEM": {
+      // Mesmo dado que o próprio comprador já vê no formulário (soma de 12
+      // meses vinda de GET /api/requests/[id]/supplier-history, carregada no
+      // client e enviada aqui em draft) — repassado para a IA não opinar às
+      // cegas sobre a faixa de risco quando o sistema já sabe o histórico.
+      const priorRequestsValueLast12Months =
+        typeof d.priorRequestsValueLast12Months === "number" ? d.priorRequestsValueLast12Months : undefined;
+      const supplierHistoryMatch =
+        typeof d.supplierHistoryMatch === "string" ? (d.supplierHistoryMatch as "catalog" | "approximate" | "none") : undefined;
+      // Só dá para checar fracionamento se já houver um valor estimado
+      // resolvido (pode ainda não haver, se a solicitação chegou sem valor e
+      // o comprador ainda não preencheu o campo desta mesma Triagem).
+      const fragmentationFlagged =
+        estimatedValue !== null && priorRequestsValueLast12Months !== undefined
+          ? checkFragmentationRisk({
+              faixas: await faixasAtivas(),
+              newRequestValue: estimatedValue,
+              priorRequestsValueLast12Months,
+            }).flagged
+          : undefined;
       prompt = buildTriagemPrompt({
         demandType: request.demandType,
         shortDescription: request.shortDescription,
@@ -96,8 +116,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         supplierApproved: typeof d.supplierApproved === "boolean" ? d.supplierApproved : undefined,
         supplierRiskTier: typeof d.supplierRiskTier === "string" ? d.supplierRiskTier : undefined,
         handlesPersonalData: typeof d.handlesPersonalData === "boolean" ? d.handlesPersonalData : undefined,
+        priorRequestsValueLast12Months,
+        supplierHistoryMatch,
+        fragmentationFlagged,
       });
       break;
+    }
     case "DUE_DILIGENCE":
       prompt = buildDueDiligencePrompt({
         demandType: request.demandType,
@@ -158,6 +182,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const winning = request.quotes.find((q) => q.selected) ?? null;
       const latestConflict = request.conflictDeclarations[0];
       const pendingApproval = request.approvals.find((a) => a.decision === "PENDENTE");
+      const costCenterHistory = await getCostCenterSpendHistory(request.costCenterId);
       prompt = buildApprovalSummaryPrompt({
         demandType: request.demandType,
         shortDescription: request.shortDescription,
@@ -180,6 +205,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         hasConflictDeclared: Boolean(latestConflict?.hasConflict),
         isPersonified: Boolean(pendingApproval?.personifiedBy),
         approvalLevel: estimatedValue !== null ? (faixaDoValor(await faixasAtivas(), estimatedValue)?.level ?? 0) : 0,
+        costCenterSpendLast12Months: costCenterHistory.sum,
+        costCenterOrderCountLast12Months: costCenterHistory.count,
       });
       break;
     }

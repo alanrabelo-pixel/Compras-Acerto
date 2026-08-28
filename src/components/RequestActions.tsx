@@ -464,7 +464,13 @@ function TriagemForm({
           requestId={request.id}
           stage="TRIAGEM"
           actorId={buyerId}
-          draft={{ supplierApproved, supplierRiskTier, handlesPersonalData }}
+          draft={{
+            supplierApproved,
+            supplierRiskTier,
+            handlesPersonalData,
+            priorRequestsValueLast12Months: priorValue,
+            supplierHistoryMatch: priorValueSource?.matchType,
+          }}
         />
 
         <div className="form-section">
