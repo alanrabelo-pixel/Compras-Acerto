@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { cx } from "./cx";
 
@@ -15,14 +15,24 @@ import { cx } from "./cx";
 export function Modal({
   open, onClose, title, children, panelClassName,
 }: { open: boolean; onClose: () => void; title?: string; children: React.ReactNode; panelClassName?: string }) {
+  // onClose entra como prop e é comum ser recriada a cada render de quem usa
+  // este modal (ex: onClose={() => setAberto(false)} inline) — inclusive a
+  // cada tecla digitada num campo do conteúdo, se ele mexer em algum estado
+  // do componente pai. Uma ref evita que o efeito abaixo (que só deve rodar
+  // ao abrir/fechar) dependa dessa identidade instável — mesmo bug corrigido
+  // em src/components/OrcamentoExtraModal.tsx, onde chegou a tirar o foco do
+  // campo que a pessoa estava preenchendo a cada tecla.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

@@ -64,11 +64,23 @@ export function OrcamentoExtraModal({
 }) {
   const fecharRef = useRef<HTMLButtonElement>(null);
 
+  // Bug real corrigido aqui: onFechar chega como prop, recriada a cada
+  // render do formulário que contém este modal — inclusive a cada tecla
+  // digitada no campo de valor, porque ela atualiza um estado do formulário
+  // (estimatedValue). Antes, onFechar entrava nas dependências do efeito, e
+  // fecharRef.current?.focus() rodava de novo a cada dessas recriações,
+  // tirando o foco do campo que a pessoa estava preenchendo e jogando para o
+  // botão Fechar. Uma ref segura a versão mais recente de onFechar para o
+  // atalho de Esc sem precisar que o efeito (que só deve rodar ao abrir/
+  // fechar) dependa dela.
+  const onFecharRef = useRef(onFechar);
+  onFecharRef.current = onFechar;
+
   useEffect(() => {
     if (!aberto) return;
 
     function aoTeclar(e: KeyboardEvent) {
-      if (e.key === "Escape") onFechar();
+      if (e.key === "Escape") onFecharRef.current();
     }
     document.addEventListener("keydown", aoTeclar);
 
@@ -80,7 +92,7 @@ export function OrcamentoExtraModal({
       document.removeEventListener("keydown", aoTeclar);
       document.body.style.overflow = overflowAnterior;
     };
-  }, [aberto, onFechar]);
+  }, [aberto]);
 
   if (!aberto) return null;
 
