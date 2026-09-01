@@ -175,6 +175,33 @@ export async function sendPurchaseEmail(params: {
   }
 }
 
+/**
+ * Escapa caracteres especiais de HTML antes de interpolar um valor num corpo
+ * de e-mail. Achado do DAST (28/08/2026, retorno do Daniel dos Anjos): nome,
+ * descrição, motivo de devolução/reprovação e nome de fornecedor são texto
+ * livre do usuário (Zod só limita tamanho, não caractere) e entravam direto
+ * no HTML do e-mail sem isso — quem abrisse o e-mail executava o que a pessoa
+ * tivesse digitado no campo.
+ */
+function escapeHtml(valor: string): string {
+  return valor
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Remove quebra de linha de um valor antes de usá-lo como assunto do e-mail.
+ * Assunto vira uma linha de header (`Subject: ...`) em buildRawMessage: um
+ * `\n` no meio do valor injetaria headers extras na mensagem. Mesma classe de
+ * achado do escapeHtml acima, campo diferente (header, não corpo).
+ */
+function sanitizeSubject(valor: string): string {
+  return valor.replace(/[\r\n]+/g, " ");
+}
+
 // Templates de e-mail do fluxo original (um por evento-chave). Manter o texto
 // alinhado à Política de Compras vigente ao editar.
 export const templates = {
@@ -194,21 +221,21 @@ export const templates = {
    * fazer a seguir.
    */
   confirmacaoRecebimento: (nome: string, codigo: string, descricao: string, link: string) => ({
-    subject: `Solicitação ${codigo} recebida - ${descricao}`,
+    subject: sanitizeSubject(`Solicitação ${codigo} recebida - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>Recebemos a sua Solicitação de Compra <b>${codigo}</b> (${descricao}).</p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>Recebemos a sua Solicitação de Compra <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}).</p>` +
       `<p>Ela seguiu para a <b>Homologação e Triagem</b>, com o time de Compras | F&NC, que confere as informações antes de dar andamento. Você é avisado a cada passo.</p>` +
-      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p><a href="${escapeHtml(link)}">Acompanhar a solicitação</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   atualizacaoEtapa: (nome: string, codigo: string, descricao: string, etapa: string, link: string) => ({
-    subject: `${codigo} avançou para ${etapa} - ${descricao}`,
+    subject: sanitizeSubject(`${codigo} avançou para ${etapa} - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A solicitação <b>${codigo}</b> (${descricao}) entrou na fase de "<b>${etapa}</b>".</p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) entrou na fase de "<b>${escapeHtml(etapa)}</b>".</p>` +
       `<p>Nada é necessário da sua parte neste momento.</p>` +
-      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p><a href="${escapeHtml(link)}">Acompanhar a solicitação</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   /**
@@ -220,45 +247,45 @@ export const templates = {
    * outros onze avisos em que ela não precisa fazer nada.
    */
   solicitacaoDevolvida: (nome: string, codigo: string, descricao: string, motivo: string, link: string) => ({
-    subject: `Ação necessária: ${codigo} foi devolvida - ${descricao}`,
+    subject: sanitizeSubject(`Ação necessária: ${codigo} foi devolvida - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi devolvida na Triagem porque faltam informações.</p>` +
-      `<p>O que o time de Compras precisa: ${motivo}</p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) foi devolvida na Triagem porque faltam informações.</p>` +
+      `<p>O que o time de Compras precisa: ${escapeHtml(motivo)}</p>` +
       `<p>Complete os dados e a solicitação volta a andar. Enquanto isso, ela fica parada.</p>` +
-      `<p><a href="${link}">Abrir a solicitação para completar</a></p>` +
+      `<p><a href="${escapeHtml(link)}">Abrir a solicitação para completar</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   reprovado: (nome: string, codigo: string, descricao: string, etapa: string, motivo: string, link: string) => ({
-    subject: `Reprovada em ${etapa}: ${codigo} - ${descricao}`,
+    subject: sanitizeSubject(`Reprovada em ${etapa}: ${codigo} - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi reprovada na etapa de <b>${etapa}</b>.</p>` +
-      `<p>Motivo: ${motivo}</p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) foi reprovada na etapa de <b>${escapeHtml(etapa)}</b>.</p>` +
+      `<p>Motivo: ${escapeHtml(motivo)}</p>` +
       `<p>A solicitação foi encerrada. Se a necessidade continuar, o caminho é abrir uma nova tratando o motivo acima, ou falar com quem decidiu.</p>` +
-      `<p><a href="${link}">Ver a solicitação</a></p>` +
+      `<p><a href="${escapeHtml(link)}">Ver a solicitação</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   aprovado: (nome: string, codigo: string, descricao: string, proximaEtapa: string, link: string) => ({
-    subject: `Aprovada: ${codigo} - ${descricao}`,
+    subject: sanitizeSubject(`Aprovada: ${codigo} - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi aprovada no fluxo financeiro e de compras.</p>` +
-      `<p>Próxima etapa: <b>${proximaEtapa}</b>.</p>` +
-      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) foi aprovada no fluxo financeiro e de compras.</p>` +
+      `<p>Próxima etapa: <b>${escapeHtml(proximaEtapa)}</b>.</p>` +
+      `<p><a href="${escapeHtml(link)}">Acompanhar a solicitação</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   pedidoCompraGerado: (nome: string, descricao: string, codigoPedido: string, pdfUrl: string) => ({
-    subject: `Pedido de Compra gerado - ${descricao}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>O Pedido de Compra <b>${codigoPedido}</b> foi gerado para a solicitação <b>${descricao}</b>.</p><p><a href="${pdfUrl}">Baixar o PDF do Pedido de Compra</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+    subject: sanitizeSubject(`Pedido de Compra gerado - ${descricao}`),
+    html: `<p>Olá, <b>${escapeHtml(nome)}</b>!</p><p>O Pedido de Compra <b>${escapeHtml(codigoPedido)}</b> foi gerado para a solicitação <b>${escapeHtml(descricao)}</b>.</p><p><a href="${escapeHtml(pdfUrl)}">Baixar o PDF do Pedido de Compra</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
   chamadoAberto: (nome: string, categoriaLabel: string, codigo: string, linkChamado: string) => ({
-    subject: `Chamado ${codigo} recebido: ${categoriaLabel}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Recebemos seu chamado de <b>${categoriaLabel}</b> (${codigo}).</p><p>Acompanhe as respostas e o andamento por aqui: <a href="${linkChamado}">${linkChamado}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
+    subject: sanitizeSubject(`Chamado ${codigo} recebido: ${categoriaLabel}`),
+    html: `<p>Olá, <b>${escapeHtml(nome)}</b>!</p><p>Recebemos seu chamado de <b>${escapeHtml(categoriaLabel)}</b> (${escapeHtml(codigo)}).</p><p>Acompanhe as respostas e o andamento por aqui: <a href="${escapeHtml(linkChamado)}">${escapeHtml(linkChamado)}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
   }),
   chamadoNovaMensagem: (nome: string, categoriaLabel: string, codigo: string, linkChamado: string) => ({
-    subject: `Nova mensagem no chamado ${codigo}: ${categoriaLabel}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Há uma nova mensagem no seu chamado <b>${codigo}</b> (${categoriaLabel}).</p><p>Veja e responda por aqui: <a href="${linkChamado}">${linkChamado}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
+    subject: sanitizeSubject(`Nova mensagem no chamado ${codigo}: ${categoriaLabel}`),
+    html: `<p>Olá, <b>${escapeHtml(nome)}</b>!</p><p>Há uma nova mensagem no seu chamado <b>${escapeHtml(codigo)}</b> (${escapeHtml(categoriaLabel)}).</p><p>Veja e responda por aqui: <a href="${escapeHtml(linkChamado)}">${escapeHtml(linkChamado)}</a></p><p>Atenciosamente,<br/>Acerto</p>`,
   }),
   /**
    * Risco de fracionamento: a soma das compras do mesmo fornecedor nos últimos
@@ -276,8 +303,8 @@ export const templates = {
     nivelSomado: number,
     link: string
   ) => ({
-    subject: `Risco de fracionamento: ${codigo}`,
-    html: `<p>A solicitação <b>${codigo}</b> (${descricao}) foi sinalizada com risco de fracionamento na Triagem.</p><p>Sozinha, ela cai na alçada de <b>Nível ${nivelIsolado}</b>. Somada às compras do fornecedor <b>${fornecedor}</b> nos últimos 12 meses, o total alcança a alçada de <b>Nível ${nivelSomado}</b>.</p><p>Isso não bloqueia a solicitação: ela segue o fluxo normalmente. O alerta existe para a Controladoria avaliar se as compras deveriam ter sido tratadas como uma só.</p><p><a href="${link}">Abrir a solicitação</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+    subject: sanitizeSubject(`Risco de fracionamento: ${codigo}`),
+    html: `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) foi sinalizada com risco de fracionamento na Triagem.</p><p>Sozinha, ela cai na alçada de <b>Nível ${nivelIsolado}</b>. Somada às compras do fornecedor <b>${escapeHtml(fornecedor)}</b> nos últimos 12 meses, o total alcança a alçada de <b>Nível ${nivelSomado}</b>.</p><p>Isso não bloqueia a solicitação: ela segue o fluxo normalmente. O alerta existe para a Controladoria avaliar se as compras deveriam ter sido tratadas como uma só.</p><p><a href="${escapeHtml(link)}">Abrir a solicitação</a></p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
 
   /**
@@ -304,15 +331,15 @@ export const templates = {
     solicitante: string,
     link: string
   ) => ({
-    subject: `Aprovação pendente: ${codigo} - ${descricao}`,
+    subject: sanitizeSubject(`Aprovação pendente: ${codigo} - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A solicitação <b>${codigo}</b> (${descricao}) está aguardando a sua aprovação.</p>` +
-      `<p>Valor: <b>${valor}</b><br/>Alçada: ${faixa}<br/>Solicitante: ${solicitante}</p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) está aguardando a sua aprovação.</p>` +
+      `<p>Valor: <b>${escapeHtml(valor)}</b><br/>Alçada: ${escapeHtml(faixa)}<br/>Solicitante: ${escapeHtml(solicitante)}</p>` +
       (assinaturas > 1
         ? `<p>Esta faixa exige <b>${assinaturas} aprovadores distintos</b>: a compra só avança depois que todos decidirem.</p>`
         : "") +
-      `<p><a href="${link}">Abrir a solicitação para decidir</a></p>` +
+      `<p><a href="${escapeHtml(link)}">Abrir a solicitação para decidir</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
 
@@ -329,28 +356,28 @@ export const templates = {
     motivo: string | null,
     link: string
   ) => ({
-    subject: `Exceção orçamentária pendente: ${codigo} - ${descricao}`,
+    subject: sanitizeSubject(`Exceção orçamentária pendente: ${codigo} - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A solicitação <b>${codigo}</b> (${descricao}) foi aberta sem linha de orçamento e depende da sua decisão sobre a exceção orçamentária.</p>` +
-      `<p>Valor: <b>${valor}</b><br/>Solicitante: ${solicitante}</p>` +
-      (motivo ? `<p>Motivo informado por quem abriu: ${motivo}</p>` : "") +
-      `<p><a href="${link}">Abrir a solicitação para decidir</a></p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) foi aberta sem linha de orçamento e depende da sua decisão sobre a exceção orçamentária.</p>` +
+      `<p>Valor: <b>${escapeHtml(valor)}</b><br/>Solicitante: ${escapeHtml(solicitante)}</p>` +
+      (motivo ? `<p>Motivo informado por quem abriu: ${escapeHtml(motivo)}</p>` : "") +
+      `<p><a href="${escapeHtml(link)}">Abrir a solicitação para decidir</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
 
   /** Exceção aprovada: fecha a assimetria em que só a reprovação avisava. */
   excecaoOrcamentariaAprovada: (nome: string, codigo: string, descricao: string, link: string) => ({
-    subject: `Exceção orçamentária aprovada: ${codigo} - ${descricao}`,
+    subject: sanitizeSubject(`Exceção orçamentária aprovada: ${codigo} - ${descricao}`),
     html:
-      `<p>Olá, <b>${nome}</b>!</p>` +
-      `<p>A exceção orçamentária da solicitação <b>${codigo}</b> (${descricao}) foi aprovada, e a compra seguiu no fluxo mesmo sem linha de orçamento prevista.</p>` +
-      `<p><a href="${link}">Acompanhar a solicitação</a></p>` +
+      `<p>Olá, <b>${escapeHtml(nome)}</b>!</p>` +
+      `<p>A exceção orçamentária da solicitação <b>${escapeHtml(codigo)}</b> (${escapeHtml(descricao)}) foi aprovada, e a compra seguiu no fluxo mesmo sem linha de orçamento prevista.</p>` +
+      `<p><a href="${escapeHtml(link)}">Acompanhar a solicitação</a></p>` +
       `<p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
 
   alertaRenovacaoContrato: (nome: string, fornecedor: string, dataLimite: string, linkNovaSolicitacao: string) => ({
-    subject: `Renovação ou Cancelamento de Contrato - ${fornecedor}`,
-    html: `<p>Olá, <b>${nome}</b>!</p><p>Informamos que o contrato do fornecedor <b>${fornecedor}</b> está próximo do fim da vigência, prevista até o dia ${dataLimite}.</p><p>Para dar andamento, acesse: <a href="${linkNovaSolicitacao}">abrir novo processo de compras</a>.</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
+    subject: sanitizeSubject(`Renovação ou Cancelamento de Contrato - ${fornecedor}`),
+    html: `<p>Olá, <b>${escapeHtml(nome)}</b>!</p><p>Informamos que o contrato do fornecedor <b>${escapeHtml(fornecedor)}</b> está próximo do fim da vigência, prevista até o dia ${escapeHtml(dataLimite)}.</p><p>Para dar andamento, acesse: <a href="${escapeHtml(linkNovaSolicitacao)}">abrir novo processo de compras</a>.</p><p>Atenciosamente,<br/>Time de Compras | F&NC</p>`,
   }),
 };
